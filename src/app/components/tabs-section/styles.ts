@@ -6,11 +6,13 @@ export const TabsContainer = styled.nav`
   padding: 16px 70px;
   justify-content: space-between;
   align-items: center;
-  margin: 0 11px;
+  border-bottom: 1px solid #eee;
+  
   @media (max-width: 991px) {
     padding-left: 20px;
     padding-right: 20px;
   }
+  
   @media (max-width: 640px) {
     flex-direction: column;
     gap: 20px;
@@ -28,8 +30,19 @@ export const TabItem = styled.button`
   border: none;
   cursor: pointer;
   padding: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+
+  &.active {
+    font-weight: bold;
+    opacity: 1;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
 `;
 
-export const ActiveTabItem = styled(TabItem)`
-  font-weight: bold;
+export const TabContent = styled.div`
+  margin-top: 24px;
 `;

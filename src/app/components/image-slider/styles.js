@@ -27,7 +27,7 @@ export const Dot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 4px;
-  background-color: #fff;
+  background-color: white;
   opacity: ${(props) => (props.$active ? 1 : 0.5)};
   transition: opacity 0.2s ease;
 `;

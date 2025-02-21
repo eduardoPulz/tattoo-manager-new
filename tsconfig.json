@@ -28,7 +28,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/app/components/add-button/styles.js", "src/app/components/table-header/styles.js"  ],
   "exclude": [
     "node_modules"
   ]

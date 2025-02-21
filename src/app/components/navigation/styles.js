@@ -1,63 +1,59 @@
 import styled from "styled-components";
 
 export const Header = styled.header`
-  background-color: rgba(66, 66, 66, 1);
-  width: 100%;
-  padding: 14px 80px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.14);
+  padding: 16px 70px;
+  background-color: rgba(66, 66, 66, 1);
+  border-bottom: 1px solid #eee;
+  width: 100%;
 
   @media (max-width: 991px) {
-    padding: 14px 40px;
-  }
-
-  @media (max-width: 640px) {
-    padding: 14px 20px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 `;
 
 export const LogoSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
-  color: #fff;
+  gap: 8px;
+  cursor: pointer;
 `;
 
 export const BrushIcon = styled.i`
   font-size: 24px;
+  color: white;
 `;
 
-export const StudioName = styled.h1`
-  text-align: center;
-  font-weight: normal;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  font-size: 32px;
-  color: #fff;
-  margin: 0;
-
-  @media (max-width: 640px) {
-    font-size: 24px;
-  }
+export const StudioName = styled.span`
+  font-family: Ubuntu, sans-serif;
+  font-size: 24px;
+  color: white;
+  font-weight: 500;
 `;
 
 export const AdminSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 23px;
-  color: #fff;
-
-  @media (max-width: 640px) {
-    display: none;
-  }
+  gap: 8px;
+  cursor: pointer;
 `;
 
 export const PersonIcon = styled.i`
   font-size: 24px;
+  color: white;
 `;
 
 export const AdminText = styled.span`
-  font-family: "Ubuntu", sans-serif;
-  font-size: 15px;
+  font-family: Ubuntu, sans-serif;
+  font-size: 14px;
+  color: white;
+  text-transform: uppercase;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 `;
