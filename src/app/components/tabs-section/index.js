@@ -43,19 +43,28 @@ export const TabsSection = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [funcionariosRes, servicosRes, agendamentosRes] = await Promise.all([
-          fetch('/api/funcionarios').then(res => res.json()),
-          fetch('/api/servicos').then(res => res.json()),
-          fetch('/api/agendamentos').then(res => res.json())
-        ]);
+        const funcionariosResponse = await fetch('/api/funcionarios');
+        const servicosResponse = await fetch('/api/servicos');
+        const agendamentosResponse = await fetch('/api/agendamentos');
         
-        setFuncionarios(funcionariosRes);
-        setServicos(servicosRes);
-        setAgendamentos(agendamentosRes);
+        if (!funcionariosResponse.ok || !servicosResponse.ok || !agendamentosResponse.ok) {
+          throw new Error('Erro ao carregar dados da API');
+        }
+        
+        const funcionariosRes = await funcionariosResponse.json();
+        const servicosRes = await servicosResponse.json();
+        const agendamentosRes = await agendamentosResponse.json();
+        
+        setFuncionarios(Array.isArray(funcionariosRes) ? funcionariosRes : []);
+        setServicos(Array.isArray(servicosRes) ? servicosRes : []);
+        setAgendamentos(Array.isArray(agendamentosRes) ? agendamentosRes : []);
         setError(null);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         setError('Falha ao carregar dados. Por favor, recarregue a página.');
+        setFuncionarios([]);
+        setServicos([]);
+        setAgendamentos([]);
       } finally {
         setIsLoading(false);
       }
