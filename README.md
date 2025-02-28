@@ -191,6 +191,36 @@ O projeto utiliza Prisma como ORM para interagir com o banco de dados SQLite. A 
 - **criadoEm**: Data de criação do registro
 - **atualizadoEm**: Data da última atualização do registro
 
+## Testes e Integração Contínua
+
+O projeto inclui uma configuração completa de testes automatizados e integração contínua:
+
+### Testes Automatizados
+
+- **Framework de Testes**: Jest
+- **Testes de Componentes**: Utilizando React Testing Library
+- **Testes de API**: Utilizando mocks do Prisma
+
+Para executar os testes:
+
+```bash
+# Executar todos os testes
+npm test
+
+# Executar testes em modo de observação
+npm run test:watch
+```
+
+### Integração Contínua
+
+O projeto utiliza GitHub Actions para automação de CI/CD:
+
+- **Testes Automatizados**: Executados em cada push e pull request
+- **Linting**: Verificação de qualidade de código
+- **Cobertura de Código**: Relatórios gerados automaticamente
+
+Para mais detalhes, consulte o diretório `__tests__` e o arquivo `.github/workflows/ci.yml`.
+
 ## Como Executar o Projeto
 
 ### Pré-requisitos
