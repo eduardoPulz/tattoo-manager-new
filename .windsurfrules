@@ -1,0 +1,102 @@
+# Diretrizes Gerais
+
+- SEMPRE fale em Português.  
+- NUNCA adicione comentários no meio do arquivo alterado.
+- Sempre use Markdown para documentação e arquivos README.md.  
+- Mantenha a estrutura existente do arquivo README.md.  
+
+---
+
+# Organização das Regras  
+
+Organize as regras em dois diretórios principais:  
+
+## global_rules/  
+- language/ (Linguagem)  
+- commit-message/ (Mensagens de Commit)  
+- code-style/ (Estilo de Código)  
+- documentation/ (Documentação)  
+- security/ (Segurança)  
+- performance/ (Desempenho)  
+
+## workspace_rules/  
+- Frameworks e Bibliotecas Frontend  
+- Backend e Full-Stack  
+- Desenvolvimento Mobile  
+- CSS e Estilização  
+- Gerenciamento de Estado  
+- Banco de Dados e API  
+- Testes  
+- Ferramentas de Build e Desenvolvimento  
+- Regras Específicas de Linguagem  
+- Outros  
+
+---
+
+# Nomeação e Formatação  
+
+### Para regras globais:  
+- Use nomes de pastas descritivos que indiquem a categoria da regra.  
+- Cada categoria deve conter um arquivo global_rules.md.  
+
+### Para regras de workspace:  
+- Use o padrão: 'tecnologia-foco-windsurfrules-prompt-file'.  
+- Inclua um arquivo .windsurfrules em cada pasta.  
+- No arquivo README.md, mantenha a ordem alfabética dentro de cada categoria.  
+
+---
+
+# Diretrizes de Conteúdo  
+
+### As regras globais devem:  
+- Ser aplicáveis a todos os projetos.  
+- Focar em padrões organizacionais.  
+- Ser claras e aplicáveis.  
+
+### As regras de workspace devem:  
+- Focar em instruções específicas do projeto.  
+- Incluir boas práticas de frameworks específicos.  
+- Fornecer contexto sobre a arquitetura do projeto.  
+
+---
+
+# Documentação  
+
+Cada pasta de regras deve conter:  
+- Um README.md claro explicando seu propósito.  
+- Exemplos de aplicação das regras.  
+- Créditos aos autores originais, se forem forks ou adaptações.  
+
+---
+
+# Manutenção  
+
+- Mantenha o README.md atualizado ao adicionar novas regras.  
+- Certifique-se de que todos os links sejam relativos e estejam funcionando.  
+- Revise e atualize a categorização regularmente.  
+- Documente qualquer mudança significativa ou reorganização.  
+
+---
+
+# Melhores Práticas  
+
+- Use o formato global para mensagens de commit.  
+- Mantenha as regras focadas e específicas.  
+- Referencie regras relacionadas quando útil.  
+- Revise e remova regras obsoletas regularmente.
+# Protocolo de tratamento de erros
+
+1. *Identificação do problema*
+   - Análise de mensagens de erro
+   - Identificação do escopo do impacto
+   - Análise de causa raiz
+
+2. *Desenvolvimento de soluções*
+   - Consideração de múltiplas opções de resposta
+   - Avaliação de risco
+   - Seleção da solução ótima
+
+3. *Implementação e Verificação*
+   - Implementação da solução
+   - Verificação de teste
+   - Confirmação de efeito colateral

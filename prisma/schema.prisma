@@ -1,7 +1,7 @@
 // Schema do Prisma
 datasource db {
-  provider = "postgresql"
-  url      = "postgresql://postgres:postgres@localhost:5432/tattoo_manager"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {

@@ -160,3 +160,89 @@ A remoção progressiva do TypeScript exigiu implementação rigorosa de documen
 
 3.4 Componentização
 O sistema de design atômico reduziu em 40% o tempo de desenvolvimento de novas interfaces através da reutilização de componentes.
+
+## Estrutura do Banco de Dados
+
+O projeto utiliza Prisma como ORM para interagir com o banco de dados SQLite. A estrutura do banco de dados é composta por três modelos principais:
+
+### Funcionario
+- **id**: Identificador único (UUID)
+- **nome**: Nome do funcionário
+- **especialidade**: Especialidade do funcionário (ex: Tatuador, Piercer)
+- **telefone**: Número de telefone do funcionário
+- **criadoEm**: Data de criação do registro
+- **atualizadoEm**: Data da última atualização do registro
+
+### Servico
+- **id**: Identificador único (UUID)
+- **descricao**: Descrição do serviço
+- **duracao**: Duração em minutos
+- **preco**: Preço do serviço
+- **criadoEm**: Data de criação do registro
+- **atualizadoEm**: Data da última atualização do registro
+
+### Agendamento
+- **id**: Identificador único (UUID)
+- **horaInicio**: Data e hora de início do agendamento
+- **horaFim**: Data e hora de término do agendamento
+- **nomeCliente**: Nome do cliente
+- **funcionarioId**: Referência ao funcionário responsável
+- **servicoId**: Referência ao serviço a ser realizado
+- **criadoEm**: Data de criação do registro
+- **atualizadoEm**: Data da última atualização do registro
+
+## Como Executar o Projeto
+
+### Pré-requisitos
+- Node.js (versão 18.18.0 ou superior)
+- NPM ou Yarn
+
+### Instalação
+1. Clone o repositório
+```
+git clone https://github.com/seu-usuario/tattoo-manager.git
+cd tattoo-manager
+```
+
+2. Instale as dependências
+```
+npm install
+```
+
+3. Configure o banco de dados
+```
+npx prisma generate
+npx prisma db push
+```
+
+4. Popule o banco de dados com dados iniciais
+```
+node scripts/seed.js
+```
+
+5. Inicie o servidor de desenvolvimento
+```
+npm run dev
+```
+
+6. Acesse o aplicativo em `http://localhost:3000`
+
+## API Endpoints
+
+### Funcionários
+- **GET /api/funcionarios**: Lista todos os funcionários
+- **POST /api/funcionarios**: Cria um novo funcionário
+- **PUT /api/funcionarios?id={id}**: Atualiza um funcionário existente
+- **DELETE /api/funcionarios?id={id}**: Remove um funcionário
+
+### Serviços
+- **GET /api/servicos**: Lista todos os serviços
+- **POST /api/servicos**: Cria um novo serviço
+- **PUT /api/servicos?id={id}**: Atualiza um serviço existente
+- **DELETE /api/servicos?id={id}**: Remove um serviço
+
+### Agendamentos
+- **GET /api/agendamentos**: Lista todos os agendamentos
+- **POST /api/agendamentos**: Cria um novo agendamento
+- **PUT /api/agendamentos?id={id}**: Atualiza um agendamento existente
+- **DELETE /api/agendamentos?id={id}**: Remove um agendamento
