@@ -1,7 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING") // Usado para migrações
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 generator client {
@@ -9,33 +9,23 @@ generator client {
 }
 
 model Funcionario {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  cargo        String
-  email        String        @unique
-  agendamentos Agendamento[]
-
-  @@map("funcionarios")
+  id    Int    @id @default(autoincrement())
+  nome  String
+  cargo String
+  email String
 }
 
 model Servico {
-  id           Int           @id @default(autoincrement())
-  nome         String
-  preco        Float
-  duracao      Int           // duração em minutos
-  agendamentos Agendamento[]
-
-  @@map("servicos")
+  id      Int   @id @default(autoincrement())
+  nome    String
+  preco   Float
+  duracao Int
 }
 
 model Agendamento {
-  id            Int         @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   data          DateTime
+  nomeCliente   String
   funcionarioId Int
   servicoId     Int
-  nomeCliente   String
-  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
-  servico       Servico     @relation(fields: [servicoId], references: [id])
-
-  @@map("agendamentos")
 }
