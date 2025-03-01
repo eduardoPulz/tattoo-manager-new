@@ -10,6 +10,8 @@
     "postinstall": "prisma generate",
     "seed": "node scripts/seed.js",
     "db:check": "node scripts/db-check.js",
+    "db:init": "node scripts/init-db.js",
+    "vercel-build": "prisma generate && node scripts/init-db.js && next build",
     "test": "jest --config=jest.simple.config.js",
     "test:watch": "jest --config=jest.simple.config.js --watch",
     "test:ci": "jest --config=jest.simple.config.js --ci"
