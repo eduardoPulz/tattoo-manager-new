@@ -7,11 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
-    "seed": "node scripts/seed.js",
-    "db:check": "node scripts/db-check.js",
-    "db:init": "node scripts/init-db.js",
-    "vercel-build": "prisma generate && node scripts/init-db.js && next build",
+    "postinstall": "prisma generate && npx prisma db push",
+    "vercel-build": "prisma generate && npx prisma db push && next build",
     "test": "jest --config=jest.simple.config.js",
     "test:watch": "jest --config=jest.simple.config.js --watch",
     "test:ci": "jest --config=jest.simple.config.js --ci"

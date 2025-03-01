@@ -1,119 +1,64 @@
 import prisma from '@/lib/prisma';
 
-// Cache para armazenar resultados e reduzir consultas ao banco
-const cache = {
-  funcionarios: null,
-  timestamp: 0,
-  ttl: 60000 // 1 minuto em milissegundos
-};
-
 export const FuncionarioService = {
   async listarTodos() {
     try {
-      // Verifica se há dados em cache válidos
-      const agora = Date.now();
-      if (cache.funcionarios && (agora - cache.timestamp < cache.ttl)) {
-        return cache.funcionarios;
-      }
-
-      // Busca dados do banco e atualiza o cache
       const funcionarios = await prisma.funcionario.findMany({
         orderBy: { nome: 'asc' }
       });
-      
-      // Atualiza o cache
-      cache.funcionarios = funcionarios;
-      cache.timestamp = agora;
-      
       return funcionarios;
     } catch (error) {
       console.error('Erro ao listar funcionários:', error);
-      throw new Error('Não foi possível listar os funcionários');
+      throw new Error('Erro ao listar funcionários');
     }
   },
 
   async buscarPorId(id) {
     try {
-      // Tenta encontrar no cache primeiro
-      if (cache.funcionarios) {
-        const funcionarioCache = cache.funcionarios.find(f => f.id === id);
-        if (funcionarioCache) {
-          // Busca os agendamentos relacionados
-          const agendamentos = await prisma.agendamento.findMany({
-            where: { funcionarioId: id }
-          });
-          return { ...funcionarioCache, agendamentos };
-        }
-      }
-
       const funcionario = await prisma.funcionario.findUnique({
-        where: { id },
-        include: { agendamentos: true }
+        where: { id: parseInt(id) }
       });
-
-      if (!funcionario) {
-        throw new Error('Funcionário não encontrado');
-      }
-
       return funcionario;
     } catch (error) {
-      console.error('Erro ao buscar funcionário:', error);
-      throw new Error('Não foi possível buscar o funcionário');
+      console.error(`Erro ao buscar funcionário ${id}:`, error);
+      throw new Error('Erro ao buscar funcionário');
     }
   },
 
   async criar(dados) {
     try {
-      const novoFuncionario = await prisma.funcionario.create({
-        data: {
-          nome: dados.nome,
-          especialidade: dados.especialidade,
-          telefone: dados.telefone
-        }
+      const funcionario = await prisma.funcionario.create({
+        data: dados
       });
-      
-      // Invalida o cache
-      cache.funcionarios = null;
-      
-      return novoFuncionario;
+      return funcionario;
     } catch (error) {
       console.error('Erro ao criar funcionário:', error);
-      throw new Error('Não foi possível criar o funcionário');
+      throw new Error('Erro ao criar funcionário');
     }
   },
 
   async atualizar(id, dados) {
     try {
-      const funcionarioAtualizado = await prisma.funcionario.update({
-        where: { id },
-        data: {
-          nome: dados.nome,
-          especialidade: dados.especialidade,
-          telefone: dados.telefone
-        }
+      const funcionario = await prisma.funcionario.update({
+        where: { id: parseInt(id) },
+        data: dados
       });
-      
-      // Invalida o cache
-      cache.funcionarios = null;
-      
-      return funcionarioAtualizado;
+      return funcionario;
     } catch (error) {
-      console.error('Erro ao atualizar funcionário:', error);
-      throw new Error('Não foi possível atualizar o funcionário');
+      console.error(`Erro ao atualizar funcionário ${id}:`, error);
+      throw new Error('Erro ao atualizar funcionário');
     }
   },
 
   async excluir(id) {
     try {
       await prisma.funcionario.delete({
-        where: { id }
+        where: { id: parseInt(id) }
       });
-      
-      // Invalida o cache
-      cache.funcionarios = null;
+      return true;
     } catch (error) {
-      console.error('Erro ao excluir funcionário:', error);
-      throw new Error('Não foi possível excluir o funcionário');
+      console.error(`Erro ao excluir funcionário ${id}:`, error);
+      throw new Error('Erro ao excluir funcionário');
     }
   }
 };

@@ -1,16 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 
-// Configuração para logs em desenvolvimento
-const prismaClientSingleton = () => {
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
-};
+// Criando uma única instância do PrismaClient
+const prisma = global.prisma || new PrismaClient();
 
-// Implementação do padrão singleton para evitar múltiplas instâncias
-const globalForPrisma = global;
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
 
 export default prisma;
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
