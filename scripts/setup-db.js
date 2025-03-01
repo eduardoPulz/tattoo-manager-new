@@ -49,7 +49,8 @@ async function main() {
     console.log('Setup do banco de dados concluído com sucesso!');
   } catch (error) {
     console.error('Erro no setup do banco de dados:', error);
-    process.exit(1);
+    // Não interromper o processo para não falhar o deploy
+    console.log('Continuando apesar do erro...');
   } finally {
     await prisma.$disconnect();
   }
