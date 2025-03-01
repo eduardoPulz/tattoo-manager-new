@@ -13,6 +13,8 @@ model Funcionario {
   nome  String
   cargo String
   email String
+
+  @@map("funcionarios")
 }
 
 model Servico {
@@ -20,6 +22,8 @@ model Servico {
   nome    String
   preco   Float
   duracao Int
+
+  @@map("servicos")
 }
 
 model Agendamento {
@@ -28,4 +32,6 @@ model Agendamento {
   nomeCliente   String
   funcionarioId Int
   servicoId     Int
+
+  @@map("agendamentos")
 }
