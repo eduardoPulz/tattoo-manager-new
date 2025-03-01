@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/generate-env.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate && prisma db push",
-    "setup": "node scripts/setup-db.js"
+    "postinstall": "node scripts/generate-env.js && prisma generate",
+    "setup": "node scripts/setup-db.js",
+    "railway:prod": "prisma db push && next start"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",
