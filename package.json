@@ -11,7 +11,7 @@
     "lint": "next lint",
     "postinstall": "node scripts/generate-env.js && prisma generate || echo 'Prisma generate falhou, mas continuando...'",
     "setup": "node scripts/setup-db.js",
-    "railway:prod": "prisma db push && next start"
+    "railway:prod": "node scripts/railway-start.js"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",
