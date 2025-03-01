@@ -1,15 +1,35 @@
 import prisma from '@/lib/prisma';
 
+// Cache para armazenar resultados e reduzir consultas ao banco
+const cache = {
+  agendamentos: null,
+  timestamp: 0,
+  ttl: 30000 // 30 segundos em milissegundos (menor para agendamentos que mudam com frequência)
+};
+
 export const AgendamentoService = {
   async listarTodos() {
     try {
-      return await prisma.agendamento.findMany({
+      // Verifica se há dados em cache válidos
+      const agora = Date.now();
+      if (cache.agendamentos && (agora - cache.timestamp < cache.ttl)) {
+        return cache.agendamentos;
+      }
+
+      // Busca dados do banco e atualiza o cache
+      const agendamentos = await prisma.agendamento.findMany({
         include: {
           funcionario: true,
           servico: true
         },
         orderBy: { horaInicio: 'asc' }
       });
+      
+      // Atualiza o cache
+      cache.agendamentos = agendamentos;
+      cache.timestamp = agora;
+      
+      return agendamentos;
     } catch (error) {
       console.error('Erro ao listar agendamentos:', error);
       throw new Error('Não foi possível listar os agendamentos');
@@ -18,6 +38,14 @@ export const AgendamentoService = {
 
   async buscarPorId(id) {
     try {
+      // Tenta encontrar no cache primeiro
+      if (cache.agendamentos) {
+        const agendamentoCache = cache.agendamentos.find(a => a.id === id);
+        if (agendamentoCache) {
+          return agendamentoCache;
+        }
+      }
+
       const agendamento = await prisma.agendamento.findUnique({
         where: { id },
         include: {
@@ -39,35 +67,35 @@ export const AgendamentoService = {
 
   async criar(dados) {
     try {
-      // Verifica disponibilidade do funcionário
-      const conflito = await prisma.agendamento.findFirst({
+      // Verificar se o funcionário está disponível no horário
+      const agendamentosConflitantes = await prisma.agendamento.findMany({
         where: {
           funcionarioId: dados.funcionarioId,
           OR: [
             {
               AND: [
-                { horaInicio: { lte: dados.horaInicio } },
-                { horaFim: { gt: dados.horaInicio } }
+                { horaInicio: { lte: new Date(dados.horaInicio) } },
+                { horaFim: { gt: new Date(dados.horaInicio) } }
               ]
             },
             {
               AND: [
-                { horaInicio: { lt: dados.horaFim } },
-                { horaFim: { gte: dados.horaFim } }
+                { horaInicio: { lt: new Date(dados.horaFim) } },
+                { horaFim: { gte: new Date(dados.horaFim) } }
               ]
             }
           ]
         }
       });
 
-      if (conflito) {
-        throw new Error('Horário não disponível para este funcionário');
+      if (agendamentosConflitantes.length > 0) {
+        throw new Error('O funcionário já possui um agendamento neste horário');
       }
 
-      return await prisma.agendamento.create({
+      const novoAgendamento = await prisma.agendamento.create({
         data: {
-          horaInicio: dados.horaInicio,
-          horaFim: dados.horaFim,
+          horaInicio: new Date(dados.horaInicio),
+          horaFim: new Date(dados.horaFim),
           nomeCliente: dados.nomeCliente,
           funcionarioId: dados.funcionarioId,
           servicoId: dados.servicoId
@@ -77,6 +105,11 @@ export const AgendamentoService = {
           servico: true
         }
       });
+      
+      // Invalida o cache
+      cache.agendamentos = null;
+      
+      return novoAgendamento;
     } catch (error) {
       console.error('Erro ao criar agendamento:', error);
       throw new Error(error.message || 'Não foi possível criar o agendamento');
@@ -85,11 +118,37 @@ export const AgendamentoService = {
 
   async atualizar(id, dados) {
     try {
-      return await prisma.agendamento.update({
+      // Verificar se o funcionário está disponível no horário (excluindo o próprio agendamento)
+      const agendamentosConflitantes = await prisma.agendamento.findMany({
+        where: {
+          id: { not: id },
+          funcionarioId: dados.funcionarioId,
+          OR: [
+            {
+              AND: [
+                { horaInicio: { lte: new Date(dados.horaInicio) } },
+                { horaFim: { gt: new Date(dados.horaInicio) } }
+              ]
+            },
+            {
+              AND: [
+                { horaInicio: { lt: new Date(dados.horaFim) } },
+                { horaFim: { gte: new Date(dados.horaFim) } }
+              ]
+            }
+          ]
+        }
+      });
+
+      if (agendamentosConflitantes.length > 0) {
+        throw new Error('O funcionário já possui um agendamento neste horário');
+      }
+
+      const agendamentoAtualizado = await prisma.agendamento.update({
         where: { id },
         data: {
-          horaInicio: dados.horaInicio,
-          horaFim: dados.horaFim,
+          horaInicio: new Date(dados.horaInicio),
+          horaFim: new Date(dados.horaFim),
           nomeCliente: dados.nomeCliente,
           funcionarioId: dados.funcionarioId,
           servicoId: dados.servicoId
@@ -99,9 +158,14 @@ export const AgendamentoService = {
           servico: true
         }
       });
+      
+      // Invalida o cache
+      cache.agendamentos = null;
+      
+      return agendamentoAtualizado;
     } catch (error) {
       console.error('Erro ao atualizar agendamento:', error);
-      throw new Error('Não foi possível atualizar o agendamento');
+      throw new Error(error.message || 'Não foi possível atualizar o agendamento');
     }
   },
 
@@ -110,6 +174,9 @@ export const AgendamentoService = {
       await prisma.agendamento.delete({
         where: { id }
       });
+      
+      // Invalida o cache
+      cache.agendamentos = null;
     } catch (error) {
       console.error('Erro ao excluir agendamento:', error);
       throw new Error('Não foi possível excluir o agendamento');

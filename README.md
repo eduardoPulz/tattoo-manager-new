@@ -163,9 +163,23 @@ O sistema de design atômico reduziu em 40% o tempo de desenvolvimento de novas 
 
 ## Estrutura do Banco de Dados
 
-O projeto utiliza Prisma como ORM para interagir com o banco de dados SQLite. A estrutura do banco de dados é composta por três modelos principais:
+O projeto utiliza Prisma como ORM para interagir com o banco de dados. Em ambiente de desenvolvimento, é possível usar SQLite, mas para produção recomendamos PostgreSQL.
 
-### Funcionario
+### Configuração do Banco de Dados para Produção
+
+Para configurar o banco de dados PostgreSQL para produção, siga os passos abaixo:
+
+1. Crie um banco de dados PostgreSQL (recomendamos usar Vercel Postgres, Supabase ou Railway)
+2. Crie um arquivo `.env` na raiz do projeto com a seguinte variável:
+   ```
+   DATABASE_URL="postgresql://usuario:senha@host:porta/nome_do_banco?schema=public"
+   ```
+3. Execute o comando `npx prisma db push` para sincronizar o esquema com o banco de dados
+4. Execute o comando `npm run seed` para popular o banco com dados iniciais
+
+### Modelos do Banco de Dados
+
+#### Funcionario
 - **id**: Identificador único (UUID)
 - **nome**: Nome do funcionário
 - **especialidade**: Especialidade do funcionário (ex: Tatuador, Piercer)
@@ -173,7 +187,7 @@ O projeto utiliza Prisma como ORM para interagir com o banco de dados SQLite. A 
 - **criadoEm**: Data de criação do registro
 - **atualizadoEm**: Data da última atualização do registro
 
-### Servico
+#### Servico
 - **id**: Identificador único (UUID)
 - **descricao**: Descrição do serviço
 - **duracao**: Duração em minutos
@@ -181,7 +195,7 @@ O projeto utiliza Prisma como ORM para interagir com o banco de dados SQLite. A 
 - **criadoEm**: Data de criação do registro
 - **atualizadoEm**: Data da última atualização do registro
 
-### Agendamento
+#### Agendamento
 - **id**: Identificador único (UUID)
 - **horaInicio**: Data e hora de início do agendamento
 - **horaFim**: Data e hora de término do agendamento
