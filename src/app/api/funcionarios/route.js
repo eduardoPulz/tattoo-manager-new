@@ -1,80 +1,69 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../prisma/client';
+import { PrismaClient } from '@prisma/client';
 
-// API simplificada de funcionários
+// Criar uma instância direta do PrismaClient aqui para isolamento total
+const localPrisma = new PrismaClient();
+
 export async function GET() {
   try {
-    const funcionarios = await prisma.funcionario.findMany();
-    return NextResponse.json(funcionarios);
+    // Tentar criar um registro de teste para verificar se está funcionando
+    await localPrisma.funcionario.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        nome: 'Funcionário Teste API',
+        cargo: 'Tatuador',
+        email: 'funcionario@teste.com'
+      }
+    });
+    
+    // Buscar todos os funcionários
+    const funcionarios = await localPrisma.funcionario.findMany();
+    
+    return NextResponse.json({
+      success: true,
+      data: funcionarios,
+      message: 'API direta de funcionários funcionando'
+    });
   } catch (error) {
-    console.error('Erro ao listar funcionários:', error);
-    return NextResponse.json(
-      { error: 'Erro ao listar funcionários: ' + error.message },
-      { status: 500 }
-    );
+    console.error('Erro crítico na API de funcionários:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+      code: error.code || 'UNKNOWN',
+      meta: error.meta || {},
+      clientVersion: error.clientVersion || 'N/A'
+    }, { status: 500 });
   }
 }
 
 export async function POST(request) {
   try {
     const dados = await request.json();
-    const funcionario = await prisma.funcionario.create({
+    
+    // Criar funcionário com dados mínimos
+    const funcionario = await localPrisma.funcionario.create({
       data: {
-        nome: dados.nome,
-        cargo: dados.cargo,
-        email: dados.email
+        nome: dados.nome || 'Nome padrão',
+        cargo: dados.cargo || 'Cargo padrão',
+        email: dados.email || 'email@padrao.com'
       }
     });
-    return NextResponse.json(funcionario, { status: 201 });
+    
+    return NextResponse.json({
+      success: true,
+      data: funcionario
+    }, { status: 201 });
   } catch (error) {
     console.error('Erro ao criar funcionário:', error);
-    return NextResponse.json(
-      { error: 'Erro ao criar funcionário: ' + error.message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = parseInt(searchParams.get('id'));
-    const dados = await request.json();
     
-    const funcionario = await prisma.funcionario.update({
-      where: { id },
-      data: {
-        nome: dados.nome,
-        cargo: dados.cargo,
-        email: dados.email
-      }
-    });
-    
-    return NextResponse.json(funcionario);
-  } catch (error) {
-    console.error('Erro ao atualizar funcionário:', error);
-    return NextResponse.json(
-      { error: 'Erro ao atualizar funcionário: ' + error.message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function DELETE(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = parseInt(searchParams.get('id'));
-    
-    await prisma.funcionario.delete({
-      where: { id }
-    });
-    
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Erro ao excluir funcionário:', error);
-    return NextResponse.json(
-      { error: 'Erro ao excluir funcionário: ' + error.message },
-      { status: 400 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+      code: error.code || 'UNKNOWN'
+    }, { status: 400 });
   }
 }

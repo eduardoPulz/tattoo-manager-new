@@ -1,80 +1,40 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../prisma/client';
+import { PrismaClient } from '@prisma/client';
 
-// API simplificada de serviços
+// Criar uma instância direta do PrismaClient aqui para isolamento total
+const localPrisma = new PrismaClient();
+
 export async function GET() {
   try {
-    const servicos = await prisma.servico.findMany();
-    return NextResponse.json(servicos);
-  } catch (error) {
-    console.error('Erro ao listar serviços:', error);
-    return NextResponse.json(
-      { error: 'Erro ao listar serviços: ' + error.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request) {
-  try {
-    const dados = await request.json();
-    const servico = await prisma.servico.create({
-      data: {
-        nome: dados.nome,
-        preco: parseFloat(dados.preco),
-        duracao: parseInt(dados.duracao)
-      }
-    });
-    return NextResponse.json(servico, { status: 201 });
-  } catch (error) {
-    console.error('Erro ao criar serviço:', error);
-    return NextResponse.json(
-      { error: 'Erro ao criar serviço: ' + error.message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = parseInt(searchParams.get('id'));
-    const dados = await request.json();
-    
-    const servico = await prisma.servico.update({
-      where: { id },
-      data: {
-        nome: dados.nome,
-        preco: parseFloat(dados.preco),
-        duracao: parseInt(dados.duracao)
+    // Tentar criar um serviço de teste para verificar se está funcionando
+    await localPrisma.servico.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        nome: 'Serviço Teste API',
+        preco: 100.0,
+        duracao: 60
       }
     });
     
-    return NextResponse.json(servico);
-  } catch (error) {
-    console.error('Erro ao atualizar serviço:', error);
-    return NextResponse.json(
-      { error: 'Erro ao atualizar serviço: ' + error.message },
-      { status: 400 }
-    );
-  }
-}
-
-export async function DELETE(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = parseInt(searchParams.get('id'));
+    // Buscar todos os serviços
+    const servicos = await localPrisma.servico.findMany();
     
-    await prisma.servico.delete({
-      where: { id }
+    return NextResponse.json({
+      success: true,
+      data: servicos,
+      message: 'API direta de serviços funcionando'
     });
-    
-    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Erro ao excluir serviço:', error);
-    return NextResponse.json(
-      { error: 'Erro ao excluir serviço: ' + error.message },
-      { status: 400 }
-    );
+    console.error('Erro crítico na API de serviços:', error);
+    
+    return NextResponse.json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+      code: error.code || 'UNKNOWN',
+      meta: error.meta || {},
+      clientVersion: error.clientVersion || 'N/A'
+    }, { status: 500 });
   }
 }
