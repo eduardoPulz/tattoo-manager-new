@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { ServicoService } from '@/services/servicoService';
+import prisma from '../../../../prisma/client';
 
-export async function GET(request) {
+// API simplificada de serviços
+export async function GET() {
   try {
-    const servicos = await ServicoService.listarTodos();
+    const servicos = await prisma.servico.findMany();
     return NextResponse.json(servicos);
   } catch (error) {
+    console.error('Erro ao listar serviços:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao listar serviços: ' + error.message },
       { status: 500 }
     );
   }
@@ -16,11 +18,18 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const dados = await request.json();
-    const servico = await ServicoService.criar(dados);
+    const servico = await prisma.servico.create({
+      data: {
+        nome: dados.nome,
+        preco: parseFloat(dados.preco),
+        duracao: parseInt(dados.duracao)
+      }
+    });
     return NextResponse.json(servico, { status: 201 });
   } catch (error) {
+    console.error('Erro ao criar serviço:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao criar serviço: ' + error.message },
       { status: 400 }
     );
   }
@@ -29,14 +38,23 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id'));
     const dados = await request.json();
     
-    const servico = await ServicoService.atualizar(id, dados);
+    const servico = await prisma.servico.update({
+      where: { id },
+      data: {
+        nome: dados.nome,
+        preco: parseFloat(dados.preco),
+        duracao: parseInt(dados.duracao)
+      }
+    });
+    
     return NextResponse.json(servico);
   } catch (error) {
+    console.error('Erro ao atualizar serviço:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao atualizar serviço: ' + error.message },
       { status: 400 }
     );
   }
@@ -45,13 +63,17 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id'));
     
-    await ServicoService.excluir(id);
-    return NextResponse.json({}, { status: 204 });
+    await prisma.servico.delete({
+      where: { id }
+    });
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Erro ao excluir serviço:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao excluir serviço: ' + error.message },
       { status: 400 }
     );
   }

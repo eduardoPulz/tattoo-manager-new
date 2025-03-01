@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
-import { FuncionarioService } from '@/services/funcionarioService';
+import prisma from '../../../../prisma/client';
 
-export async function GET(request) {
+// API simplificada de funcionários
+export async function GET() {
   try {
-    const funcionarios = await FuncionarioService.listarTodos();
+    const funcionarios = await prisma.funcionario.findMany();
     return NextResponse.json(funcionarios);
   } catch (error) {
+    console.error('Erro ao listar funcionários:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao listar funcionários: ' + error.message },
       { status: 500 }
     );
   }
@@ -16,11 +18,18 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const dados = await request.json();
-    const funcionario = await FuncionarioService.criar(dados);
+    const funcionario = await prisma.funcionario.create({
+      data: {
+        nome: dados.nome,
+        cargo: dados.cargo,
+        email: dados.email
+      }
+    });
     return NextResponse.json(funcionario, { status: 201 });
   } catch (error) {
+    console.error('Erro ao criar funcionário:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao criar funcionário: ' + error.message },
       { status: 400 }
     );
   }
@@ -29,14 +38,23 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id'));
     const dados = await request.json();
     
-    const funcionario = await FuncionarioService.atualizar(id, dados);
+    const funcionario = await prisma.funcionario.update({
+      where: { id },
+      data: {
+        nome: dados.nome,
+        cargo: dados.cargo,
+        email: dados.email
+      }
+    });
+    
     return NextResponse.json(funcionario);
   } catch (error) {
+    console.error('Erro ao atualizar funcionário:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao atualizar funcionário: ' + error.message },
       { status: 400 }
     );
   }
@@ -45,13 +63,17 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = parseInt(searchParams.get('id'));
     
-    await FuncionarioService.excluir(id);
-    return NextResponse.json({}, { status: 204 });
+    await prisma.funcionario.delete({
+      where: { id }
+    });
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
+    console.error('Erro ao excluir funcionário:', error);
     return NextResponse.json(
-      { error: error.message },
+      { error: 'Erro ao excluir funcionário: ' + error.message },
       { status: 400 }
     );
   }
