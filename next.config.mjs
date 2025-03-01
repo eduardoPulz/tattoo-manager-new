@@ -14,10 +14,11 @@ const nextConfig = {
   },
   // Configuração de cache para melhorar a performance
   experimental: {
+    // Removendo a otimização de CSS que estava causando erro
+    // optimizeCss: true,
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    optimizeCss: true,
   },
   async redirects() {
     return [
