@@ -8,10 +8,10 @@
 
 import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
+
 async function main() {
   console.log('Iniciando setup do banco de dados...');
-  
-  const prisma = new PrismaClient();
   
   try {
     // Verificar conexão com o banco
@@ -55,4 +55,5 @@ async function main() {
   }
 }
 
+// Chamada principal
 main();

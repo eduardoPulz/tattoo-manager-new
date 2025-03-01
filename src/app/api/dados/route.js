@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 // Criar uma instância direta do PrismaClient para essa API
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
 
 export async function GET() {
   try {
