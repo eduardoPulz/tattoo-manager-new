@@ -7,16 +7,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos de configuração
-COPY package.json ./
-
 # Instalar dependências
 FROM base AS dependencies
-RUN npm install --production=false
+COPY package.json ./
+COPY scripts ./scripts
+RUN npm install --production=false --ignore-scripts
 
 # Construir a aplicação
 FROM dependencies AS builder
 COPY . .
+RUN node scripts/generate-env.js
+RUN node scripts/setup-db.js
 RUN npm run build
 
 # Executar a aplicação
@@ -29,9 +30,10 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/db.json ./db.json
 
 # Garantir que o db.json seja gravável
-RUN touch db.json && chmod 777 db.json
+RUN chmod 777 db.json
 
 # Expor a porta
 EXPOSE 3000

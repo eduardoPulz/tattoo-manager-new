@@ -8,7 +8,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "node scripts/generate-env.js && node scripts/setup-db.js",
     "railway:prod": "npm run build && npm start",
     "setup": "node scripts/setup-db.js"
   },
