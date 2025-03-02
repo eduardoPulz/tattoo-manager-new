@@ -108,16 +108,11 @@ export const TabsSection = () => {
   
   // Função para excluir funcionário com validação extra
   const handleDeleteFuncionario = async (id) => {
-    if (!id) {
-      alert('ID do funcionário não fornecido');
-      return;
-    }
-    
-    if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
-      return;
-    }
-    
     try {
+      if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
+        return;
+      }
+      
       setIsLoading(true);
       
       // Verificar se há agendamentos para este funcionário
@@ -127,8 +122,13 @@ export const TabsSection = () => {
         return;
       }
       
+      // Verificar se o ID é um objeto e convertê-lo para string se necessário
+      const funcionarioId = typeof id === 'object' ? id.id : id;
+      
+      console.log("Enviando exclusão para o ID:", funcionarioId);
+      
       // Fazer a exclusão
-      await handleFetch(`/api/funcionarios?id=${id}`, 'DELETE');
+      await handleFetch(`/api/funcionarios?id=${funcionarioId}`, 'DELETE');
       
       // Atualizar a lista
       setFuncionarios(funcionarios.filter(f => f.id !== id));

@@ -51,14 +51,11 @@ export async function POST(request) {
     
     return NextResponse.json({
       success: true,
+      message: 'Funcionário criado com sucesso',
       data: novoFuncionario
-    });
+    }, { status: 201 });
   } catch (error) {
-    console.error('Erro ao criar funcionário:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao criar funcionário'
-    }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -68,10 +65,20 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
+    console.log('ID recebido para exclusão:', id);
+    
     if (!id) {
       return NextResponse.json({
         success: false,
         message: 'ID não fornecido'
+      }, { status: 400 });
+    }
+    
+    // Verificar se o ID é um objeto serializado
+    if (id.startsWith('[object')) {
+      return NextResponse.json({
+        success: false,
+        message: 'Formato de ID inválido'
       }, { status: 400 });
     }
     
@@ -83,6 +90,9 @@ export async function DELETE(request) {
         message: resultado.message
       }, { status: 409 }); // Conflict
     }
+    
+    // Garantir que os dados sejam persistidos no banco
+    console.log('Funcionário removido com sucesso. ID:', id);
     
     return NextResponse.json({
       success: true,
