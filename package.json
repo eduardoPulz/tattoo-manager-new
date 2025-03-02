@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "railway:prod": "npm run build && npm start",
-    "setup": "node scripts/setup-db.js"
+    "setup": "node scripts/setup-db.js",
+    "test": "jest",
+    "test:ci": "jest --ci --coverage"
   },
   "dependencies": {
     "critters": "0.0.23",
@@ -22,6 +24,8 @@
   },
   "devDependencies": {
     "eslint": "8.56.0",
-    "eslint-config-next": "14.0.4"
+    "eslint-config-next": "14.0.4",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0"
   }
 }
