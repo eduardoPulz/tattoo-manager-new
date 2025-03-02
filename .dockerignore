@@ -11,3 +11,10 @@ LICENSE
 .gitignore
 !.env.example
 *.log
+*.md
+*.yml
+*.yaml
+.eslintrc*
+.prettierrc*
+.editorconfig
+db.json

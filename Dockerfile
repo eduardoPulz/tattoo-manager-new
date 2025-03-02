@@ -1,44 +1,30 @@
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Configuração de ambiente comum
-ENV NEXT_TELEMETRY_DISABLED=1
+# Configuração básica
 WORKDIR /app
 
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN echo "prisma:generate-skip=true" > .npmrc
-RUN echo "prisma:skip-postinstall=true" >> .npmrc
-RUN echo "ignore-scripts=true" >> .npmrc
-RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
+# Copiar apenas o necessário para instalar dependências
+COPY package.json ./
+COPY package-lock.json ./
 
-FROM base AS setup
-COPY --from=deps /app/node_modules ./node_modules
-COPY scripts ./scripts
-COPY db.example.json ./db.example.json
+# Instalar apenas dependências de produção
+RUN npm install --omit=dev --no-fund --no-audit
+
+# Copiar o restante dos arquivos
+COPY . .
+
+# Configuração de ambiente
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=64"
+
+# Configurar banco de dados
 RUN node scripts/setup-db.js
 
-FROM base AS builder
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=128"
-ENV NEXT_DISABLE_LINT=1
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=setup /app/db.json ./db.json
-COPY next.config.js jsconfig.json ./
-COPY src ./src
-COPY public ./public
-
+# Construir a aplicação com configurações mínimas
 RUN npm run build -- --no-lint
-
-FROM base AS runner
-ENV NODE_ENV=production
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=setup /app/db.json ./db.json
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
+# Comando para iniciar a aplicação
 CMD ["npm", "start"]
