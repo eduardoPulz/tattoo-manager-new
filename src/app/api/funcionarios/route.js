@@ -79,6 +79,20 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
+    // Verificar se há agendamentos relacionados
+    const agendamentosRelacionados = await prisma.agendamento.count({
+      where: { funcionarioId: Number(id) }
+    });
+    
+    if (agendamentosRelacionados > 0) {
+      // Se tiver agendamentos, não permitir exclusão
+      return NextResponse.json({
+        success: false,
+        message: 'Não é possível excluir este funcionário pois existem agendamentos associados a ele'
+      }, { status: 409 });
+    }
+    
+    // Se não tiver agendamentos, excluir o funcionário
     await prisma.funcionario.delete({
       where: { id: Number(id) }
     });
@@ -88,6 +102,11 @@ export async function DELETE(request) {
       message: 'Funcionário removido com sucesso'
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao excluir funcionário:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao excluir funcionário',
+      error: error.message
+    }, { status: 500 });
   }
 }

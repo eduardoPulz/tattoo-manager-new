@@ -39,61 +39,111 @@ export const TabsSection = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
+  // Função para lidar com erros de forma mais robusta
+  const handleFetch = async (url, method = 'GET', body = null) => {
+    try {
+      const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+      };
       
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+      
+      const response = await fetch(url, options);
+      
+      // Mesmo se não for OK, tentamos analisar a resposta para entender o erro
+      const data = await response.json().catch(() => ({ 
+        success: false, 
+        message: 'Erro ao analisar resposta do servidor' 
+      }));
+      
+      if (!response.ok) {
+        throw new Error(data.message || `Erro ${response.status}: ${response.statusText}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`Erro na requisição para ${url}:`, error);
+      throw error;
+    }
+  };
+  
+  // Função para carregar dados com fallback
+  const loadData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    // Função para carregar com tentativas
+    const fetchWithRetry = async (endpoint, setter, emptyFallback = []) => {
       try {
-        // Tentar carregar dados de cada endpoint separadamente
-        try {
-          const funcionariosResponse = await fetch('/api/funcionarios');
-          if (funcionariosResponse.ok) {
-            const data = await funcionariosResponse.json();
-            setFuncionarios(data.data || []);
-          } else {
-            console.error('Erro ao carregar funcionários:', await funcionariosResponse.text());
-          }
-        } catch (funcError) {
-          console.error('Erro ao buscar funcionários:', funcError);
-          // Não falha todo o carregamento, apenas este recurso
+        const result = await handleFetch(endpoint);
+        if (result && result.success && Array.isArray(result.data)) {
+          setter(result.data);
+        } else {
+          console.warn(`Resposta inválida de ${endpoint}:`, result);
+          setter(emptyFallback); // Fallback para array vazio
         }
-        
-        try {
-          const servicosResponse = await fetch('/api/servicos');
-          if (servicosResponse.ok) {
-            const data = await servicosResponse.json();
-            setServicos(data.data || []);
-          } else {
-            console.error('Erro ao carregar serviços:', await servicosResponse.text());
-          }
-        } catch (servError) {
-          console.error('Erro ao buscar serviços:', servError);
-          // Não falha todo o carregamento
-        }
-        
-        try {
-          const agendamentosResponse = await fetch('/api/agendamentos');
-          if (agendamentosResponse.ok) {
-            const data = await agendamentosResponse.json();
-            setAgendamentos(data.data || []);
-          } else {
-            console.error('Erro ao carregar agendamentos:', await agendamentosResponse.text());
-          }
-        } catch (agendError) {
-          console.error('Erro ao buscar agendamentos:', agendError);
-          // Não falha todo o carregamento
-        }
-        
       } catch (error) {
-        console.error('Erro geral ao carregar dados:', error);
-        setError('Erro ao carregar dados. Por favor, recarregue a página.');
-      } finally {
-        setIsLoading(false);
+        console.error(`Erro ao carregar dados de ${endpoint}:`, error);
+        setter(emptyFallback); // Fallback para array vazio em caso de erro
       }
     };
+    
+    try {
+      // Carregar dados de cada endpoint separadamente e com fallback para arrays vazios
+      await Promise.all([
+        fetchWithRetry('/api/funcionarios', setFuncionarios),
+        fetchWithRetry('/api/servicos', setServicos),
+        fetchWithRetry('/api/agendamentos', setAgendamentos)
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      setError('Alguns dados não puderam ser carregados. O sistema continuará funcionando com recursos limitados.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Função para excluir funcionário com validação extra
+  const handleDeleteFuncionario = async (id) => {
+    if (!id) {
+      alert('ID do funcionário não fornecido');
+      return;
+    }
+    
+    if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Verificar se há agendamentos para este funcionário
+      const agendamentosRelacionados = agendamentos.filter(a => a.funcionarioId === id);
+      if (agendamentosRelacionados.length > 0) {
+        alert('Não é possível excluir este funcionário pois existem agendamentos associados a ele');
+        return;
+      }
+      
+      // Fazer a exclusão
+      await handleFetch(`/api/funcionarios?id=${id}`, 'DELETE');
+      
+      // Atualizar a lista
+      setFuncionarios(funcionarios.filter(f => f.id !== id));
+      
+      alert('Funcionário excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir funcionário:', error);
+      alert(`Erro ao excluir funcionário: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    loadData();
   }, []);
 
   const handleTabClick = (tab) => {
@@ -110,19 +160,13 @@ export const TabsSection = () => {
 
   const handleFuncionarioSubmit = async (data) => {
     try {
-      const response = await fetch('/api/funcionarios', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await handleFetch('/api/funcionarios', 'POST', data);
       
-      if (!response.ok) {
+      if (!response.success) {
         throw new Error('Erro ao salvar funcionário');
       }
       
-      const novoFuncionario = await response.json();
+      const novoFuncionario = response.data;
       setFuncionarios(prev => [...prev, novoFuncionario]);
       closeModal();
     } catch (error) {
@@ -133,19 +177,13 @@ export const TabsSection = () => {
 
   const handleServicoSubmit = async (data) => {
     try {
-      const response = await fetch('/api/servicos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await handleFetch('/api/servicos', 'POST', data);
       
-      if (!response.ok) {
+      if (!response.success) {
         throw new Error('Erro ao salvar serviço');
       }
       
-      const novoServico = await response.json();
+      const novoServico = response.data;
       setServicos(prev => [...prev, novoServico]);
       closeModal();
     } catch (error) {
@@ -156,19 +194,13 @@ export const TabsSection = () => {
 
   const handleAgendamentoSubmit = async (data) => {
     try {
-      const response = await fetch('/api/agendamentos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await handleFetch('/api/agendamentos', 'POST', data);
       
-      if (!response.ok) {
+      if (!response.success) {
         throw new Error('Erro ao salvar agendamento');
       }
       
-      const novoAgendamento = await response.json();
+      const novoAgendamento = response.data;
       setAgendamentos(prev => [...prev, novoAgendamento]);
       closeModal();
     } catch (error) {
@@ -221,22 +253,31 @@ export const TabsSection = () => {
     console.log('Editar funcionário:', funcionario);
   };
 
-  const handleDeleteFuncionario = async (funcionario) => {
-    if (window.confirm(`Deseja realmente excluir o funcionário ${funcionario.nome}?`)) {
-      try {
-        const response = await fetch(`/api/funcionarios?id=${funcionario.id}`, {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          throw new Error('Erro ao excluir funcionário');
-        }
-        
-        setFuncionarios(prev => prev.filter(f => f.id !== funcionario.id));
-      } catch (error) {
-        console.error('Erro ao excluir funcionário:', error);
-        alert('Erro ao excluir funcionário');
-      }
+  const handleDeleteServico = async (id) => {
+    if (!id) {
+      alert('ID do serviço não fornecido');
+      return;
+    }
+    
+    if (!confirm('Tem certeza que deseja excluir este serviço?')) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Fazer a exclusão
+      await handleFetch(`/api/servicos?id=${id}`, 'DELETE');
+      
+      // Atualizar a lista
+      setServicos(servicos.filter(s => s.id !== id));
+      
+      alert('Serviço excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir serviço:', error);
+      alert(`Erro ao excluir serviço: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -244,45 +285,35 @@ export const TabsSection = () => {
     console.log('Editar serviço:', servico);
   };
 
-  const handleDeleteServico = async (servico) => {
-    if (window.confirm(`Deseja realmente excluir o serviço ${servico.descricao}?`)) {
-      try {
-        const response = await fetch(`/api/servicos?id=${servico.id}`, {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          throw new Error('Erro ao excluir serviço');
-        }
-        
-        setServicos(prev => prev.filter(s => s.id !== servico.id));
-      } catch (error) {
-        console.error('Erro ao excluir serviço:', error);
-        alert('Erro ao excluir serviço');
-      }
-    }
-  };
-
   const handleEditAgendamento = (agendamento) => {
     console.log('Editar agendamento:', agendamento);
   };
 
-  const handleDeleteAgendamento = async (agendamento) => {
-    if (window.confirm(`Deseja realmente excluir este agendamento?`)) {
-      try {
-        const response = await fetch(`/api/agendamentos?id=${agendamento.id}`, {
-          method: 'DELETE',
-        });
-        
-        if (!response.ok) {
-          throw new Error('Erro ao excluir agendamento');
-        }
-        
-        setAgendamentos(prev => prev.filter(a => a.id !== agendamento.id));
-      } catch (error) {
-        console.error('Erro ao excluir agendamento:', error);
-        alert('Erro ao excluir agendamento');
-      }
+  const handleDeleteAgendamento = async (id) => {
+    if (!id) {
+      alert('ID do agendamento não fornecido');
+      return;
+    }
+    
+    if (!confirm('Tem certeza que deseja excluir este agendamento?')) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Fazer a exclusão
+      await handleFetch(`/api/agendamentos?id=${id}`, 'DELETE');
+      
+      // Atualizar a lista
+      setAgendamentos(agendamentos.filter(a => a.id !== id));
+      
+      alert('Agendamento excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir agendamento:', error);
+      alert(`Erro ao excluir agendamento: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
