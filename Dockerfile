@@ -8,7 +8,11 @@ WORKDIR /app
 
 COPY package.json ./
 COPY next.config.js ./
-COPY .npmrc ./
+
+# Configuração para evitar problemas com Prisma
+RUN echo "prisma:generate-skip=true" > .npmrc
+RUN echo "prisma:skip-postinstall=true" >> .npmrc
+RUN echo "ignore-scripts=true" >> .npmrc
 
 RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
 
