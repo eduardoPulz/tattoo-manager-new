@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Instância única do Prisma com timeout aumentado
+// Instância única do Prisma 
 const prisma = new PrismaClient({
   log: ['error'],
   datasources: {
@@ -21,11 +21,19 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-// GET - Listar todos os agendamentos
+// GET - Listar todos os agendamentos - VERSÃO SUPER SIMPLIFICADA
 export async function GET() {
   try {
-    // Versão simplificada sem include para evitar erros de relação
-    const agendamentos = await prisma.agendamento.findMany();
+    // Versão extremamente simplificada sem qualquer include ou relations
+    const agendamentos = await prisma.agendamento.findMany({
+      select: {
+        id: true,
+        data: true,
+        nomeCliente: true,
+        funcionarioId: true,
+        servicoId: true
+      }
+    });
     
     return NextResponse.json({
       success: true,
@@ -45,21 +53,35 @@ export async function POST(request) {
     if (!dados.data || !dados.nomeCliente) {
       return NextResponse.json({
         success: false,
-        message: 'Dados incompletos'
+        message: 'Data e nome do cliente são obrigatórios'
       }, { status: 400 });
     }
     
-    // Converter string para objeto Date se necessário
-    const dataAgendamento = typeof dados.data === 'string' 
-      ? new Date(dados.data) 
-      : dados.data;
+    // Verificar se o funcionário existe
+    const funcionarioId = Number(dados.funcionarioId);
+    if (isNaN(funcionarioId)) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID de funcionário inválido'
+      }, { status: 400 });
+    }
     
+    // Verificar se o serviço existe
+    const servicoId = Number(dados.servicoId);
+    if (isNaN(servicoId)) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID de serviço inválido'
+      }, { status: 400 });
+    }
+    
+    // Criar o agendamento
     const novoAgendamento = await prisma.agendamento.create({
       data: {
-        data: dataAgendamento,
+        data: new Date(dados.data),
         nomeCliente: dados.nomeCliente,
-        funcionarioId: dados.funcionarioId || 1, // Valor padrão
-        servicoId: dados.servicoId || 1 // Valor padrão
+        funcionarioId,
+        servicoId
       }
     });
     
