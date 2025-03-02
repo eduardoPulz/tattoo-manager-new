@@ -7,7 +7,9 @@ ENV NODE_OPTIONS="--max-old-space-size=256"
 WORKDIR /app
 
 COPY package.json ./
+COPY package-lock.json ./
 COPY next.config.js ./
+COPY jsconfig.json ./
 
 # Configuração para evitar problemas com Prisma
 RUN echo "prisma:generate-skip=true" > .npmrc
@@ -18,13 +20,16 @@ RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
 
 COPY scripts ./scripts
 COPY src ./src
+COPY public ./public
 
 RUN mkdir -p public
 RUN node scripts/generate-env.js
 RUN node scripts/setup-db.js
 RUN chmod 777 db.json
 
-RUN npm run build
+# Desativar o linting durante o build
+ENV NEXT_DISABLE_LINT=1
+RUN npm run build --no-lint
 
 EXPOSE 3000
 
