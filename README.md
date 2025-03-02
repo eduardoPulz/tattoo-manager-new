@@ -45,6 +45,9 @@ O Tattoo Manager é um sistema completo para gestão de estúdios de tatuagem, p
 # Instalar dependências
 npm install
 
+# Configurar o banco de dados
+npm run setup
+
 # Iniciar o servidor de desenvolvimento
 npm run dev
 ```
@@ -55,6 +58,9 @@ npm run dev
 tattoo-manager/
 ├── db.json                 # Banco de dados baseado em arquivo
 ├── public/                 # Arquivos estáticos
+├── scripts/                # Scripts de configuração
+│   ├── generate-env.js     # Gera variáveis de ambiente
+│   └── setup-db.js         # Configura o banco de dados
 ├── src/
 │   ├── app/
 │   │   ├── api/            # Endpoints da API
@@ -63,6 +69,18 @@ tattoo-manager/
 │   │   └── page.js         # Página principal
 └── package.json            # Dependências e scripts
 ```
+
+## Scripts de Configuração
+
+O projeto inclui scripts de configuração que são executados automaticamente durante o processo de build e desenvolvimento:
+
+- **setup-db.js**: Cria o arquivo db.json com a estrutura inicial se ele não existir
+- **generate-env.js**: Configura variáveis de ambiente necessárias para o projeto
+
+Estes scripts são executados automaticamente quando você roda:
+- `npm run dev` (inicia o servidor de desenvolvimento)
+- `npm run build` (compila o projeto para produção)
+- `npm run setup` (configura manualmente o banco de dados)
 
 ## Sobre a Versão 2.0
 

@@ -20,11 +20,11 @@ RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
 
 COPY src ./src
 COPY public ./public
+COPY scripts ./scripts
 
 RUN mkdir -p public
 RUN node scripts/generate-env.js
 RUN node scripts/setup-db.js
-RUN chmod 777 db.json
 
 # Desativar o linting durante o build
 ENV NEXT_DISABLE_LINT=1
@@ -32,4 +32,5 @@ RUN npm run build --no-lint
 
 EXPOSE 3000
 
+# Comando para iniciar a aplicação
 CMD ["npm", "start"]
