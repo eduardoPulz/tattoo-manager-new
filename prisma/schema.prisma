@@ -12,6 +12,9 @@ model Funcionario {
   nome  String
   cargo String
   email String
+  
+  // Relação com agendamentos
+  agendamentos Agendamento[]
 
   @@map("funcionarios")
 }
@@ -21,6 +24,9 @@ model Servico {
   nome    String
   preco   Float
   duracao Int
+  
+  // Relação com agendamentos
+  agendamentos Agendamento[]
 
   @@map("servicos")
 }
@@ -31,6 +37,10 @@ model Agendamento {
   nomeCliente   String
   funcionarioId Int
   servicoId     Int
+  
+  // Definir as relações com as outras tabelas
+  funcionario   Funcionario @relation(fields: [funcionarioId], references: [id])
+  servico       Servico     @relation(fields: [servicoId], references: [id])
 
   @@map("agendamentos")
 }

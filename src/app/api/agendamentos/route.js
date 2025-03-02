@@ -1,35 +1,48 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Criar uma instância direta do PrismaClient aqui para isolamento total
-const localPrisma = new PrismaClient();
+// Criar uma instância do PrismaClient com melhor tratamento de erro
+const prisma = new PrismaClient({
+  log: ['error', 'warn'],
+});
 
 export async function GET() {
   try {
-    // Buscar todos os agendamentos, sem tentar criar um de teste
-    // já que depende de outras tabelas
-    const agendamentos = await localPrisma.agendamento.findMany({
+    console.log('Iniciando busca de agendamentos...');
+    
+    // Buscar todos os agendamentos com relacionamentos
+    const agendamentos = await prisma.agendamento.findMany({
       include: {
         funcionario: true,
         servico: true
       }
     });
     
+    console.log(`Encontrados ${agendamentos.length} agendamentos`);
+    
     return NextResponse.json({
       success: true,
       data: agendamentos,
-      message: 'API direta de agendamentos funcionando'
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Erro crítico na API de agendamentos:', error);
+    console.error('Erro na API de agendamentos:', error);
+    
+    // Log mais detalhado para depuração
+    if (error.code === 'P2025') {
+      console.error('Erro de registro não encontrado. Verifique os IDs de relacionamento.');
+    } else if (error.code?.startsWith('P2')) {
+      console.error('Erro do Prisma:', error.message);
+    }
     
     return NextResponse.json({
       success: false,
       error: error.message,
-      stack: error.stack,
       code: error.code || 'UNKNOWN',
-      meta: error.meta || {},
-      clientVersion: error.clientVersion || 'N/A'
+      timestamp: new Date().toISOString()
     }, { status: 500 });
+  } finally {
+    // Sempre desconectar o prisma
+    await prisma.$disconnect();
   }
 }
