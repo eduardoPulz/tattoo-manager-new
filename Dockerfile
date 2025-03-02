@@ -1,35 +1,44 @@
-FROM node:18-alpine
+FROM node:18-alpine AS base
 
-ENV NODE_ENV=production
+# Configuração de ambiente comum
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=256"
-
 WORKDIR /app
 
-COPY package.json ./
-COPY package-lock.json ./
-COPY next.config.js ./
-COPY jsconfig.json ./
-
-# Configuração para evitar problemas com Prisma
+FROM base AS deps
+COPY package.json package-lock.json ./
 RUN echo "prisma:generate-skip=true" > .npmrc
 RUN echo "prisma:skip-postinstall=true" >> .npmrc
 RUN echo "ignore-scripts=true" >> .npmrc
-
 RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
 
-COPY src ./src
-COPY public ./public
+FROM base AS setup
+COPY --from=deps /app/node_modules ./node_modules
 COPY scripts ./scripts
-
-RUN mkdir -p public
+COPY db.example.json ./db.example.json
 RUN node scripts/setup-db.js
 
-# Desativar o linting durante o build
+FROM base AS builder
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=128"
 ENV NEXT_DISABLE_LINT=1
-RUN npm run build --no-lint
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=setup /app/db.json ./db.json
+COPY next.config.js jsconfig.json ./
+COPY src ./src
+COPY public ./public
+
+RUN npm run build -- --no-lint
+
+FROM base AS runner
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=setup /app/db.json ./db.json
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
 
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
 CMD ["npm", "start"]
