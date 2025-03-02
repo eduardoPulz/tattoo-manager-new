@@ -16,6 +16,7 @@ RUN npm install --production=false --ignore-scripts
 # Construir a aplicação
 FROM dependencies AS builder
 COPY . .
+RUN mkdir -p public
 RUN node scripts/generate-env.js
 RUN node scripts/setup-db.js
 RUN npm run build
@@ -25,7 +26,7 @@ FROM base AS runner
 
 # Copiar os arquivos necessários
 COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/public ./public
+COPY --from=builder /app/public ./public || true
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
