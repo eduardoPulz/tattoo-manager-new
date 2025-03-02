@@ -1,5 +1,5 @@
 // Script simplificado para inicializar o banco de dados
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 async function main() {
   console.log('Inicializando banco de dados...');

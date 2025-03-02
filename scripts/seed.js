@@ -1,9 +1,15 @@
-const { PrismaClient } = require('@prisma/client');
+// Script de seed para popular o banco de dados com dados de teste
+// Compatível com o esquema atual do PostgreSQL
+
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
   try {
+    console.log('Iniciando seed do banco de dados...');
+    
     // Limpar dados existentes
+    console.log('Limpando dados existentes...');
     await prisma.agendamento.deleteMany({});
     await prisma.funcionario.deleteMany({});
     await prisma.servico.deleteMany({});
@@ -11,28 +17,30 @@ async function main() {
     console.log('Banco de dados limpo com sucesso.');
 
     // Criar funcionários
+    console.log('Criando funcionários...');
     const funcionario1 = await prisma.funcionario.create({
       data: {
         nome: 'João Silva',
-        especialidade: 'Tatuador',
-        telefone: '(11) 98765-4321'
+        cargo: 'Tatuador',
+        email: 'joao.silva@tattoo.com'
       }
     });
 
     const funcionario2 = await prisma.funcionario.create({
       data: {
         nome: 'Maria Oliveira',
-        especialidade: 'Piercer',
-        telefone: '(11) 91234-5678'
+        cargo: 'Piercer',
+        email: 'maria.oliveira@tattoo.com'
       }
     });
 
     console.log('Funcionários criados:', funcionario1.nome, funcionario2.nome);
 
     // Criar serviços
+    console.log('Criando serviços...');
     const servico1 = await prisma.servico.create({
       data: {
-        descricao: 'Tatuagem pequena',
+        nome: 'Tatuagem pequena',
         duracao: 60,
         preco: 150.0
       }
@@ -40,7 +48,7 @@ async function main() {
 
     const servico2 = await prisma.servico.create({
       data: {
-        descricao: 'Piercing básico',
+        nome: 'Piercing básico',
         duracao: 30,
         preco: 80.0
       }
@@ -48,20 +56,29 @@ async function main() {
 
     const servico3 = await prisma.servico.create({
       data: {
-        descricao: 'Tatuagem média',
+        nome: 'Tatuagem média',
         duracao: 120,
         preco: 300.0
       }
     });
 
-    console.log('Serviços criados:', servico1.descricao, servico2.descricao, servico3.descricao);
+    console.log('Serviços criados:', servico1.nome, servico2.nome, servico3.nome);
 
     // Criar agendamentos
+    console.log('Criando agendamentos...');
+    
+    // Datas para os agendamentos (próximos dias)
+    const hoje = new Date();
+    const amanha = new Date(hoje);
+    amanha.setDate(amanha.getDate() + 1);
+    
+    const doisDiasDepois = new Date(hoje);
+    doisDiasDepois.setDate(doisDiasDepois.getDate() + 2);
+    
     const agendamento1 = await prisma.agendamento.create({
       data: {
         nomeCliente: 'Pedro Santos',
-        horaInicio: new Date('2025-03-01T10:00:00Z'),
-        horaFim: new Date('2025-03-01T11:00:00Z'),
+        data: hoje,
         funcionarioId: funcionario1.id,
         servicoId: servico1.id
       }
@@ -70,8 +87,7 @@ async function main() {
     const agendamento2 = await prisma.agendamento.create({
       data: {
         nomeCliente: 'Ana Souza',
-        horaInicio: new Date('2025-03-02T14:00:00Z'),
-        horaFim: new Date('2025-03-02T14:30:00Z'),
+        data: amanha,
         funcionarioId: funcionario2.id,
         servicoId: servico2.id
       }
@@ -80,8 +96,7 @@ async function main() {
     const agendamento3 = await prisma.agendamento.create({
       data: {
         nomeCliente: 'Carlos Ferreira',
-        horaInicio: new Date('2025-03-03T15:00:00Z'),
-        horaFim: new Date('2025-03-03T17:00:00Z'),
+        data: doisDiasDepois,
         funcionarioId: funcionario1.id,
         servicoId: servico3.id
       }
@@ -89,9 +104,9 @@ async function main() {
 
     console.log('Agendamentos criados para:', agendamento1.nomeCliente, agendamento2.nomeCliente, agendamento3.nomeCliente);
 
-    console.log('Dados inseridos com sucesso!');
+    console.log('Dados de teste inseridos com sucesso!');
   } catch (error) {
-    console.error('Erro ao inserir dados:', error);
+    console.error('Erro ao inserir dados de teste:', error);
   } finally {
     await prisma.$disconnect();
   }
