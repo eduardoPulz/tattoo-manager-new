@@ -1,14 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  swcMinify: true,
+  compiler: {
+    styledComponents: true,
+  },
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: true,
   },
-  experimental: {
-    disableOptimizedLoading: true
+  env: {
+    API_URL: process.env.API_URL || 'http://localhost:3000/api',
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/home',
+        permanent: true,
+      },
+    ];
   }
 }
 

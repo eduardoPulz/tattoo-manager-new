@@ -3,8 +3,10 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "start": "next dev"
+    "dev": "node scripts/setup-db.js && next dev",
+    "build": "next build --no-lint",
+    "start": "next start",
+    "setup": "node scripts/setup-db.js"
   },
   "dependencies": {
     "next": "14.0.4",
