@@ -53,6 +53,12 @@ export const TabsSection = () => {
       
       const response = await fetch(url, options);
       
+      // Analisar a resposta
+      const data = await response.json().catch(() => ({ 
+        success: false, 
+        message: 'Erro ao analisar resposta do servidor' 
+      }));
+      
       if (!response.ok) {
         throw new Error(data.message || `Erro ${response.status}: ${response.statusText}`);
       }
