@@ -5,8 +5,12 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "node scripts/setup-db.js && npm start",
+    "startCommand": "npm start",
     "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE"
+  },
+  "variables": {
+    "NODE_ENV": "production",
+    "NODE_OPTIONS": "--max-old-space-size=256"
   }
 }
