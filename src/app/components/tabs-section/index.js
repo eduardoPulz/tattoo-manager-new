@@ -1,13 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
-import { TabItem, TabsContainer, TabContent, TabHeader, Title, Button, TableContainer, Table, Loading, Error, EmptyState, ActionButton, FaEdit, FaTrash } from "./styles";
-import { TableHeader } from "../table-header/TableHeader";
-import { TableBody } from "../table-body/TableBody";
-import { AddButton } from "../add-button/AddButton";
-import { Modal } from "../modal/Modal";
+import { useEffect, useState } from "react";
+import { AgendamentoForm } from "../forms/AgendamentoForm";
 import { FuncionarioForm } from "../forms/FuncionarioForm";
 import { ServicoForm } from "../forms/ServicoForm";
-import { AgendamentoForm } from "../forms/AgendamentoForm";
+import { Modal } from "../modal/Modal";
+import { ActionButton, Button, EmptyState, ErrorMessage, FaEdit, FaTrash, Loading, TabContent, TabHeader, TabItem, Table, TableContainer, TabsContainer, Title } from "./styles";
 
 const TABS = {
   SCHEDULES: {
@@ -322,8 +319,8 @@ export const TabsSection = () => {
   };
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case TABS.EMPLOYEES:
+    switch (activeTab.id) {
+      case TABS.EMPLOYEES.id:
         return (
           <TabContent>
             <TabHeader>
@@ -337,7 +334,7 @@ export const TabsSection = () => {
             {isLoading ? (
               <Loading>Carregando...</Loading>
             ) : error ? (
-              <Error>{error}</Error>
+              <ErrorMessage>{error}</ErrorMessage>
             ) : (
               <>
                 {funcionarios.length === 0 ? (
@@ -388,7 +385,7 @@ export const TabsSection = () => {
           </TabContent>
         );
         
-      case TABS.SERVICES:
+      case TABS.SERVICES.id:
         return (
           <TabContent>
             <TabHeader>
@@ -402,7 +399,7 @@ export const TabsSection = () => {
             {isLoading ? (
               <Loading>Carregando...</Loading>
             ) : error ? (
-              <Error>{error}</Error>
+              <ErrorMessage>{error}</ErrorMessage>
             ) : (
               <>
                 {servicos.length === 0 ? (
@@ -453,7 +450,7 @@ export const TabsSection = () => {
           </TabContent>
         );
         
-      case TABS.SCHEDULES:
+      case TABS.SCHEDULES.id:
         return (
           <TabContent>
             <TabHeader>
@@ -467,7 +464,7 @@ export const TabsSection = () => {
             {isLoading ? (
               <Loading>Carregando...</Loading>
             ) : error ? (
-              <Error>{error}</Error>
+              <ErrorMessage>{error}</ErrorMessage>
             ) : (
               <>
                 {agendamentos.length === 0 ? (
