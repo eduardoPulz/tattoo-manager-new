@@ -159,6 +159,7 @@ export const TabsSection = () => {
 
   const handleFuncionarioSubmit = async (data) => {
     try {
+      setIsLoading(true);
       const response = await handleFetch('/api/funcionarios', 'POST', data);
       
       if (!response.success) {
@@ -167,15 +168,18 @@ export const TabsSection = () => {
       
       const novoFuncionario = response.data;
       setFuncionarios(prev => [...prev, novoFuncionario]);
-      closeModal();
+      setShowFuncionarioForm(false);
     } catch (error) {
       console.error('Erro ao salvar funcionário:', error);
-      throw error;
+      alert('Erro ao salvar funcionário: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleServicoSubmit = async (data) => {
     try {
+      setIsLoading(true);
       const response = await handleFetch('/api/servicos', 'POST', data);
       
       if (!response.success) {
@@ -184,15 +188,18 @@ export const TabsSection = () => {
       
       const novoServico = response.data;
       setServicos(prev => [...prev, novoServico]);
-      closeModal();
+      setShowServicoForm(false);
     } catch (error) {
       console.error('Erro ao salvar serviço:', error);
-      throw error;
+      alert('Erro ao salvar serviço: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleAgendamentoSubmit = async (data) => {
     try {
+      setIsLoading(true);
       const response = await handleFetch('/api/agendamentos', 'POST', data);
       
       if (!response.success) {
@@ -201,10 +208,12 @@ export const TabsSection = () => {
       
       const novoAgendamento = response.data;
       setAgendamentos(prev => [...prev, novoAgendamento]);
-      closeModal();
+      setShowAgendamentoForm(false);
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      throw error;
+      alert('Erro ao salvar agendamento: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
