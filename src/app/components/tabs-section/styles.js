@@ -46,97 +46,17 @@ export const TabItem = styled.button`
 
 export const TabContent = styled.div`
   margin-top: 24px;
-  padding: 0 70px;
-  
-  @media (max-width: 991px) {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
 `;
 
-export const TabHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-`;
-
-export const Title = styled.h2`
-  font-size: 24px;
-  margin: 0;
-`;
-
-export const Button = styled.button`
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 14px;
-  
-  &:hover {
-    background-color: #0069d9;
-  }
-`;
-
-export const TableContainer = styled.div`
-  overflow-x: auto;
-  margin-bottom: 24px;
-`;
-
-export const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  
-  th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-  }
-  
-  th {
-    font-weight: bold;
-    background-color: #f8f9fa;
-  }
-  
-  tr:hover {
-    background-color: #f8f9fa;
-  }
-`;
-
-export const Loading = styled.div`
-  text-align: center;
-  padding: 24px;
-  color: #6c757d;
-`;
-
-export const ErrorMessage = styled.div`
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 24px;
-`;
-
-export const EmptyState = styled.div`
-  text-align: center;
-  padding: 48px 0;
-  color: #6c757d;
-`;
-
-export const ActionButton = styled.button`
-  background: none;
-  border: none;
-  color: #007bff;
-  margin-right: 8px;
-  cursor: pointer;
-  
-  &:hover {
-    color: #0056b3;
-  }
-`;
-
+// Componentes necessários para o build funcionar
+export const TabHeader = styled.div``;
+export const Title = styled.h2``;
+export const Button = styled.button``;
+export const TableContainer = styled.div``;
+export const Table = styled.table``;
+export const Loading = styled.div``;
+export const ErrorMessage = styled.div``;
+export const EmptyState = styled.div``;
+export const ActionButton = styled.button``;
 export const FaEdit = EditIcon;
 export const FaTrash = TrashIcon;
