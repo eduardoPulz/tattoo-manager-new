@@ -18,7 +18,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN echo "NODE_ENV=development" > .env
 
 # Criar arquivo db.json vazio
-RUN echo '{"funcionarios":[],"servicos":[],"agendamentos":[]}' > db.json
+RUN mkdir -p /app/data
+RUN echo '{"funcionarios":[],"servicos":[],"agendamentos":[]}' > /app/data/db.json
 
 # Porta
 EXPOSE 3000
