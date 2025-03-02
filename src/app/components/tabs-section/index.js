@@ -381,7 +381,7 @@ export const TabsSection = () => {
             )}
             
             {showFuncionarioForm && (
-              <Modal onClose={() => setShowFuncionarioForm(false)}>
+              <Modal isOpen={showFuncionarioForm} onClose={() => setShowFuncionarioForm(false)} title="Funcionário">
                 <FuncionarioForm
                   onSubmit={handleFuncionarioSubmit}
                   onCancel={() => setShowFuncionarioForm(false)}
@@ -443,7 +443,7 @@ export const TabsSection = () => {
             )}
             
             {showServicoForm && (
-              <Modal onClose={() => setShowServicoForm(false)}>
+              <Modal isOpen={showServicoForm} onClose={() => setShowServicoForm(false)} title="Serviço">
                 <ServicoForm
                   onSubmit={handleServicoSubmit}
                   onCancel={() => setShowServicoForm(false)}
@@ -507,11 +507,13 @@ export const TabsSection = () => {
             )}
             
             {showAgendamentoForm && (
-              <Modal onClose={() => setShowAgendamentoForm(false)}>
+              <Modal isOpen={showAgendamentoForm} onClose={() => setShowAgendamentoForm(false)} title="Agendamento">
                 <AgendamentoForm
                   onSubmit={handleAgendamentoSubmit}
                   onCancel={() => setShowAgendamentoForm(false)}
                   initialData={currentAgendamento || {}}
+                  funcionarios={funcionarios}
+                  servicos={servicos}
                 />
               </Modal>
             )}
