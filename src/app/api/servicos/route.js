@@ -1,40 +1,93 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
-// Criar uma instância direta do PrismaClient aqui para isolamento total
-const localPrisma = new PrismaClient();
+// Instância única do Prisma com timeout aumentado
+const prisma = new PrismaClient({
+  log: ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    },
+  },
+});
 
+// Função para tratar erros de forma consistente
+function handleError(error) {
+  console.error('Erro na API:', error);
+  return NextResponse.json({
+    success: false,
+    message: 'Erro ao processar solicitação',
+    error: error.message
+  }, { status: 500 });
+}
+
+// GET - Listar todos os serviços
 export async function GET() {
   try {
-    // Tentar criar um serviço de teste para verificar se está funcionando
-    await localPrisma.servico.upsert({
-      where: { id: 1 },
-      update: {},
-      create: {
-        nome: 'Serviço Teste API',
-        preco: 100.0,
-        duracao: 60
-      }
-    });
-    
-    // Buscar todos os serviços
-    const servicos = await localPrisma.servico.findMany();
+    const servicos = await prisma.servico.findMany();
     
     return NextResponse.json({
       success: true,
-      data: servicos,
-      message: 'API direta de serviços funcionando'
+      data: servicos
     });
   } catch (error) {
-    console.error('Erro crítico na API de serviços:', error);
+    return handleError(error);
+  }
+}
+
+// POST - Criar um novo serviço
+export async function POST(request) {
+  try {
+    const dados = await request.json();
+    
+    // Validação básica
+    if (!dados.nome) {
+      return NextResponse.json({
+        success: false,
+        message: 'Nome é obrigatório'
+      }, { status: 400 });
+    }
+    
+    // Criar com dados mínimos
+    const novoServico = await prisma.servico.create({
+      data: {
+        nome: dados.nome,
+        preco: Number(dados.preco) || 0,
+        duracao: Number(dados.duracao) || 30
+      }
+    });
     
     return NextResponse.json({
-      success: false,
-      error: error.message,
-      stack: error.stack,
-      code: error.code || 'UNKNOWN',
-      meta: error.meta || {},
-      clientVersion: error.clientVersion || 'N/A'
-    }, { status: 500 });
+      success: true,
+      data: novoServico
+    });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+// DELETE - Remover um serviço
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID não fornecido'
+      }, { status: 400 });
+    }
+    
+    await prisma.servico.delete({
+      where: { id: Number(id) }
+    });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Serviço removido com sucesso'
+    });
+  } catch (error) {
+    return handleError(error);
   }
 }

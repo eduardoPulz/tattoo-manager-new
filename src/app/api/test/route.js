@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../prisma/client';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient({
+  log: ['error'],
+});
 
 export async function GET() {
   try {
@@ -14,17 +18,34 @@ export async function GET() {
       }
     });
 
+    // Também tenta criar um serviço de teste
+    await prisma.servico.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        nome: 'Serviço Teste',
+        preco: 100.0,
+        duracao: 60
+      }
+    });
+
     // Busca registros para verificar se está acessível
-    const funcionarios = await prisma.funcionario.findMany();
+    const funcionarios = await prisma.funcionario.count();
+    const servicos = await prisma.servico.count();
+    const agendamentos = await prisma.agendamento.count();
     
     return NextResponse.json({ 
       status: 'success',
-      message: 'Banco de dados está funcionando corretamente',
-      data: funcionarios,
-      env: {
-        database_url: process.env.POSTGRES_PRISMA_URL ? 'Configurado' : 'Ausente',
-        direct_url: process.env.POSTGRES_URL_NON_POOLING ? 'Configurado' : 'Ausente',
-        node_env: process.env.NODE_ENV
+      message: 'Sistema funcionando corretamente',
+      timestamp: new Date().toISOString(),
+      contagem: {
+        funcionarios,
+        servicos,
+        agendamentos
+      },
+      ambiente: {
+        node_env: process.env.NODE_ENV || 'development',
+        database_url: process.env.DATABASE_URL ? 'Configurado' : 'Ausente',
       }
     });
   } catch (error) {
@@ -32,8 +53,9 @@ export async function GET() {
     return NextResponse.json({ 
       status: 'error',
       message: error.message,
-      stack: error.stack,
-      code: error.code
+      timestamp: new Date().toISOString()
     }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

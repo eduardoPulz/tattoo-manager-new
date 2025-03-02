@@ -14,6 +14,7 @@
     "railway:prod": "node scripts/railway-start.js",
     "db:check": "node scripts/db-check.js",
     "db:setup": "node scripts/setup-db.js",
+    "db:bootstrap": "node scripts/bootstrap-db.js",
     "version-info": "node scripts/version-info.js"
   },
   "dependencies": {

@@ -42,34 +42,57 @@ export const TabsSection = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        const funcionariosResponse = await fetch('/api/funcionarios');
-        const servicosResponse = await fetch('/api/servicos');
-        const agendamentosResponse = await fetch('/api/agendamentos');
-        
-        if (!funcionariosResponse.ok || !servicosResponse.ok || !agendamentosResponse.ok) {
-          throw new Error('Erro ao carregar dados da API');
+        // Tentar carregar dados de cada endpoint separadamente
+        try {
+          const funcionariosResponse = await fetch('/api/funcionarios');
+          if (funcionariosResponse.ok) {
+            const data = await funcionariosResponse.json();
+            setFuncionarios(data.data || []);
+          } else {
+            console.error('Erro ao carregar funcionários:', await funcionariosResponse.text());
+          }
+        } catch (funcError) {
+          console.error('Erro ao buscar funcionários:', funcError);
+          // Não falha todo o carregamento, apenas este recurso
         }
         
-        const funcionariosRes = await funcionariosResponse.json();
-        const servicosRes = await servicosResponse.json();
-        const agendamentosRes = await agendamentosResponse.json();
+        try {
+          const servicosResponse = await fetch('/api/servicos');
+          if (servicosResponse.ok) {
+            const data = await servicosResponse.json();
+            setServicos(data.data || []);
+          } else {
+            console.error('Erro ao carregar serviços:', await servicosResponse.text());
+          }
+        } catch (servError) {
+          console.error('Erro ao buscar serviços:', servError);
+          // Não falha todo o carregamento
+        }
         
-        setFuncionarios(Array.isArray(funcionariosRes) ? funcionariosRes : []);
-        setServicos(Array.isArray(servicosRes) ? servicosRes : []);
-        setAgendamentos(Array.isArray(agendamentosRes) ? agendamentosRes : []);
-        setError(null);
+        try {
+          const agendamentosResponse = await fetch('/api/agendamentos');
+          if (agendamentosResponse.ok) {
+            const data = await agendamentosResponse.json();
+            setAgendamentos(data.data || []);
+          } else {
+            console.error('Erro ao carregar agendamentos:', await agendamentosResponse.text());
+          }
+        } catch (agendError) {
+          console.error('Erro ao buscar agendamentos:', agendError);
+          // Não falha todo o carregamento
+        }
+        
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        setError('Falha ao carregar dados. Por favor, recarregue a página.');
-        setFuncionarios([]);
-        setServicos([]);
-        setAgendamentos([]);
+        console.error('Erro geral ao carregar dados:', error);
+        setError('Erro ao carregar dados. Por favor, recarregue a página.');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 

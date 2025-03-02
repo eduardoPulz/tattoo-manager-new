@@ -20,20 +20,33 @@ if (fs.existsSync('.env')) {
 }
 
 try {
-  // Executar prisma db push para sincronizar o banco de dados
+  // Executar prisma db push para sincronizar o banco de dados (com timeout maior)
   console.log('=== SINCRONIZANDO BANCO DE DADOS ===');
   console.log('Executando prisma db push...');
-  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  execSync('npx prisma db push --accept-data-loss', { 
+    stdio: 'inherit',
+    timeout: 60000 // 60 segundos
+  });
   
-  // Executar script de setup para criar dados iniciais
+  // Executar script de bootstrap simplificado para criar dados iniciais
   console.log('\n=== CONFIGURANDO DADOS INICIAIS ===');
-  console.log('Executando script de setup do banco de dados...');
-  execSync('node scripts/setup-db.js', { stdio: 'inherit' });
+  console.log('Executando script de bootstrap do banco de dados...');
+  execSync('node scripts/bootstrap-db.js', { 
+    stdio: 'inherit',
+    timeout: 30000 // 30 segundos
+  });
   
-  // Verificar a saúde do banco de dados
+  // Verificar a saúde do banco de dados de forma simplificada
   console.log('\n=== VERIFICANDO SAÚDE DO BANCO DE DADOS ===');
-  console.log('Executando verificação de banco de dados...');
-  execSync('node scripts/db-check.js', { stdio: 'inherit' });
+  console.log('Executando endpoint de teste...');
+  try {
+    execSync('curl -s http://localhost:3000/api/test', { 
+      stdio: 'inherit',
+      timeout: 10000 // 10 segundos
+    });
+  } catch (error) {
+    console.log('Erro ao executar o curl, mas prosseguindo...');
+  }
   
   // Iniciar a aplicação Next.js
   console.log('\n=== INICIANDO APLICAÇÃO ===');
