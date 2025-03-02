@@ -53,12 +53,6 @@ export const TabsSection = () => {
       
       const response = await fetch(url, options);
       
-      // Mesmo se não for OK, tentamos analisar a resposta para entender o erro
-      const data = await response.json().catch(() => ({ 
-        success: false, 
-        message: 'Erro ao analisar resposta do servidor' 
-      }));
-      
       if (!response.ok) {
         throw new Error(data.message || `Erro ${response.status}: ${response.statusText}`);
       }
@@ -70,12 +64,10 @@ export const TabsSection = () => {
     }
   };
   
-  // Função para carregar dados com fallback
   const loadData = async () => {
     setIsLoading(true);
     setError(null);
     
-    // Função para carregar com tentativas
     const fetchWithRetry = async (endpoint, setter, emptyFallback = []) => {
       try {
         const result = await handleFetch(endpoint);
@@ -83,16 +75,15 @@ export const TabsSection = () => {
           setter(result.data);
         } else {
           console.warn(`Resposta inválida de ${endpoint}:`, result);
-          setter(emptyFallback); // Fallback para array vazio
+          setter(emptyFallback);
         }
       } catch (error) {
         console.error(`Erro ao carregar dados de ${endpoint}:`, error);
-        setter(emptyFallback); // Fallback para array vazio em caso de erro
+        setter(emptyFallback);
       }
     };
     
     try {
-      // Carregar dados de cada endpoint separadamente e com fallback para arrays vazios
       await Promise.all([
         fetchWithRetry('/api/funcionarios', setFuncionarios),
         fetchWithRetry('/api/servicos', setServicos),
@@ -106,7 +97,6 @@ export const TabsSection = () => {
     }
   };
   
-  // Função para excluir funcionário com validação extra
   const handleDeleteFuncionario = async (id) => {
     try {
       if (!confirm('Tem certeza que deseja excluir este funcionário?')) {
@@ -115,7 +105,6 @@ export const TabsSection = () => {
       
       setIsLoading(true);
       
-      // Verificar se há agendamentos para este funcionário
       const agendamentosRelacionados = agendamentos.filter(a => a.funcionarioId === id);
       if (agendamentosRelacionados.length > 0) {
         alert('Não é possível excluir este funcionário pois existem agendamentos associados a ele');
@@ -388,7 +377,7 @@ export const TabsSection = () => {
                 columns={TABS.SCHEDULES.columns}
                 formatRow={formatAgendamentoRow}
                 onEdit={handleEditAgendamento}
-                onDelete={(id) => handleDeleteAgendamento(String(id))}
+                onDelete={(item) => handleDeleteAgendamento(item.id)}
               />
             </>
           )}
@@ -401,7 +390,7 @@ export const TabsSection = () => {
                 columns={TABS.EMPLOYEES.columns}
                 formatRow={formatFuncionarioRow}
                 onEdit={handleEditFuncionario}
-                onDelete={(id) => handleDeleteFuncionario(String(id))}
+                onDelete={(item) => handleDeleteFuncionario(item.id)}
               />
             </>
           )}
@@ -414,7 +403,7 @@ export const TabsSection = () => {
                 columns={TABS.SERVICES.columns}
                 formatRow={formatServicoRow}
                 onEdit={handleEditServico}
-                onDelete={(id) => handleDeleteServico(String(id))}
+                onDelete={(item) => handleDeleteServico(item.id)}
               />
             </>
           )}
