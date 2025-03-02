@@ -1,102 +1,90 @@
 /**
- * Script para configurar o banco de dados PostgreSQL
- * 
- * Este script:
- * 1. Executa push do schema do Prisma para o banco de dados
- * 2. Cria dados iniciais básicos para produção
+ * Script de inicialização do banco de dados
  */
 
-import { PrismaClient } from '@prisma/client';
+const fs = require('fs');
+const path = require('path');
 
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+console.log('Iniciando setup do banco de dados...');
 
-async function main() {
-  console.log('Iniciando setup do banco de dados PostgreSQL...');
+try {
+  const dbPath = path.join(process.cwd(), 'db.json');
   
-  try {
-    // Verificar conexão com o banco
-    console.log('Verificando conexão com o banco de dados...');
-    await prisma.$connect();
-    console.log('Conexão com o banco estabelecida com sucesso!');
+  // Verifica se o arquivo de banco já existe
+  if (!fs.existsSync(dbPath)) {
+    console.log('Arquivo db.json não encontrado. Criando estrutura inicial...');
     
-    // Criar funcionário de teste se não existir
-    console.log('Criando dados de produção...');
+    // Estrutura inicial do banco
+    const initialDb = {
+      funcionarios: [],
+      servicos: [],
+      agendamentos: []
+    };
     
-    const funcionario = await prisma.funcionario.upsert({
-      where: { id: 1 },
-      update: {},
-      create: {
-        nome: 'Admin',
-        cargo: 'Gerente',
-        email: 'admin@tattoo-manager.com'
-      }
-    });
+    // Escreve o arquivo
+    fs.writeFileSync(dbPath, JSON.stringify(initialDb, null, 2));
+    console.log('Banco de dados inicializado com sucesso!');
+  } else {
+    console.log('Arquivo db.json já existe. Verificando estrutura...');
     
-    const servico = await prisma.servico.upsert({
-      where: { id: 1 },
-      update: {},
-      create: {
-        nome: 'Tatuagem Pequena',
-        preco: 150.0,
-        duracao: 60
-      }
-    });
+    // Lê o arquivo existente
+    const dbContent = fs.readFileSync(dbPath, 'utf8');
+    let db;
     
-    // Criar mais um serviço para ter diversidade
-    await prisma.servico.upsert({
-      where: { id: 2 },
-      update: {},
-      create: {
-        nome: 'Tatuagem Média',
-        preco: 300.0,
-        duracao: 120
-      }
-    });
-    
-    // Criar um agendamento de exemplo se não existir nenhum
-    const agendamentosCount = await prisma.agendamento.count();
-    
-    if (agendamentosCount === 0) {
-      const dataAgendamento = new Date();
-      dataAgendamento.setDate(dataAgendamento.getDate() + 7); // uma semana no futuro
+    try {
+      db = JSON.parse(dbContent);
       
-      await prisma.agendamento.create({
-        data: {
-          data: dataAgendamento,
-          nomeCliente: 'Cliente Exemplo',
-          funcionarioId: 1,
-          servicoId: 1
-        }
-      });
+      // Verifica se todas as coleções existem
+      let modificado = false;
       
-      console.log('Agendamento de exemplo criado para a próxima semana');
+      if (!db.funcionarios) {
+        db.funcionarios = [];
+        modificado = true;
+        console.log('Adicionada coleção de funcionarios');
+      }
+      
+      if (!db.servicos) {
+        db.servicos = [];
+        modificado = true;
+        console.log('Adicionada coleção de servicos');
+      }
+      
+      if (!db.agendamentos) {
+        db.agendamentos = [];
+        modificado = true;
+        console.log('Adicionada coleção de agendamentos');
+      }
+      
+      // Salva as alterações se necessário
+      if (modificado) {
+        fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+        console.log('Estrutura do banco de dados atualizada com sucesso!');
+      } else {
+        console.log('Estrutura do banco de dados já está correta.');
+      }
+    } catch (parseError) {
+      console.error('Erro ao analisar o arquivo db.json:', parseError);
+      console.log('Criando backup do arquivo corrompido...');
+      
+      // Cria backup do arquivo corrompido
+      const backupPath = `${dbPath}.bak.${Date.now()}`;
+      fs.copyFileSync(dbPath, backupPath);
+      console.log(`Backup criado em: ${backupPath}`);
+      
+      // Cria um novo arquivo
+      const initialDb = {
+        funcionarios: [],
+        servicos: [],
+        agendamentos: []
+      };
+      
+      fs.writeFileSync(dbPath, JSON.stringify(initialDb, null, 2));
+      console.log('Novo arquivo db.json criado com sucesso!');
     }
-    
-    console.log('Dados iniciais criados:');
-    console.log('- Funcionário:', funcionario.nome);
-    console.log('- Serviço:', servico.nome);
-    
-    console.log('Setup do banco de dados concluído com sucesso!');
-  } catch (error) {
-    console.error('Erro no setup do banco de dados:', error);
-    
-    // Verificar o tipo específico de erro para dar instruções mais claras
-    if (error.message?.includes('connect ECONNREFUSED')) {
-      console.error('Não foi possível conectar ao PostgreSQL. Verifique as configurações de conexão.');
-    }
-    
-    if (error.message?.includes('already exists')) {
-      console.log('Alguns objetos já existem no banco de dados, o que é normal em execuções subsequentes.');
-    }
-    
-    // Não interromper o processo para não falhar o deploy
-    console.log('Continuando apesar do erro...');
-  } finally {
-    await prisma.$disconnect();
   }
+  
+  console.log('Setup do banco de dados concluído!');
+} catch (error) {
+  console.error('Erro ao configurar o banco de dados:', error);
+  process.exit(1);
 }
-
-// Chamada principal
-main();

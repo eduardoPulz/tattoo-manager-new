@@ -1,20 +1,35 @@
-import fs from 'fs';
+/**
+ * Script de geração de arquivo .env para ambientes de produção
+ */
 
-// Este script verifica o ambiente e limpa arquivos .env em produção
-console.log('Verificando ambiente...');
+const fs = require('fs');
+const path = require('path');
 
-// Se estamos em produção, não criar o arquivo .env
-if (process.env.NODE_ENV === 'production') {
-  console.log('Ambiente de produção detectado.');
-  // Verificar se existe um arquivo .env e removê-lo
-  if (fs.existsSync('.env')) {
-    console.log('Removendo arquivo .env em ambiente de produção...');
-    fs.unlinkSync('.env');
-    console.log('Arquivo .env removido.');
+console.log('Gerando arquivo .env para o ambiente atual...');
+
+try {
+  // Criar arquivo .env se não existir
+  const envPath = path.join(process.cwd(), '.env');
+  
+  // Verificar se o arquivo já existe
+  if (!fs.existsSync(envPath)) {
+    // Configurações básicas
+    const envContent = `# Arquivo .env gerado automaticamente
+NODE_ENV=production
+# Configurações da aplicação
+APP_URL=${process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:3000'}
+# Variáveis de inicialização
+INIT_APP=true
+# Data de geração
+GENERATED_AT=${new Date().toISOString()}
+`;
+    
+    fs.writeFileSync(envPath, envContent);
+    console.log('Arquivo .env criado com sucesso!');
+  } else {
+    console.log('Arquivo .env já existe, pulando geração.');
   }
-  process.exit(0);
+} catch (error) {
+  console.error('Erro ao gerar arquivo .env:', error);
+  // Não falha a execução em caso de erro
 }
-
-// Em ambiente de desenvolvimento, não fazemos nada
-console.log('Ambiente de desenvolvimento detectado.');
-console.log('Configuração de ambiente concluída com sucesso.');

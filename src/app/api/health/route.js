@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-// Criar uma instância do PrismaClient para verificação
-const prisma = new PrismaClient();
+import { funcionariosDb, servicosDb, agendamentosDb } from '../../lib/db';
+import fs from 'fs';
+import path from 'path';
 
 export async function GET() {
   try {
-    // Tentar conectar ao banco
-    await prisma.$connect();
+    // Verificar acesso ao arquivo de banco de dados
+    const dbPath = path.join(process.cwd(), 'db.json');
+    const dbExists = fs.existsSync(dbPath);
     
-    // Verificar se podemos fazer consultas simples
-    const funcionariosCount = await prisma.funcionario.count();
-    const servicosCount = await prisma.servico.count();
-    const agendamentosCount = await prisma.agendamento.count();
+    // Verificar se conseguimos ler os dados
+    const funcionariosCount = funcionariosDb.getAll().length;
+    const servicosCount = servicosDb.getAll().length;
+    const agendamentosCount = agendamentosDb.getAll().length;
     
-    // Verificar informações de ambiente
+    // Informações de ambiente
     const environment = process.env.NODE_ENV || 'development';
     const port = process.env.PORT || '3000';
     const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN || 'not-deployed';
     
     return NextResponse.json({
       status: 'healthy',
-      database: 'connected',
+      database: dbExists ? 'accessible' : 'not found',
       timestamp: new Date().toISOString(),
       environment: environment,
       deployment: {
@@ -40,10 +40,7 @@ export async function GET() {
     return NextResponse.json({
       status: 'unhealthy',
       error: error.message,
-      stack: process.env.NODE_ENV === 'production' ? null : error.stack,
       timestamp: new Date().toISOString()
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -6,20 +6,12 @@ const nextConfig = {
   // Otimizações para melhorar a performance
   poweredByHeader: false,
   reactStrictMode: true,
-  swcMinify: true,
   env: {
     API_URL: process.env.API_URL || 'http://localhost:3000/api',
   },
   // Configuração de imagens para otimização
   images: {
-    domains: ['vercel.com'],
     formats: ['image/avif', 'image/webp'],
-  },
-  // Configuração de cache para melhorar a performance
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
   },
   async redirects() {
     return [
@@ -45,4 +37,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig;
+module.exports = nextConfig;

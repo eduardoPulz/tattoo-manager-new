@@ -1,292 +1,88 @@
-1.1 10 de fevereiro de 2025
-Iniciou-se a análise do projeto de gerenciamento para estúdio de tatuagem com definição dos requisitos fundamentais:
+# Tattoo Manager - Sistema Simplificado
 
-Dashboard administrativo com abas intuitivas
+Uma aplicação simples para gerenciamento de estúdio de tatuagem desenvolvida com Next.js e banco de dados baseado em arquivos JSON.
 
-Sistema de agendamento integrado
+## Visão Geral
 
-Portfólio digital interativo
+O Tattoo Manager é um sistema completo para gestão de estúdios de tatuagem, permitindo o gerenciamento de:
 
-Interface moderna e responsiva
+- **Funcionários**: Cadastro e gerenciamento da equipe
+- **Serviços**: Catálogo de serviços oferecidos
+- **Agendamentos**: Sistema de agendamento de tatuagens
 
-Selecionou-se Next.js 14 com App Router como tecnologia base devido aos seguintes fatores:
+## Tecnologias
 
-Eficiência na renderização server-side
+- **Frontend**: Next.js, React, CSS Modules
+- **Backend**: Next.js API Routes
+- **Banco de Dados**: Arquivo JSON para persistência de dados
+- **Deploy**: Railway.app
 
-Arquitetura de roteamento simplificado
+## Características
 
-Integração nativa com React Server Components
+- Interface simples e intuitiva
+- Sistema de abas para navegação entre seções
+- Validação de dados no cliente e servidor
+- Tratamento robusto de erros
+- Design responsivo
 
-Otimização avançada para mecanismos de busca
+## Funcionalidades
 
-1.2 15 de fevereiro de 2025
-Configuração inicial do ambiente de desenvolvimento contendo:
+### Gerenciamento de Funcionários
+- Cadastro de funcionários (nome, cargo, email)
+- Listagem e exclusão de funcionários
 
-Estruturação via create-next-app
+### Gerenciamento de Serviços
+- Cadastro de serviços (nome, preço, duração)
+- Listagem e exclusão de serviços
 
-Padronização visual com Styled Components
+### Gerenciamento de Agendamentos
+- Agendamento de tatuagens (cliente, data, hora, funcionário, serviço)
+- Listagem e exclusão de agendamentos
 
-Implementação de ESLint e Prettier para controle de qualidade
-
-Arquitetura modular de componentes
-
-Modelagem de dados contemplando:
-
-Diagramação entidade-relacionamento no DbDiagram
-
-Definição de schemas via Prisma ORM
-
-Utilização de SQLite como banco primário
-
-1.3 20 de fevereiro de 2025
-Desenvolvimento das funcionalidades centrais:
-
-Módulo de abas dinâmicas para gestão administrativa
-
-Componente reutilizável para exibição tabular de dados
-
-Sistema de upload de imagens para portfólio
-
-Mecanismo de autenticação via NextAuth
-
-Dificuldades técnicas identificadas:
-
-Complexidade no gerenciamento de estado entre componentes
-
-Adaptação responsiva para múltiplas resoluções
-
-Otimização de performance na integração de recursos gráficos
-
-1.4 25 de fevereiro de 2025
-Aprimoramentos na experiência do usuário:
-
-Implementação de modais contextuais
-
-Adoção de transições animadas entre views
-
-Validação em tempo real de formulários
-
-Sistema de feedback visual para ações críticas
-
-1.5 28 de fevereiro de 2025
-Otimizações técnicas realizadas:
-
-Implementação de Server Components
-
-Estratégia de cache inteligente para requisições
-
-Carregamento assíncrono de recursos multimídia
-
-Divisão de código por rotas específicas
-
-1.6 1 de março de 2025
-Fase de testes e validações:
-
-Testes E2E utilizando Cypress
-
-Verificação de acessibilidade conforme WCAG 2.1
-
-Ajustes em metatags para SEO
-
-Implementação básica de internacionalização (i18n)
-
-1.7 5 de março de 2025
-Procedimentos de implantação:
-
-Deploy automatizado na plataforma Vercel
-
-Configuração de preview para pull requests
-
-Ativação de cache distribuído global
-
-Implementação de monitoramento contínuo de performance
-
-STACK TECNOLÓGICO PRINCIPAL
-
-Camada Frontend:
-
-Next.js 14
-
-React 18
-
-Styled Components
-
-Sistema de Estilização:
-
-CSS-in-JS
-
-Tabler Icons
-
-Gerenciamento de Estado:
-
-React Context API
-
-Roteamento:
-
-Next.js App Router
-
-Banco de Dados:
-
-SQLite
-
-Prisma ORM
-
-Autenticação:
-
-NextAuth.js
-
-Infraestrutura:
-
-Vercel Platform
-
-Ferramentas Auxiliares:
-
-ESLint
-
-Prettier
-
-GitHub Actions
-
-LIÇÕES APRENDIDAS
-
-3.1 Gestão de Estado
-A adoção de Server Components demonstrou redução de 35% na complexidade do gerenciamento de estado global comparado a soluções tradicionais.
-
-3.2 Performance
-A combinação entre cache na Vercel e lazy loading proporcionou melhoria de 72% no indicador LCP (Largest Contentful Paint).
-
-3.3 Type Safety
-A remoção progressiva do TypeScript exigiu implementação rigorosa de documentação via JSDoc para manter a segurança de tipos.
-
-3.4 Componentização
-O sistema de design atômico reduziu em 40% o tempo de desenvolvimento de novas interfaces através da reutilização de componentes.
-
-## Estrutura do Banco de Dados
-
-O projeto utiliza Prisma como ORM para interagir com o banco de dados. Em ambiente de desenvolvimento, é possível usar SQLite, mas para produção recomendamos PostgreSQL.
-
-### Configuração do Banco de Dados para Produção
-
-Para configurar o banco de dados PostgreSQL para produção, siga os passos abaixo:
-
-1. Crie um banco de dados PostgreSQL (recomendamos usar Vercel Postgres, Supabase ou Railway)
-2. Crie um arquivo `.env` na raiz do projeto com a seguinte variável:
-   ```
-   DATABASE_URL="postgresql://usuario:senha@host:porta/nome_do_banco?schema=public"
-   ```
-3. Execute o comando `npx prisma db push` para sincronizar o esquema com o banco de dados
-4. Execute o comando `npm run seed` para popular o banco com dados iniciais
-
-### Modelos do Banco de Dados
-
-#### Funcionario
-- **id**: Identificador único (UUID)
-- **nome**: Nome do funcionário
-- **especialidade**: Especialidade do funcionário (ex: Tatuador, Piercer)
-- **telefone**: Número de telefone do funcionário
-- **criadoEm**: Data de criação do registro
-- **atualizadoEm**: Data da última atualização do registro
-
-#### Servico
-- **id**: Identificador único (UUID)
-- **descricao**: Descrição do serviço
-- **duracao**: Duração em minutos
-- **preco**: Preço do serviço
-- **criadoEm**: Data de criação do registro
-- **atualizadoEm**: Data da última atualização do registro
-
-#### Agendamento
-- **id**: Identificador único (UUID)
-- **horaInicio**: Data e hora de início do agendamento
-- **horaFim**: Data e hora de término do agendamento
-- **nomeCliente**: Nome do cliente
-- **funcionarioId**: Referência ao funcionário responsável
-- **servicoId**: Referência ao serviço a ser realizado
-- **criadoEm**: Data de criação do registro
-- **atualizadoEm**: Data da última atualização do registro
-
-## Testes e Integração Contínua
-
-O projeto inclui uma configuração completa de testes automatizados e integração contínua:
-
-### Testes Automatizados
-
-- **Framework de Testes**: Jest
-- **Testes de Componentes**: Utilizando React Testing Library
-- **Testes de API**: Utilizando mocks do Prisma
-
-Para executar os testes:
+## Como Executar Localmente
 
 ```bash
-# Executar todos os testes
-npm test
-
-# Executar testes em modo de observação
-npm run test:watch
-```
-
-### Integração Contínua
-
-O projeto utiliza GitHub Actions para automação de CI/CD:
-
-- **Testes Automatizados**: Executados em cada push e pull request
-- **Linting**: Verificação de qualidade de código
-- **Cobertura de Código**: Relatórios gerados automaticamente
-
-Para mais detalhes, consulte o diretório `__tests__` e o arquivo `.github/workflows/ci.yml`.
-
-## Como Executar o Projeto
-
-### Pré-requisitos
-- Node.js (versão 18.18.0 ou superior)
-- NPM ou Yarn
-
-### Instalação
-1. Clone o repositório
-```
-git clone https://github.com/seu-usuario/tattoo-manager.git
-cd tattoo-manager
-```
-
-2. Instale as dependências
-```
+# Instalar dependências
 npm install
-```
 
-3. Configure o banco de dados
-```
-npx prisma generate
-npx prisma db push
-```
-
-4. Popule o banco de dados com dados iniciais
-```
-node scripts/seed.js
-```
-
-5. Inicie o servidor de desenvolvimento
-```
+# Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
-6. Acesse o aplicativo em `http://localhost:3000`
+## Estrutura do Projeto
 
-## API Endpoints
+```
+tattoo-manager/
+├── db.json                 # Banco de dados baseado em arquivo
+├── public/                 # Arquivos estáticos
+├── src/
+│   ├── app/
+│   │   ├── api/            # Endpoints da API
+│   │   ├── components/     # Componentes React
+│   │   ├── lib/            # Biblioteca de utilitários
+│   │   └── page.js         # Página principal
+└── package.json            # Dependências e scripts
+```
 
-### Funcionários
-- **GET /api/funcionarios**: Lista todos os funcionários
-- **POST /api/funcionarios**: Cria um novo funcionário
-- **PUT /api/funcionarios?id={id}**: Atualiza um funcionário existente
-- **DELETE /api/funcionarios?id={id}**: Remove um funcionário
+## Sobre a Versão 2.0
 
-### Serviços
-- **GET /api/servicos**: Lista todos os serviços
-- **POST /api/servicos**: Cria um novo serviço
-- **PUT /api/servicos?id={id}**: Atualiza um serviço existente
-- **DELETE /api/servicos?id={id}**: Remove um serviço
+A versão 2.0 do Tattoo Manager foi significativamente simplificada para facilitar a manutenção e o deploy.
 
-### Agendamentos
-- **GET /api/agendamentos**: Lista todos os agendamentos
-- **POST /api/agendamentos**: Cria um novo agendamento
-- **PUT /api/agendamentos?id={id}**: Atualiza um agendamento existente
-- **DELETE /api/agendamentos?id={id}**: Remove um agendamento
+### Banco de Dados Simplificado
+- Sistema de banco de dados baseado em arquivo JSON
+- Eliminação de dependências de banco de dados relacional
+- Persistência direta em um arquivo `db.json` na raiz do projeto
+
+### APIs Simplificadas
+- Padrão consistente para todas as APIs
+- Tratamento de erros melhorado
+- Validações simplificadas
+
+### Frontend mais Robusto
+- Tratamento de erros melhorado na interface
+- Fallbacks para garantir funcionamento contínuo
+- Validações no cliente
+
+## Deploy
+
+Este projeto está configurado para deploy no Railway.app. O deploy é automático a partir da branch main.
