@@ -18,7 +18,6 @@ RUN echo "ignore-scripts=true" >> .npmrc
 
 RUN npm install --omit=dev --no-fund --no-audit --ignore-scripts
 
-COPY scripts ./scripts
 COPY src ./src
 COPY public ./public
 
