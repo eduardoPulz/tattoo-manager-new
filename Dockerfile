@@ -30,6 +30,7 @@ FROM base AS runner
 
 # Copiar os arquivos necessários
 COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/src ./src
 # Criar diretório public
 RUN mkdir -p public
 COPY --from=builder /app/.next ./.next
