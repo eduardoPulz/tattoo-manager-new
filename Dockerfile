@@ -17,7 +17,6 @@ RUN npm install --omit=dev --no-fund --no-audit
 # Copiar o restante dos arquivos
 COPY scripts ./scripts
 COPY src ./src
-COPY .npmrc ./
 
 # Criar diretório public e db.json
 RUN mkdir -p public
