@@ -4,28 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/setup-db.js && next dev",
-    "prebuild": "echo 'Executando prebuild personalizado...' && node scripts/generate-env.js && node scripts/setup-db.js",
     "build": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint",
-    "railway:prod": "npm run build && npm start",
-    "setup": "node scripts/setup-db.js",
-    "test": "jest",
-    "test:ci": "jest --ci --coverage"
+    "setup": "node scripts/setup-db.js"
   },
   "dependencies": {
-    "critters": "0.0.23",
     "next": "14.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "styled-components": "6.1.1",
-    "swr": "2.2.4",
     "uuid": "9.0.1"
-  },
-  "devDependencies": {
-    "eslint": "8.56.0",
-    "eslint-config-next": "14.0.4",
-    "jest": "29.7.0",
-    "jest-environment-jsdom": "29.7.0"
   }
 }
