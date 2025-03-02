@@ -13,16 +13,16 @@
     "setup": "node scripts/setup-db.js"
   },
   "dependencies": {
-    "critters": "^0.0.23",
+    "critters": "0.0.23",
     "next": "14.0.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "styled-components": "^6.1.1",
-    "swr": "^2.2.4",
-    "uuid": "^9.0.1"
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "styled-components": "6.1.1",
+    "swr": "2.2.4",
+    "uuid": "9.0.1"
   },
   "devDependencies": {
-    "eslint": "^8.56.0",
+    "eslint": "8.56.0",
     "eslint-config-next": "14.0.4"
   }
 }
