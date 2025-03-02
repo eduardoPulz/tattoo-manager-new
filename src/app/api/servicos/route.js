@@ -22,8 +22,6 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    console.log('Dados recebidos para criar serviço:', body);
-    
     // Validação básica
     if (!body.descricao) {
       return NextResponse.json({
@@ -32,7 +30,27 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    // Criar serviço
+    if (body.id) {
+      const servicoAtualizado = servicosDb.update(body.id, {
+        descricao: body.descricao,
+        duracao: body.duracao || 60,
+        preco: body.preco || 0
+      });
+      
+      if (!servicoAtualizado) {
+        return NextResponse.json({
+          success: false,
+          message: 'Serviço não encontrado'
+        }, { status: 404 });
+      }
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Serviço atualizado com sucesso',
+        data: servicoAtualizado
+      });
+    }
+    
     const novoServico = servicosDb.create({
       descricao: body.descricao,
       duracao: body.duracao || 60,
@@ -47,10 +65,9 @@ export async function POST(request) {
       data: novoServico
     }, { status: 201 });
   } catch (error) {
-    console.error('Erro ao criar serviço:', error);
     return NextResponse.json({
       success: false,
-      message: 'Erro ao criar serviço',
+      message: 'Erro ao criar/atualizar serviço',
       error: error.message
     }, { status: 500 });
   }
@@ -68,7 +85,6 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
-    // Verificar se o ID é um objeto serializado
     if (id.startsWith('[object')) {
       return NextResponse.json({
         success: false,

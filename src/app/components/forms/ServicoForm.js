@@ -4,9 +4,10 @@ import { FormContainer, FormGroup, Label, Input, ErrorMessage, Button, ButtonGro
 
 export const ServicoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   const [formData, setFormData] = useState({
+    id: initialData.id || null,
     descricao: initialData.descricao || '',
-    duracao: initialData.duracao || '',
-    preco: initialData.preco ? (initialData.preco).toString() : '',
+    duracao: initialData.duracao || 60,
+    preco: initialData.preco || 0
   });
   
   const [errors, setErrors] = useState({});

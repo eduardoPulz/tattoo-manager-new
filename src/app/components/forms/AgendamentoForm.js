@@ -8,11 +8,14 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
+    id: initialData.id || null,
     nomeCliente: initialData.nomeCliente || '',
     funcionarioId: initialData.funcionarioId || '',
     servicoId: initialData.servicoId || '',
-    dataInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
-    dataFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
+    horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+    horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
+    observacoes: initialData.observacoes || '',
+    status: initialData.status || 'Agendado'
   });
   
   const [errors, setErrors] = useState({});
@@ -26,7 +29,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           fetch('/api/servicos').then(res => res.json())
         ]);
         
-        // Verificar se as respostas contêm os dados no formato esperado
         if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
           setFuncionarios(funcionariosRes.data);
         } else {
@@ -54,18 +56,18 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   }, []);
 
   useEffect(() => {
-    if (formData.servicoId && formData.dataInicio) {
+    if (formData.servicoId && formData.horaInicio) {
       const servicoSelecionado = servicos.find(s => s.id === formData.servicoId);
       if (servicoSelecionado) {
-        const dataInicio = new Date(formData.dataInicio);
-        const dataFim = new Date(dataInicio.getTime() + servicoSelecionado.duracao * 60000);
+        const horaInicio = new Date(formData.horaInicio);
+        const horaFim = new Date(horaInicio.getTime() + servicoSelecionado.duracao * 60000);
         setFormData(prev => ({
           ...prev,
-          dataFim: dataFim.toISOString().slice(0, 16)
+          horaFim: horaFim.toISOString().slice(0, 16)
         }));
       }
     }
-  }, [formData.servicoId, formData.dataInicio, servicos]);
+  }, [formData.servicoId, formData.horaInicio, servicos]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -97,14 +99,14 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       newErrors.servicoId = 'Selecione um serviço';
     }
     
-    if (!formData.dataInicio) {
-      newErrors.dataInicio = 'Data e hora de início são obrigatórias';
+    if (!formData.horaInicio) {
+      newErrors.horaInicio = 'Data e hora de início são obrigatórias';
     }
     
-    if (!formData.dataFim) {
-      newErrors.dataFim = 'Data e hora de fim são obrigatórias';
-    } else if (new Date(formData.dataFim) <= new Date(formData.dataInicio)) {
-      newErrors.dataFim = 'A data e hora de fim devem ser posteriores ao início';
+    if (!formData.horaFim) {
+      newErrors.horaFim = 'Data e hora de fim são obrigatórias';
+    } else if (new Date(formData.horaFim) <= new Date(formData.horaInicio)) {
+      newErrors.horaFim = 'A data e hora de fim devem ser posteriores ao início';
     }
     
     return newErrors;
@@ -123,26 +125,28 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     
     try {
       const dataToSubmit = {
+        id: formData.id,
         nomeCliente: formData.nomeCliente,
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
-        horaInicio: new Date(formData.dataInicio).toISOString(),
-        horaFim: new Date(formData.dataFim).toISOString(),
+        horaInicio: new Date(formData.horaInicio).toISOString(),
+        horaFim: new Date(formData.horaFim).toISOString(),
+        observacoes: formData.observacoes,
+        status: formData.status
       };
-      
-      if (initialData.id) {
-        dataToSubmit.id = initialData.id;
-      }
       
       await onSubmit(dataToSubmit);
       
-      if (!initialData.id) {
+      if (!formData.id) {
         setFormData({
+          id: null,
           nomeCliente: '',
           funcionarioId: '',
           servicoId: '',
-          dataInicio: '',
-          dataFim: '',
+          horaInicio: '',
+          horaFim: '',
+          observacoes: '',
+          status: 'Agendado'
         });
       }
     } catch (error) {
@@ -214,33 +218,59 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       </FormGroup>
       
       <FormGroup>
-        <Label htmlFor="dataInicio">Data e Hora de Início</Label>
+        <Label htmlFor="horaInicio">Data e Hora de Início</Label>
         <DateTimeInput
           type="datetime-local"
-          id="dataInicio"
-          name="dataInicio"
-          value={formData.dataInicio}
+          id="horaInicio"
+          name="horaInicio"
+          value={formData.horaInicio}
           onChange={handleChange}
-          data-error={!!errors.dataInicio}
+          data-error={!!errors.horaInicio}
         />
-        {errors.dataInicio && <ErrorMessage>{errors.dataInicio}</ErrorMessage>}
+        {errors.horaInicio && <ErrorMessage>{errors.horaInicio}</ErrorMessage>}
       </FormGroup>
       
       <FormGroup>
-        <Label htmlFor="dataFim">Data e Hora de Fim</Label>
+        <Label htmlFor="horaFim">Data e Hora de Fim</Label>
         <DateTimeInput
           type="datetime-local"
-          id="dataFim"
-          name="dataFim"
-          value={formData.dataFim}
+          id="horaFim"
+          name="horaFim"
+          value={formData.horaFim}
           onChange={handleChange}
-          data-error={!!errors.dataFim}
+          data-error={!!errors.horaFim}
           readOnly={!!formData.servicoId} // Somente leitura se um serviço for selecionado
         />
-        {errors.dataFim && <ErrorMessage>{errors.dataFim}</ErrorMessage>}
+        {errors.horaFim && <ErrorMessage>{errors.horaFim}</ErrorMessage>}
         {formData.servicoId && (
           <small>Calculado automaticamente com base na duração do serviço</small>
         )}
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="observacoes">Observações</Label>
+        <Input
+          type="text"
+          id="observacoes"
+          name="observacoes"
+          value={formData.observacoes}
+          onChange={handleChange}
+          placeholder="Observações"
+        />
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="status">Status</Label>
+        <Select
+          id="status"
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+        >
+          <option value="Agendado">Agendado</option>
+          <option value="Realizado">Realizado</option>
+          <option value="Cancelado">Cancelado</option>
+        </Select>
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}
@@ -250,7 +280,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           Cancelar
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando...' : initialData.id ? 'Atualizar' : 'Salvar'}
+          {isSubmitting ? 'Salvando...' : formData.id ? 'Atualizar' : 'Salvar'}
         </Button>
       </ButtonGroup>
     </FormContainer>

@@ -4,6 +4,7 @@ import { FormContainer, FormGroup, Label, Input, ErrorMessage, Button, ButtonGro
 
 export const FuncionarioForm = ({ onSubmit, onCancel, initialData = {} }) => {
   const [formData, setFormData] = useState({
+    id: initialData.id || null,
     nome: initialData.nome || '',
     especialidade: initialData.especialidade || '',
     telefone: initialData.telefone || '',
@@ -63,6 +64,7 @@ export const FuncionarioForm = ({ onSubmit, onCancel, initialData = {} }) => {
       await onSubmit(formData);
       if (!initialData.id) {
         setFormData({
+          id: null,
           nome: '',
           especialidade: '',
           telefone: '',

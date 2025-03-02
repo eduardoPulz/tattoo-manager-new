@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TabItem, TabsContainer, TabContent } from "./styles";
+import { TabItem, TabsContainer, TabContent, TabHeader, Title, Button, TableContainer, Table, Loading, Error, EmptyState, ActionButton, FaEdit, FaTrash } from "./styles";
 import { TableHeader } from "../table-header/TableHeader";
 import { TableBody } from "../table-body/TableBody";
 import { AddButton } from "../add-button/AddButton";
@@ -38,6 +38,12 @@ export const TabsSection = () => {
   const [agendamentos, setAgendamentos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentFuncionario, setCurrentFuncionario] = useState(null);
+  const [currentServico, setCurrentServico] = useState(null);
+  const [currentAgendamento, setCurrentAgendamento] = useState(null);
+  const [showFuncionarioForm, setShowFuncionarioForm] = useState(false);
+  const [showServicoForm, setShowServicoForm] = useState(false);
+  const [showAgendamentoForm, setShowAgendamentoForm] = useState(false);
 
   // Função para lidar com erros de forma mais robusta
   const handleFetch = async (url, method = 'GET', body = null) => {
@@ -245,7 +251,18 @@ export const TabsSection = () => {
   };
 
   const handleEditFuncionario = (funcionario) => {
-    console.log('Editar funcionário:', funcionario);
+    setCurrentFuncionario(funcionario);
+    setShowFuncionarioForm(true);
+  };
+
+  const handleEditServico = (servico) => {
+    setCurrentServico(servico);
+    setShowServicoForm(true);
+  };
+
+  const handleEditAgendamento = (agendamento) => {
+    setCurrentAgendamento(agendamento);
+    setShowAgendamentoForm(true);
   };
 
   const handleDeleteServico = async (id) => {
@@ -276,14 +293,6 @@ export const TabsSection = () => {
     }
   };
 
-  const handleEditServico = (servico) => {
-    console.log('Editar serviço:', servico);
-  };
-
-  const handleEditAgendamento = (agendamento) => {
-    console.log('Editar agendamento:', agendamento);
-  };
-
   const handleDeleteAgendamento = async (id) => {
     if (!id) {
       alert('ID do agendamento não fornecido');
@@ -312,44 +321,207 @@ export const TabsSection = () => {
     }
   };
 
-  const renderForm = () => {
-    switch (activeTab.id) {
-      case TABS.EMPLOYEES.id:
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case TABS.EMPLOYEES:
         return (
-          <FuncionarioForm
-            onSubmit={handleFuncionarioSubmit}
-            onCancel={closeModal}
-          />
+          <TabContent>
+            <TabHeader>
+              <Title>Funcionários</Title>
+              <Button onClick={() => {
+                setCurrentFuncionario(null);
+                setShowFuncionarioForm(true);
+              }}>Adicionar</Button>
+            </TabHeader>
+            
+            {isLoading ? (
+              <Loading>Carregando...</Loading>
+            ) : error ? (
+              <Error>{error}</Error>
+            ) : (
+              <>
+                {funcionarios.length === 0 ? (
+                  <EmptyState>Nenhum funcionário cadastrado</EmptyState>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th>Especialidade</th>
+                          <th>Telefone</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {funcionarios.map(funcionario => (
+                          <tr key={funcionario.id}>
+                            {formatFuncionarioRow(funcionario).map((cell, i) => (
+                              <td key={i}>{cell}</td>
+                            ))}
+                            <td>
+                              <ActionButton onClick={() => handleEditFuncionario(funcionario)}>
+                                <FaEdit />
+                              </ActionButton>
+                              <ActionButton onClick={() => handleDeleteFuncionario(funcionario.id)}>
+                                <FaTrash />
+                              </ActionButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </>
+            )}
+            
+            {showFuncionarioForm && (
+              <Modal onClose={() => setShowFuncionarioForm(false)}>
+                <FuncionarioForm
+                  onSubmit={handleFuncionarioSubmit}
+                  onCancel={() => setShowFuncionarioForm(false)}
+                  initialData={currentFuncionario || {}}
+                />
+              </Modal>
+            )}
+          </TabContent>
         );
-      case TABS.SERVICES.id:
+        
+      case TABS.SERVICES:
         return (
-          <ServicoForm
-            onSubmit={handleServicoSubmit}
-            onCancel={closeModal}
-          />
+          <TabContent>
+            <TabHeader>
+              <Title>Serviços</Title>
+              <Button onClick={() => {
+                setCurrentServico(null);
+                setShowServicoForm(true);
+              }}>Adicionar</Button>
+            </TabHeader>
+            
+            {isLoading ? (
+              <Loading>Carregando...</Loading>
+            ) : error ? (
+              <Error>{error}</Error>
+            ) : (
+              <>
+                {servicos.length === 0 ? (
+                  <EmptyState>Nenhum serviço cadastrado</EmptyState>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>Descrição</th>
+                          <th>Duração</th>
+                          <th>Preço</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {servicos.map(servico => (
+                          <tr key={servico.id}>
+                            {formatServicoRow(servico).map((cell, i) => (
+                              <td key={i}>{cell}</td>
+                            ))}
+                            <td>
+                              <ActionButton onClick={() => handleEditServico(servico)}>
+                                <FaEdit />
+                              </ActionButton>
+                              <ActionButton onClick={() => handleDeleteServico(servico.id)}>
+                                <FaTrash />
+                              </ActionButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </>
+            )}
+            
+            {showServicoForm && (
+              <Modal onClose={() => setShowServicoForm(false)}>
+                <ServicoForm
+                  onSubmit={handleServicoSubmit}
+                  onCancel={() => setShowServicoForm(false)}
+                  initialData={currentServico || {}}
+                />
+              </Modal>
+            )}
+          </TabContent>
         );
-      case TABS.SCHEDULES.id:
+        
+      case TABS.SCHEDULES:
         return (
-          <AgendamentoForm
-            onSubmit={handleAgendamentoSubmit}
-            onCancel={closeModal}
-          />
+          <TabContent>
+            <TabHeader>
+              <Title>Horários</Title>
+              <Button onClick={() => {
+                setCurrentAgendamento(null);
+                setShowAgendamentoForm(true);
+              }}>Adicionar</Button>
+            </TabHeader>
+            
+            {isLoading ? (
+              <Loading>Carregando...</Loading>
+            ) : error ? (
+              <Error>{error}</Error>
+            ) : (
+              <>
+                {agendamentos.length === 0 ? (
+                  <EmptyState>Nenhum horário cadastrado</EmptyState>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <thead>
+                        <tr>
+                          <th>Cliente</th>
+                          <th>Início</th>
+                          <th>Fim</th>
+                          <th>Serviço</th>
+                          <th>Profissional</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {agendamentos.map(agendamento => (
+                          <tr key={agendamento.id}>
+                            {formatAgendamentoRow(agendamento).map((cell, i) => (
+                              <td key={i}>{cell}</td>
+                            ))}
+                            <td>
+                              <ActionButton onClick={() => handleEditAgendamento(agendamento)}>
+                                <FaEdit />
+                              </ActionButton>
+                              <ActionButton onClick={() => handleDeleteAgendamento(agendamento.id)}>
+                                <FaTrash />
+                              </ActionButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </>
+            )}
+            
+            {showAgendamentoForm && (
+              <Modal onClose={() => setShowAgendamentoForm(false)}>
+                <AgendamentoForm
+                  onSubmit={handleAgendamentoSubmit}
+                  onCancel={() => setShowAgendamentoForm(false)}
+                  initialData={currentAgendamento || {}}
+                />
+              </Modal>
+            )}
+          </TabContent>
         );
+        
       default:
         return null;
-    }
-  };
-
-  const getModalTitle = () => {
-    switch (activeTab.id) {
-      case TABS.EMPLOYEES.id:
-        return "Adicionar Funcionário";
-      case TABS.SERVICES.id:
-        return "Adicionar Serviço";
-      case TABS.SCHEDULES.id:
-        return "Adicionar Agendamento";
-      default:
-        return "Adicionar";
     }
   };
 
@@ -367,62 +539,7 @@ export const TabsSection = () => {
         ))}
       </TabsContainer>
 
-      <AddButton text={activeTab.addButtonText} onClick={openModal} />
-
-      {isLoading ? (
-        <p>Carregando dados...</p>
-      ) : error ? (
-        <p>{error}</p>
-      ) : (
-        <>
-          {activeTab.id === TABS.SCHEDULES.id && (
-            <>
-              <TableHeader columns={TABS.SCHEDULES.columns} />
-              <TableBody 
-                items={agendamentos}
-                columns={TABS.SCHEDULES.columns}
-                formatRow={formatAgendamentoRow}
-                onEdit={handleEditAgendamento}
-                onDelete={(item) => handleDeleteAgendamento(item.id)}
-              />
-            </>
-          )}
-
-          {activeTab.id === TABS.EMPLOYEES.id && (
-            <>
-              <TableHeader columns={TABS.EMPLOYEES.columns} />
-              <TableBody 
-                items={funcionarios}
-                columns={TABS.EMPLOYEES.columns}
-                formatRow={formatFuncionarioRow}
-                onEdit={handleEditFuncionario}
-                onDelete={(item) => handleDeleteFuncionario(item.id)}
-              />
-            </>
-          )}
-
-          {activeTab.id === TABS.SERVICES.id && (
-            <>
-              <TableHeader columns={TABS.SERVICES.columns} />
-              <TableBody 
-                items={servicos}
-                columns={TABS.SERVICES.columns}
-                formatRow={formatServicoRow}
-                onEdit={handleEditServico}
-                onDelete={(item) => handleDeleteServico(item.id)}
-              />
-            </>
-          )}
-        </>
-      )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title={getModalTitle()}
-      >
-        {renderForm()}
-      </Modal>
+      {renderTabContent()}
     </>
   );
 };

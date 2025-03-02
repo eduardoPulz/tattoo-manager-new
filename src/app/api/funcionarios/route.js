@@ -38,10 +38,33 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
+    // Se tiver ID, é uma atualização
+    if (body.id) {
+      const funcionarioAtualizado = funcionariosDb.update(body.id, {
+        nome: body.nome,
+        especialidade: body.especialidade || '',
+        telefone: body.telefone || ''
+      });
+      
+      if (!funcionarioAtualizado) {
+        return NextResponse.json({
+          success: false,
+          message: 'Funcionário não encontrado'
+        }, { status: 404 });
+      }
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Funcionário atualizado com sucesso',
+        data: funcionarioAtualizado
+      });
+    }
+    
+    // Se não tiver ID, é uma criação
     const novoFuncionario = funcionariosDb.create({
       nome: body.nome,
-      cargo: body.cargo || 'Tatuador',
-      email: body.email || ''
+      especialidade: body.especialidade || '',
+      telefone: body.telefone || ''
     });
     
     return NextResponse.json({

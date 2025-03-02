@@ -22,53 +22,86 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    console.log('Dados recebidos para criar agendamento:', body);
+    const errors = {};
     
-    // Validar campos obrigatórios
-    if (!body.nomeCliente || !body.funcionarioId || !body.servicoId || !body.horaInicio || !body.horaFim) {
-      return NextResponse.json({
-        success: false,
-        message: 'Dados incompletos do agendamento'
-      }, { status: 400 });
+    if (!body.nomeCliente) {
+      errors.nomeCliente = 'Nome do cliente é obrigatório';
     }
     
-    // Validar existência do funcionário
-    const funcionario = funcionariosDb.getById(body.funcionarioId);
-    if (!funcionario) {
-      return NextResponse.json({
-        success: false,
-        message: 'Funcionário não encontrado'
-      }, { status: 404 });
+    if (!body.funcionarioId) {
+      errors.funcionarioId = 'Funcionário é obrigatório';
+    } else {
+      const funcionario = funcionariosDb.getById(body.funcionarioId);
+      if (!funcionario) {
+        errors.funcionarioId = 'Funcionário não encontrado';
+      }
     }
     
-    // Validar existência do serviço
-    const servico = servicosDb.getById(body.servicoId);
-    if (!servico) {
-      return NextResponse.json({
-        success: false,
-        message: 'Serviço não encontrado'
-      }, { status: 404 });
+    if (!body.servicoId) {
+      errors.servicoId = 'Serviço é obrigatório';
+    } else {
+      const servico = servicosDb.getById(body.servicoId);
+      if (!servico) {
+        errors.servicoId = 'Serviço não encontrado';
+      }
     }
     
-    // Validar datas
+    if (!body.horaInicio) {
+      errors.horaInicio = 'Hora de início é obrigatória';
+    }
+    
+    if (!body.horaFim) {
+      errors.horaFim = 'Hora de fim é obrigatória';
+    }
+    
     const horaInicio = new Date(body.horaInicio);
     const horaFim = new Date(body.horaFim);
     
-    if (isNaN(horaInicio.getTime()) || isNaN(horaFim.getTime())) {
+    if (isNaN(horaInicio.getTime())) {
+      errors.horaInicio = 'Data de início inválida';
+    }
+    
+    if (isNaN(horaFim.getTime())) {
+      errors.horaFim = 'Data de fim inválida';
+    }
+    
+    if (horaInicio && horaFim && horaFim <= horaInicio) {
+      errors.horaFim = 'A data de fim deve ser posterior à data de início';
+    }
+    
+    if (Object.keys(errors).length > 0) {
       return NextResponse.json({
         success: false,
-        message: 'Datas inválidas'
+        message: 'Erros de validação',
+        errors
       }, { status: 400 });
     }
     
-    if (horaFim <= horaInicio) {
+    if (body.id) {
+      const agendamentoAtualizado = agendamentosDb.update(body.id, {
+        nomeCliente: body.nomeCliente,
+        funcionarioId: body.funcionarioId,
+        servicoId: body.servicoId,
+        horaInicio: body.horaInicio,
+        horaFim: body.horaFim,
+        observacoes: body.observacoes || '',
+        status: body.status || 'Agendado'
+      });
+      
+      if (!agendamentoAtualizado) {
+        return NextResponse.json({
+          success: false,
+          message: 'Agendamento não encontrado'
+        }, { status: 404 });
+      }
+      
       return NextResponse.json({
-        success: false,
-        message: 'A data de fim deve ser posterior à data de início'
-      }, { status: 400 });
+        success: true,
+        message: 'Agendamento atualizado com sucesso',
+        data: agendamentoAtualizado
+      });
     }
     
-    // Criar agendamento
     const novoAgendamento = agendamentosDb.create({
       nomeCliente: body.nomeCliente,
       funcionarioId: body.funcionarioId,
@@ -87,10 +120,10 @@ export async function POST(request) {
       data: novoAgendamento
     }, { status: 201 });
   } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
+    console.error('Erro ao criar/atualizar agendamento:', error);
     return NextResponse.json({
       success: false,
-      message: 'Erro ao criar agendamento',
+      message: 'Erro ao criar/atualizar agendamento',
       error: error.message
     }, { status: 500 });
   }
@@ -117,6 +150,13 @@ export async function DELETE(request) {
     }
     
     const resultado = agendamentosDb.delete(id);
+    
+    if (!resultado.success) {
+      return NextResponse.json({
+        success: false,
+        message: resultado.message
+      }, { status: 409 });
+    }
     
     console.log('Agendamento removido com sucesso. ID:', id);
     
