@@ -3,14 +3,18 @@ FROM node:18-alpine AS base
 # Configuração de variáveis de ambiente
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Evitar tentativas de usar o Prisma
+ENV PRISMA_SKIP_POSTINSTALL=1
+ENV PRISMA_GENERATE_SKIP=1
 
 # Diretório de trabalho
 WORKDIR /app
 
 # Instalar dependências
 FROM base AS dependencies
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY scripts ./scripts
+# Instalar sem scripts pós-instalação
 RUN npm install --production=false --ignore-scripts
 
 # Construir a aplicação
