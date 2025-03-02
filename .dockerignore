@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.github
+coverage
+__tests__
+.vscode
+.idea
+README.md
+LICENSE
+.gitignore
+.npmrc
+.env*
+!.env.example
+*.log
