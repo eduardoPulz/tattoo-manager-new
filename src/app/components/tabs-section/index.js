@@ -325,6 +325,7 @@ export const TabsSection = () => {
           <TabContent>
             <TabHeader>
               <Title>Funcionários</Title>
+              <div style={{ width: '100%' }}></div>
               <Button onClick={() => {
                 setCurrentFuncionario(null);
                 setShowFuncionarioForm(true);
@@ -390,6 +391,7 @@ export const TabsSection = () => {
           <TabContent>
             <TabHeader>
               <Title>Serviços</Title>
+              <div style={{ width: '100%' }}></div>
               <Button onClick={() => {
                 setCurrentServico(null);
                 setShowServicoForm(true);
@@ -454,7 +456,8 @@ export const TabsSection = () => {
         return (
           <TabContent>
             <TabHeader>
-              <Title>Horários</Title>
+              <Title>Agendamentos</Title>
+              <div style={{ width: '100%' }}></div>
               <Button onClick={() => {
                 setCurrentAgendamento(null);
                 setShowAgendamentoForm(true);
@@ -468,7 +471,7 @@ export const TabsSection = () => {
             ) : (
               <>
                 {agendamentos.length === 0 ? (
-                  <EmptyState>Nenhum horário cadastrado</EmptyState>
+                  <EmptyState>Nenhum agendamento cadastrado</EmptyState>
                 ) : (
                   <TableContainer>
                     <Table>

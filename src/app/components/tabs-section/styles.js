@@ -59,6 +59,7 @@ export const TabHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  width: 100%;
 `;
 
 export const Title = styled.h2`
