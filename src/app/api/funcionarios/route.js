@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { funcionariosDb } from '../../lib/db';
 
-// Função para tratar erros de forma consistente
 function handleError(error) {
   console.error('Erro na API:', error);
   return NextResponse.json({
@@ -11,7 +10,6 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-// GET - Listar todos os funcionários
 export async function GET() {
   try {
     const funcionarios = funcionariosDb.getAll();
@@ -24,17 +22,15 @@ export async function GET() {
     return NextResponse.json({
       success: false,
       message: 'Erro ao buscar funcionários',
-      data: [] // Retorna array vazio em caso de erro para não quebrar o frontend
+      data: []
     });
   }
 }
 
-// POST - Criar um novo funcionário
 export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validação básica
     if (!body.nome) {
       return NextResponse.json({
         success: false,
@@ -42,7 +38,6 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    // Criar funcionário
     const novoFuncionario = funcionariosDb.create({
       nome: body.nome,
       cargo: body.cargo || 'Tatuador',
@@ -59,7 +54,6 @@ export async function POST(request) {
   }
 }
 
-// DELETE - Remover um funcionário
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -74,7 +68,6 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
-    // Verificar se o ID é um objeto serializado
     if (id.startsWith('[object')) {
       return NextResponse.json({
         success: false,
@@ -88,10 +81,9 @@ export async function DELETE(request) {
       return NextResponse.json({
         success: false,
         message: resultado.message
-      }, { status: 409 }); // Conflict
+      }, { status: 409 });
     }
     
-    // Garantir que os dados sejam persistidos no banco
     console.log('Funcionário removido com sucesso. ID:', id);
     
     return NextResponse.json({

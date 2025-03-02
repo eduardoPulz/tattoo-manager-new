@@ -1,17 +1,6 @@
 import { NextResponse } from 'next/server';
 import { servicosDb } from '../../lib/db';
 
-// Função para tratar erros de forma consistente
-function handleError(error, message) {
-  console.error(message, error);
-  return NextResponse.json({
-    success: false,
-    message: message,
-    error: error.message
-  }, { status: 500 });
-}
-
-// GET - Listar todos os serviços
 export async function GET() {
   try {
     const servicos = servicosDb.getAll();
@@ -24,45 +13,49 @@ export async function GET() {
     return NextResponse.json({
       success: false,
       message: 'Erro ao buscar serviços',
-      data: [] // Retorna array vazio em caso de erro para não quebrar o frontend
+      data: []
     });
   }
 }
 
-// POST - Criar um novo serviço
 export async function POST(request) {
   try {
     const body = await request.json();
     
+    console.log('Dados recebidos para criar serviço:', body);
+    
     // Validação básica
-    if (!body.nome) {
+    if (!body.descricao) {
       return NextResponse.json({
         success: false,
-        message: 'Nome é obrigatório'
+        message: 'Descrição é obrigatória'
       }, { status: 400 });
     }
     
     // Criar serviço
     const novoServico = servicosDb.create({
-      nome: body.nome,
-      preco: body.preco || 0,
-      duracao: body.duracao || 60
+      descricao: body.descricao,
+      duracao: body.duracao || 60,
+      preco: body.preco || 0
     });
+    
+    console.log('Serviço criado com sucesso:', novoServico);
     
     return NextResponse.json({
       success: true,
+      message: 'Serviço criado com sucesso',
       data: novoServico
-    });
+    }, { status: 201 });
   } catch (error) {
     console.error('Erro ao criar serviço:', error);
     return NextResponse.json({
       success: false,
-      message: 'Erro ao criar serviço'
+      message: 'Erro ao criar serviço',
+      error: error.message
     }, { status: 500 });
   }
 }
 
-// DELETE - Remover um serviço
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -75,14 +68,24 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
+    // Verificar se o ID é um objeto serializado
+    if (id.startsWith('[object')) {
+      return NextResponse.json({
+        success: false,
+        message: 'Formato de ID inválido'
+      }, { status: 400 });
+    }
+    
     const resultado = servicosDb.delete(id);
     
     if (!resultado.success) {
       return NextResponse.json({
         success: false,
         message: resultado.message
-      }, { status: 409 }); // Conflict
+      }, { status: 409 });
     }
+    
+    console.log('Serviço removido com sucesso. ID:', id);
     
     return NextResponse.json({
       success: true,
