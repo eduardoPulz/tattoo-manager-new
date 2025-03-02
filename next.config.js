@@ -2,10 +2,13 @@
 const nextConfig = {
   reactStrictMode: false,
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true
+  },
+  experimental: {
+    disableOptimizedLoading: true
   }
 }
 

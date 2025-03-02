@@ -7,20 +7,21 @@ COPY package.json ./
 COPY src ./src
 COPY public ./public
 COPY next.config.js ./
-COPY scripts ./scripts
-COPY db.example.json ./db.example.json
 
 # Instalar apenas o necessário
 RUN npm install --only=production
 
-# Configurar banco de dados
-RUN node scripts/setup-db.js
-
 # Desativar telemetria
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Criar arquivo .env
+RUN echo "NODE_ENV=development" > .env
+
+# Criar arquivo db.json vazio
+RUN echo '{"funcionarios":[],"servicos":[],"agendamentos":[]}' > db.json
 
 # Porta
 EXPOSE 3000
 
 # Iniciar em modo de desenvolvimento
-CMD ["npm", "run", "dev"]
+CMD ["npx", "next", "dev"]

@@ -1,34 +1,31 @@
-"use client";
-import styled from "styled-components";
-import { Navigation } from "../components/navigation/Navigation";
-import { Hero } from "../components/hero/Hero";
-import { Gallery } from "../components/gallery/Gallery";
-
-const MainContainer = styled.div`
-  min-height: 100vh;
-  background-color: rgba(245, 245, 245, 1);
-`;
-
-const ContentContainer = styled.main`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
 export default function Home() {
   return (
-    <>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"
-      />
-      <MainContainer>
-        <Navigation />
-        <ContentContainer>
-          <Hero />
-          <Gallery />
-        </ContentContainer>
-      </MainContainer>
-    </>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: '#333' }}>Tattoo Manager</h1>
+      <p style={{ fontSize: '18px' }}>
+        Bem-vindo ao sistema de gerenciamento de estúdio de tatuagem.
+      </p>
+      <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '5px' }}>
+        <h2 style={{ color: '#555' }}>Funcionalidades</h2>
+        <ul style={{ lineHeight: '1.6' }}>
+          <li>Gerenciamento de agendamentos</li>
+          <li>Cadastro de clientes</li>
+          <li>Controle de serviços</li>
+          <li>Relatórios financeiros</li>
+        </ul>
+      </div>
+      <div style={{ marginTop: '20px' }}>
+        <a href="/admin" style={{ 
+          display: 'inline-block', 
+          padding: '10px 15px', 
+          backgroundColor: '#4CAF50', 
+          color: 'white', 
+          textDecoration: 'none', 
+          borderRadius: '4px' 
+        }}>
+          Acessar Painel Administrativo
+        </a>
+      </div>
+    </div>
   );
 }
