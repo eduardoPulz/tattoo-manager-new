@@ -2,24 +2,25 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar apenas package.json e instalar dependências
+# Copiar apenas o essencial
 COPY package.json ./
-RUN npm install --only=production
-
-# Copiar apenas os arquivos essenciais
 COPY src ./src
 COPY public ./public
 COPY next.config.js ./
 COPY scripts ./scripts
 COPY db.example.json ./db.example.json
 
+# Instalar apenas o necessário
+RUN npm install --only=production
+
 # Configurar banco de dados
 RUN node scripts/setup-db.js
 
-# Configuração para economizar memória
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=256"
+# Desativar telemetria
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Iniciar diretamente sem build
+# Porta
 EXPOSE 3000
-CMD ["npm", "start"]
+
+# Iniciar em modo de desenvolvimento
+CMD ["npm", "run", "dev"]
