@@ -26,11 +26,25 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           fetch('/api/servicos').then(res => res.json())
         ]);
         
-        setFuncionarios(funcionariosRes);
-        setServicos(servicosRes);
+        // Verificar se as respostas contêm os dados no formato esperado
+        if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
+          setFuncionarios(funcionariosRes.data);
+        } else {
+          console.error('Resposta inválida de funcionários:', funcionariosRes);
+          setFuncionarios([]);
+        }
+        
+        if (servicosRes.success && Array.isArray(servicosRes.data)) {
+          setServicos(servicosRes.data);
+        } else {
+          console.error('Resposta inválida de serviços:', servicosRes);
+          setServicos([]);
+        }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
+        setFuncionarios([]);
+        setServicos([]);
       } finally {
         setLoading(false);
       }
