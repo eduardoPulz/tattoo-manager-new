@@ -1,48 +1,25 @@
-FROM node:18-alpine AS base
+FROM node:18-alpine
 
-# Configuração básica
 WORKDIR /app
 
-# Etapa 1: Instalar dependências
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm install --omit=dev --no-fund --no-audit
+# Copiar apenas package.json e instalar dependências
+COPY package.json ./
+RUN npm install --only=production
 
-# Etapa 2: Configurar banco de dados
-FROM base AS setup
-COPY --from=deps /app/node_modules ./node_modules
-COPY scripts ./scripts
-COPY db.example.json ./db.example.json
-RUN node scripts/setup-db.js
-
-# Etapa 3: Construir aplicação
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=setup /app/db.json ./db.json
-COPY package.json package-lock.json ./
-COPY next.config.js jsconfig.json ./
+# Copiar apenas os arquivos essenciais
 COPY src ./src
 COPY public ./public
+COPY next.config.js ./
+COPY scripts ./scripts
+COPY db.example.json ./db.example.json
 
-# Configuração extrema para economizar memória
+# Configurar banco de dados
+RUN node scripts/setup-db.js
+
+# Configuração para economizar memória
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=32"
-ENV NEXT_DISABLE_LINT=1
+ENV NODE_OPTIONS="--max-old-space-size=256"
 
-# Construir em etapas para economizar memória
-RUN mkdir -p .next
-RUN npx next build --no-lint
-
-# Etapa 4: Aplicação final
-FROM base AS runner
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=setup /app/db.json ./db.json
-COPY package.json next.config.js ./
-
-ENV NODE_ENV=production
+# Iniciar diretamente sem build
 EXPOSE 3000
-
 CMD ["npm", "start"]
