@@ -8,11 +8,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 # Copiar arquivos de configuração
-COPY package.json package-lock.json* ./
+COPY package.json ./
 
 # Instalar dependências
 FROM base AS dependencies
-RUN npm ci
+RUN npm install --production=false
 
 # Construir a aplicação
 FROM dependencies AS builder
