@@ -388,7 +388,7 @@ export const TabsSection = () => {
                 columns={TABS.SCHEDULES.columns}
                 formatRow={formatAgendamentoRow}
                 onEdit={handleEditAgendamento}
-                onDelete={handleDeleteAgendamento}
+                onDelete={(id) => handleDeleteAgendamento(String(id))}
               />
             </>
           )}
@@ -401,7 +401,7 @@ export const TabsSection = () => {
                 columns={TABS.EMPLOYEES.columns}
                 formatRow={formatFuncionarioRow}
                 onEdit={handleEditFuncionario}
-                onDelete={handleDeleteFuncionario}
+                onDelete={(id) => handleDeleteFuncionario(String(id))}
               />
             </>
           )}
@@ -414,7 +414,7 @@ export const TabsSection = () => {
                 columns={TABS.SERVICES.columns}
                 formatRow={formatServicoRow}
                 onEdit={handleEditServico}
-                onDelete={handleDeleteServico}
+                onDelete={(id) => handleDeleteServico(String(id))}
               />
             </>
           )}

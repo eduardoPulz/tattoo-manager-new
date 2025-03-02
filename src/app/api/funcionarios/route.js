@@ -1,15 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-// Instância única do Prisma com timeout aumentado
-const prisma = new PrismaClient({
-  log: ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    },
-  },
-});
+import { funcionariosDb } from '../../lib/db';
 
 // Função para tratar erros de forma consistente
 function handleError(error) {
@@ -24,37 +14,39 @@ function handleError(error) {
 // GET - Listar todos os funcionários
 export async function GET() {
   try {
-    const funcionarios = await prisma.funcionario.findMany();
-    
+    const funcionarios = funcionariosDb.getAll();
     return NextResponse.json({
       success: true,
       data: funcionarios
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao buscar funcionários:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao buscar funcionários',
+      data: [] // Retorna array vazio em caso de erro para não quebrar o frontend
+    });
   }
 }
 
 // POST - Criar um novo funcionário
 export async function POST(request) {
   try {
-    const dados = await request.json();
+    const body = await request.json();
     
     // Validação básica
-    if (!dados.nome) {
+    if (!body.nome) {
       return NextResponse.json({
         success: false,
         message: 'Nome é obrigatório'
       }, { status: 400 });
     }
     
-    // Criar com dados mínimos
-    const novoFuncionario = await prisma.funcionario.create({
-      data: {
-        nome: dados.nome,
-        cargo: dados.cargo || 'Não especificado',
-        email: dados.email || 'email@exemplo.com'
-      }
+    // Criar funcionário
+    const novoFuncionario = funcionariosDb.create({
+      nome: body.nome,
+      cargo: body.cargo || 'Tatuador',
+      email: body.email || ''
     });
     
     return NextResponse.json({
@@ -62,7 +54,11 @@ export async function POST(request) {
       data: novoFuncionario
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao criar funcionário:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao criar funcionário'
+    }, { status: 500 });
   }
 }
 
@@ -79,23 +75,14 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
-    // Verificar se há agendamentos relacionados
-    const agendamentosRelacionados = await prisma.agendamento.count({
-      where: { funcionarioId: Number(id) }
-    });
+    const resultado = funcionariosDb.delete(id);
     
-    if (agendamentosRelacionados > 0) {
-      // Se tiver agendamentos, não permitir exclusão
+    if (!resultado.success) {
       return NextResponse.json({
         success: false,
-        message: 'Não é possível excluir este funcionário pois existem agendamentos associados a ele'
-      }, { status: 409 });
+        message: resultado.message
+      }, { status: 409 }); // Conflict
     }
-    
-    // Se não tiver agendamentos, excluir o funcionário
-    await prisma.funcionario.delete({
-      where: { id: Number(id) }
-    });
     
     return NextResponse.json({
       success: true,

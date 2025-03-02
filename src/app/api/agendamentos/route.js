@@ -1,69 +1,102 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { agendamentosDb, funcionariosDb, servicosDb } from '../../lib/db';
 
-// Instância única do Prisma - VERSÃO EXTREMAMENTE SIMPLIFICADA
-const prisma = new PrismaClient({
-  log: ['error', 'warn'],
-});
-
-// GET - Listar todos os agendamentos - VERSÃO EMERGENCIAL
 export async function GET() {
   try {
-    // Consulta direta sem nenhuma relação, apenas os dados básicos
-    const result = await prisma.$queryRaw`SELECT * FROM agendamentos`;
-    
+    const agendamentos = agendamentosDb.getAll();
     return NextResponse.json({
       success: true,
-      data: result,
-      message: 'VERSÃO EMERGENCIAL - USANDO QUERY RAW'
+      data: agendamentos
     });
   } catch (error) {
-    console.error('ERRO CRÍTICO NA API:', error);
-    
-    // Tenta retornar uma lista vazia se houver erro
+    console.error('Erro ao buscar agendamentos:', error);
     return NextResponse.json({
       success: false,
-      data: [],
-      error: error.message,
-      message: 'Erro na API, retornando lista vazia como fallback'
-    }, { status: 200 }); // Retorna 200 mesmo com erro para não quebrar o frontend
+      message: 'Erro ao buscar agendamentos',
+      data: [] // Retorna array vazio em caso de erro para não quebrar o frontend
+    });
   }
 }
 
-// POST - Criar um novo agendamento - VERSÃO SUPER SIMPLIFICADA
 export async function POST(request) {
   try {
-    const dados = await request.json();
+    const body = await request.json();
     
-    // Validação mínima
-    if (!dados.nomeCliente) {
+    // Validar campos obrigatórios
+    if (!body.data || !body.funcionarioId || !body.servicoId) {
       return NextResponse.json({
         success: false,
-        message: 'Nome do cliente é obrigatório'
+        message: 'Dados incompletos do agendamento'
       }, { status: 400 });
     }
     
-    // Valores padrão para todos os campos
-    const dataAgendamento = dados.data ? new Date(dados.data) : new Date();
-    const funcionarioId = Number(dados.funcionarioId) || 1;
-    const servicoId = Number(dados.servicoId) || 1;
+    // Validar existência do funcionário
+    const funcionario = funcionariosDb.getById(body.funcionarioId);
+    if (!funcionario) {
+      return NextResponse.json({
+        success: false,
+        message: 'Funcionário não encontrado'
+      }, { status: 404 });
+    }
     
-    // Inserção direta usando SQL para evitar problemas de relação
-    const [novoAgendamento] = await prisma.$queryRaw`
-      INSERT INTO agendamentos (data, "nomeCliente", "funcionarioId", "servicoId") 
-      VALUES (${dataAgendamento}, ${dados.nomeCliente}, ${funcionarioId}, ${servicoId})
-      RETURNING *
-    `;
+    // Validar existência do serviço
+    const servico = servicosDb.getById(body.servicoId);
+    if (!servico) {
+      return NextResponse.json({
+        success: false,
+        message: 'Serviço não encontrado'
+      }, { status: 404 });
+    }
+    
+    // Criar agendamento
+    const novoAgendamento = agendamentosDb.create({
+      data: body.data,
+      hora: body.hora || '00:00',
+      funcionarioId: body.funcionarioId,
+      servicoId: body.servicoId,
+      clienteNome: body.clienteNome || 'Cliente sem nome',
+      clienteEmail: body.clienteEmail || '',
+      clienteTelefone: body.clienteTelefone || '',
+      observacoes: body.observacoes || '',
+      status: body.status || 'Pendente'
+    });
     
     return NextResponse.json({
       success: true,
-      data: novoAgendamento,
-      message: 'Agendamento criado com sucesso (MODO EMERGÊNCIA)'
+      data: novoAgendamento
     });
   } catch (error) {
-    console.error('ERRO CRÍTICO NO POST:', error);
+    console.error('Erro ao criar agendamento:', error);
     return NextResponse.json({
       success: false,
+      message: 'Erro ao criar agendamento'
+    }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({
+        success: false,
+        message: 'ID não fornecido'
+      }, { status: 400 });
+    }
+    
+    const resultado = agendamentosDb.delete(id);
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Agendamento removido com sucesso'
+    });
+  } catch (error) {
+    console.error('Erro ao excluir agendamento:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao excluir agendamento',
       error: error.message
     }, { status: 500 });
   }

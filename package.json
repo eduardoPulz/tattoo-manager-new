@@ -15,6 +15,7 @@
     "db:check": "node scripts/db-check.js",
     "db:setup": "node scripts/setup-db.js",
     "db:bootstrap": "node scripts/bootstrap-db.js",
+    "db:fix": "node scripts/fix-production.js",
     "version-info": "node scripts/version-info.js"
   },
   "dependencies": {

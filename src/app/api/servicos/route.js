@@ -1,22 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-// Instância única do Prisma com timeout aumentado
-const prisma = new PrismaClient({
-  log: ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    },
-  },
-});
+import { servicosDb } from '../../lib/db';
 
 // Função para tratar erros de forma consistente
-function handleError(error) {
-  console.error('Erro na API:', error);
+function handleError(error, message) {
+  console.error(message, error);
   return NextResponse.json({
     success: false,
-    message: 'Erro ao processar solicitação',
+    message: message,
     error: error.message
   }, { status: 500 });
 }
@@ -24,37 +14,39 @@ function handleError(error) {
 // GET - Listar todos os serviços
 export async function GET() {
   try {
-    const servicos = await prisma.servico.findMany();
-    
+    const servicos = servicosDb.getAll();
     return NextResponse.json({
       success: true,
       data: servicos
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao buscar serviços:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao buscar serviços',
+      data: [] // Retorna array vazio em caso de erro para não quebrar o frontend
+    });
   }
 }
 
 // POST - Criar um novo serviço
 export async function POST(request) {
   try {
-    const dados = await request.json();
+    const body = await request.json();
     
     // Validação básica
-    if (!dados.nome) {
+    if (!body.nome) {
       return NextResponse.json({
         success: false,
         message: 'Nome é obrigatório'
       }, { status: 400 });
     }
     
-    // Criar com dados mínimos
-    const novoServico = await prisma.servico.create({
-      data: {
-        nome: dados.nome,
-        preco: Number(dados.preco) || 0,
-        duracao: Number(dados.duracao) || 30
-      }
+    // Criar serviço
+    const novoServico = servicosDb.create({
+      nome: body.nome,
+      preco: body.preco || 0,
+      duracao: body.duracao || 60
     });
     
     return NextResponse.json({
@@ -62,7 +54,11 @@ export async function POST(request) {
       data: novoServico
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao criar serviço:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao criar serviço'
+    }, { status: 500 });
   }
 }
 
@@ -79,15 +75,25 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
-    await prisma.servico.delete({
-      where: { id: Number(id) }
-    });
+    const resultado = servicosDb.delete(id);
+    
+    if (!resultado.success) {
+      return NextResponse.json({
+        success: false,
+        message: resultado.message
+      }, { status: 409 }); // Conflict
+    }
     
     return NextResponse.json({
       success: true,
       message: 'Serviço removido com sucesso'
     });
   } catch (error) {
-    return handleError(error);
+    console.error('Erro ao excluir serviço:', error);
+    return NextResponse.json({
+      success: false,
+      message: 'Erro ao excluir serviço',
+      error: error.message
+    }, { status: 500 });
   }
 }
