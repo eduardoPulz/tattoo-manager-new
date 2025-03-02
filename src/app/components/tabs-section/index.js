@@ -324,7 +324,7 @@ export const TabsSection = () => {
       case TABS.EMPLOYEES.id:
         return (
           <TabContent>
-            <AddButton text="Adicionar" onClick={() => {
+            <AddButton text="Adicionar Funcionário" onClick={() => {
               setCurrentFuncionario(null);
               setShowFuncionarioForm(true);
             }} />
@@ -386,7 +386,7 @@ export const TabsSection = () => {
       case TABS.SERVICES.id:
         return (
           <TabContent>
-            <AddButton text="Adicionar" onClick={() => {
+            <AddButton text="Adicionar Serviço" onClick={() => {
               setCurrentServico(null);
               setShowServicoForm(true);
             }} />
@@ -448,7 +448,7 @@ export const TabsSection = () => {
       case TABS.SCHEDULES.id:
         return (
           <TabContent>
-            <AddButton text="Adicionar" onClick={() => {
+            <AddButton text="Adicionar Agendamento" onClick={() => {
               setCurrentAgendamento(null);
               setShowAgendamentoForm(true);
             }} />
