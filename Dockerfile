@@ -23,7 +23,6 @@ COPY public ./public
 COPY scripts ./scripts
 
 RUN mkdir -p public
-RUN node scripts/generate-env.js
 RUN node scripts/setup-db.js
 
 # Desativar o linting durante o build
