@@ -84,8 +84,6 @@ export async function POST(request) {
         servicoId: body.servicoId,
         horaInicio: body.horaInicio,
         horaFim: body.horaFim,
-        observacoes: body.observacoes || '',
-        status: body.status || 'Agendado'
       });
       
       if (!agendamentoAtualizado) {
@@ -108,8 +106,6 @@ export async function POST(request) {
       servicoId: body.servicoId,
       horaInicio: body.horaInicio,
       horaFim: body.horaFim,
-      observacoes: body.observacoes || '',
-      status: 'Agendado'
     });
     
     console.log('Agendamento criado com sucesso:', novoAgendamento);
@@ -141,7 +137,6 @@ export async function DELETE(request) {
       }, { status: 400 });
     }
     
-    // Verificar se o ID é um objeto serializado
     if (id.startsWith('[object')) {
       return NextResponse.json({
         success: false,

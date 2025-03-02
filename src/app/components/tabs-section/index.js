@@ -43,7 +43,6 @@ export const TabsSection = () => {
   const [showServicoForm, setShowServicoForm] = useState(false);
   const [showAgendamentoForm, setShowAgendamentoForm] = useState(false);
 
-  // Função para lidar com erros de forma mais robusta
   const handleFetch = async (url, method = 'GET', body = null) => {
     try {
       const options = {
@@ -57,7 +56,6 @@ export const TabsSection = () => {
       
       const response = await fetch(url, options);
       
-      // Analisar a resposta
       const data = await response.json().catch(() => ({ 
         success: false, 
         message: 'Erro ao analisar resposta do servidor' 
@@ -121,15 +119,12 @@ export const TabsSection = () => {
         return;
       }
       
-      // Verificar se o ID é um objeto e convertê-lo para string se necessário
       const funcionarioId = typeof id === 'object' ? id.id : id;
       
       console.log("Enviando exclusão para o ID:", funcionarioId);
       
-      // Fazer a exclusão
       await handleFetch(`/api/funcionarios?id=${funcionarioId}`, 'DELETE');
       
-      // Atualizar a lista
       setFuncionarios(funcionarios.filter(f => f.id !== id));
       
       alert('Funcionário excluído com sucesso');
@@ -147,14 +142,6 @@ export const TabsSection = () => {
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
-  };
-
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
   };
 
   const handleFuncionarioSubmit = async (data) => {
@@ -285,10 +272,8 @@ export const TabsSection = () => {
     try {
       setIsLoading(true);
       
-      // Fazer a exclusão
       await handleFetch(`/api/servicos?id=${id}`, 'DELETE');
       
-      // Atualizar a lista
       setServicos(servicos.filter(s => s.id !== id));
       
       alert('Serviço excluído com sucesso');
@@ -313,10 +298,8 @@ export const TabsSection = () => {
     try {
       setIsLoading(true);
       
-      // Fazer a exclusão
       await handleFetch(`/api/agendamentos?id=${id}`, 'DELETE');
       
-      // Atualizar a lista
       setAgendamentos(agendamentos.filter(a => a.id !== id));
       
       alert('Agendamento excluído com sucesso');

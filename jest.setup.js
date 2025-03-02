@@ -1,7 +1,5 @@
-// Opcional: configure ou configure bibliotecas de teste aqui
 import '@testing-library/jest-dom';
 
-// Mock do Next.js router
 jest.mock('next/router', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -13,7 +11,6 @@ jest.mock('next/router', () => ({
   }),
 }));
 
-// Mock global fetch
 global.fetch = jest.fn(() =>
   Promise.resolve({
     json: () => Promise.resolve({}),

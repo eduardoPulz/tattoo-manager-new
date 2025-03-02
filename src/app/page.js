@@ -8,7 +8,6 @@ export default function Home() {
   const [funcionario, setFuncionario] = useState({ nome: '', cargo: '', email: '' });
   const [loading, setLoading] = useState(true);
 
-  // Carregar dados
   useEffect(() => {
     const carregarDados = async () => {
       try {
@@ -33,7 +32,6 @@ export default function Home() {
     carregarDados();
   }, []);
 
-  // Adicionar funcionário
   const adicionarFuncionario = async (e) => {
     e.preventDefault();
     
@@ -54,12 +52,10 @@ export default function Home() {
         throw new Error(`Erro ao adicionar: ${resposta.status}`);
       }
       
-      // Recarregar dados
       const respostaDados = await fetch('/api/dados');
       const novosDados = await respostaDados.json();
       setDados(novosDados);
       
-      // Limpar formulário
       setFuncionario({ nome: '', cargo: '', email: '' });
       setErro(null);
     } catch (error) {

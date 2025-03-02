@@ -14,8 +14,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     servicoId: initialData.servicoId || '',
     horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
     horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
-    observacoes: initialData.observacoes || '',
-    status: initialData.status || 'Agendado'
   });
   
   const [errors, setErrors] = useState({});
@@ -131,7 +129,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         servicoId: formData.servicoId,
         horaInicio: new Date(formData.horaInicio).toISOString(),
         horaFim: new Date(formData.horaFim).toISOString(),
-        observacoes: formData.observacoes,
         status: formData.status
       };
       
@@ -145,8 +142,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           servicoId: '',
           horaInicio: '',
           horaFim: '',
-          observacoes: '',
-          status: 'Agendado'
         });
       }
     } catch (error) {
@@ -239,38 +234,12 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           value={formData.horaFim}
           onChange={handleChange}
           data-error={!!errors.horaFim}
-          readOnly={!!formData.servicoId} // Somente leitura se um serviço for selecionado
+          readOnly={!!formData.servicoId}
         />
         {errors.horaFim && <ErrorMessage>{errors.horaFim}</ErrorMessage>}
         {formData.servicoId && (
           <small>Calculado automaticamente com base na duração do serviço</small>
         )}
-      </FormGroup>
-      
-      <FormGroup>
-        <Label htmlFor="observacoes">Observações</Label>
-        <Input
-          type="text"
-          id="observacoes"
-          name="observacoes"
-          value={formData.observacoes}
-          onChange={handleChange}
-          placeholder="Observações"
-        />
-      </FormGroup>
-      
-      <FormGroup>
-        <Label htmlFor="status">Status</Label>
-        <Select
-          id="status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-        >
-          <option value="Agendado">Agendado</option>
-          <option value="Realizado">Realizado</option>
-          <option value="Cancelado">Cancelado</option>
-        </Select>
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}

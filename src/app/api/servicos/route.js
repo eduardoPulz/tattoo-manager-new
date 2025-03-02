@@ -22,7 +22,6 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validação básica
     if (!body.descricao) {
       return NextResponse.json({
         success: false,

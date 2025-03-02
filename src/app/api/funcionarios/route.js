@@ -38,7 +38,6 @@ export async function POST(request) {
       }, { status: 400 });
     }
     
-    // Se tiver ID, é uma atualização
     if (body.id) {
       const funcionarioAtualizado = funcionariosDb.update(body.id, {
         nome: body.nome,
@@ -60,7 +59,6 @@ export async function POST(request) {
       });
     }
     
-    // Se não tiver ID, é uma criação
     const novoFuncionario = funcionariosDb.create({
       nome: body.nome,
       especialidade: body.especialidade || '',

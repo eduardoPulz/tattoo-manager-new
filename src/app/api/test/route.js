@@ -5,11 +5,9 @@ import path from 'path';
 
 export async function GET() {
   try {
-    // Verifica se o arquivo de banco existe
     const dbPath = path.join(process.cwd(), 'db.json');
     const dbExists = fs.existsSync(dbPath);
     
-    // Cria dados de teste
     if (dbExists) {
       const funcionarios = funcionariosDb.getAll();
       if (funcionarios.length === 0) {
@@ -30,7 +28,6 @@ export async function GET() {
       }
     }
     
-    // Busca registros para verificar se está acessível
     const funcionariosCount = funcionariosDb.getAll().length;
     const servicosCount = servicosDb.getAll().length;
     const agendamentosCount = agendamentosDb.getAll().length;

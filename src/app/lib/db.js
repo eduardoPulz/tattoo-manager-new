@@ -1,33 +1,22 @@
-/**
- * Banco de dados simplificado usando arquivo JSON para persistência
- * Solução extremamente simplificada para trabalho de faculdade
- */
-
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-// Caminho para o arquivo JSON que servirá como nosso "banco de dados"
 const DB_PATH = path.join(process.cwd(), 'db.json');
 
-// Estrutura inicial do banco de dados
 const initialDb = {
   funcionarios: [],
   servicos: [],
   agendamentos: []
 };
 
-// Função para ler o banco de dados
 function readDb() {
   try {
-    // Verificar se o arquivo existe
     if (!fs.existsSync(DB_PATH)) {
-      // Se não existir, criar com a estrutura inicial
       fs.writeFileSync(DB_PATH, JSON.stringify(initialDb, null, 2));
       return initialDb;
     }
     
-    // Ler o arquivo
     const data = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(data);
   } catch (error) {
@@ -36,7 +25,6 @@ function readDb() {
   }
 }
 
-// Função para salvar no banco de dados
 function writeDb(data) {
   try {
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
@@ -47,11 +35,9 @@ function writeDb(data) {
   }
 }
 
-// Função para inicializar o banco com dados de teste
 function initDb() {
   const db = readDb();
   
-  // Se não houver funcionários, criar um funcionário padrão
   if (db.funcionarios.length === 0) {
     db.funcionarios.push({
       id: '1',
@@ -61,7 +47,6 @@ function initDb() {
     });
   }
   
-  // Se não houver serviços, criar um serviço padrão
   if (db.servicos.length === 0) {
     db.servicos.push({
       id: '1', 
@@ -71,12 +56,10 @@ function initDb() {
     });
   }
   
-  // Salvar os dados iniciais
   writeDb(db);
   return db;
 }
 
-// CRUD para funcionários
 export const funcionariosDb = {
   getAll: () => {
     const db = readDb();
@@ -112,21 +95,17 @@ export const funcionariosDb = {
   
   delete: (id) => {
     const db = readDb();
-    
-    // Verificar se há agendamentos relacionados
     const agendamentosRelacionados = db.agendamentos.some(a => a.funcionarioId === id);
     if (agendamentosRelacionados) {
       return { success: false, message: 'Funcionário possui agendamentos' };
     }
     
-    // Excluir funcionário
     db.funcionarios = db.funcionarios.filter(f => f.id !== id);
     writeDb(db);
     return { success: true };
   }
 };
 
-// CRUD para serviços
 export const servicosDb = {
   getAll: () => {
     const db = readDb();
@@ -163,20 +142,17 @@ export const servicosDb = {
   delete: (id) => {
     const db = readDb();
     
-    // Verificar se há agendamentos relacionados
     const agendamentosRelacionados = db.agendamentos.some(a => a.servicoId === id);
     if (agendamentosRelacionados) {
       return { success: false, message: 'Serviço possui agendamentos' };
     }
     
-    // Excluir serviço
     db.servicos = db.servicos.filter(s => s.id !== id);
     writeDb(db);
     return { success: true };
   }
 };
 
-// CRUD para agendamentos
 export const agendamentosDb = {
   getAll: () => {
     const db = readDb();
@@ -217,8 +193,6 @@ export const agendamentosDb = {
     return { success: true };
   }
 };
-
-// Inicializar o banco de dados se necessário
 initDb();
 
 export default {

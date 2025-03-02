@@ -5,16 +5,13 @@ import path from 'path';
 
 export async function GET() {
   try {
-    // Verificar acesso ao arquivo de banco de dados
     const dbPath = path.join(process.cwd(), 'db.json');
     const dbExists = fs.existsSync(dbPath);
     
-    // Verificar se conseguimos ler os dados
     const funcionariosCount = funcionariosDb.getAll().length;
     const servicosCount = servicosDb.getAll().length;
     const agendamentosCount = agendamentosDb.getAll().length;
     
-    // Informações de ambiente
     const environment = process.env.NODE_ENV || 'development';
     const port = process.env.PORT || '3000';
     const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN || 'not-deployed';
