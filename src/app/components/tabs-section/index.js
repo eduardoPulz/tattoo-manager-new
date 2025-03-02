@@ -515,7 +515,7 @@ export const TabsSection = () => {
   };
 
   return (
-    <>
+    <div style={{ width: '100%' }}>
       <TabsContainer>
         {Object.values(TABS).map((tab) => (
           <TabItem
@@ -529,6 +529,6 @@ export const TabsSection = () => {
       </TabsContainer>
 
       {renderTabContent()}
-    </>
+    </div>
   );
 };

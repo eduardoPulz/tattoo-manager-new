@@ -46,11 +46,12 @@ export const TabItem = styled.button`
 
 export const TabContent = styled.div`
   margin-top: 24px;
-  padding: 0 70px;
+  padding: 0;
+  width: 100%;
   
   @media (max-width: 991px) {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 0;
+    padding-right: 0;
   }
 `;
 

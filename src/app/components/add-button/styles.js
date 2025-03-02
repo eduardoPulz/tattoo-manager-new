@@ -12,9 +12,10 @@ export const ButtonContainer = styled.button`
   font-family: Ubuntu, sans-serif;
   font-size: 14px;
   transition: background-color 0.2s ease;
-  width: 100%;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
   padding: 16px;
-  margin: 0;
+  margin-bottom: 20px;
 
   &:hover {
     background-color: rgba(45, 45, 45, 1);
