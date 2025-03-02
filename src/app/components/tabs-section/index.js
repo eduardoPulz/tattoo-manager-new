@@ -324,14 +324,10 @@ export const TabsSection = () => {
       case TABS.EMPLOYEES.id:
         return (
           <TabContent>
-            <TabHeader>
-              <Title>Funcionários</Title>
-              <div style={{ width: '100%' }}></div>
-              <AddButton text="Adicionar" onClick={() => {
-                setCurrentFuncionario(null);
-                setShowFuncionarioForm(true);
-              }} />
-            </TabHeader>
+            <AddButton text="Adicionar" onClick={() => {
+              setCurrentFuncionario(null);
+              setShowFuncionarioForm(true);
+            }} />
             
             {isLoading ? (
               <Loading>Carregando...</Loading>
@@ -390,14 +386,10 @@ export const TabsSection = () => {
       case TABS.SERVICES.id:
         return (
           <TabContent>
-            <TabHeader>
-              <Title>Serviços</Title>
-              <div style={{ width: '100%' }}></div>
-              <AddButton text="Adicionar" onClick={() => {
-                setCurrentServico(null);
-                setShowServicoForm(true);
-              }} />
-            </TabHeader>
+            <AddButton text="Adicionar" onClick={() => {
+              setCurrentServico(null);
+              setShowServicoForm(true);
+            }} />
             
             {isLoading ? (
               <Loading>Carregando...</Loading>
@@ -456,14 +448,10 @@ export const TabsSection = () => {
       case TABS.SCHEDULES.id:
         return (
           <TabContent>
-            <TabHeader>
-              <Title>Agendamentos</Title>
-              <div style={{ width: '100%' }}></div>
-              <AddButton text="Adicionar" onClick={() => {
-                setCurrentAgendamento(null);
-                setShowAgendamentoForm(true);
-              }} />
-            </TabHeader>
+            <AddButton text="Adicionar" onClick={() => {
+              setCurrentAgendamento(null);
+              setShowAgendamentoForm(true);
+            }} />
             
             {isLoading ? (
               <Loading>Carregando...</Loading>
