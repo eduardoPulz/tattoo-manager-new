@@ -4,7 +4,8 @@ import { AgendamentoForm } from "../forms/AgendamentoForm";
 import { FuncionarioForm } from "../forms/FuncionarioForm";
 import { ServicoForm } from "../forms/ServicoForm";
 import { Modal } from "../modal/Modal";
-import { ActionButton, Button, EmptyState, ErrorMessage, FaEdit, FaTrash, Loading, TabContent, TabHeader, TabItem, Table, TableContainer, TabsContainer, Title } from "./styles";
+import { ActionButton, EmptyState, ErrorMessage, FaEdit, FaTrash, Loading, TabContent, TabHeader, TabItem, Table, TableContainer, TabsContainer, Title } from "./styles";
+import { AddButton } from "../add-button/AddButton";
 
 const TABS = {
   SCHEDULES: {
@@ -326,10 +327,10 @@ export const TabsSection = () => {
             <TabHeader>
               <Title>Funcionários</Title>
               <div style={{ width: '100%' }}></div>
-              <Button onClick={() => {
+              <AddButton text="Adicionar" onClick={() => {
                 setCurrentFuncionario(null);
                 setShowFuncionarioForm(true);
-              }}>Adicionar</Button>
+              }} />
             </TabHeader>
             
             {isLoading ? (
@@ -392,10 +393,10 @@ export const TabsSection = () => {
             <TabHeader>
               <Title>Serviços</Title>
               <div style={{ width: '100%' }}></div>
-              <Button onClick={() => {
+              <AddButton text="Adicionar" onClick={() => {
                 setCurrentServico(null);
                 setShowServicoForm(true);
-              }}>Adicionar</Button>
+              }} />
             </TabHeader>
             
             {isLoading ? (
@@ -458,10 +459,10 @@ export const TabsSection = () => {
             <TabHeader>
               <Title>Agendamentos</Title>
               <div style={{ width: '100%' }}></div>
-              <Button onClick={() => {
+              <AddButton text="Adicionar" onClick={() => {
                 setCurrentAgendamento(null);
                 setShowAgendamentoForm(true);
-              }}>Adicionar</Button>
+              }} />
             </TabHeader>
             
             {isLoading ? (
