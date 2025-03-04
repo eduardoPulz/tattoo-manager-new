@@ -50,3 +50,6 @@ db.json
 # Garantir que os arquivos de backup não sejam comitados
 *.bak
 *.backup
+
+# temp files
+.temp
