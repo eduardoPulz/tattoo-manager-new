@@ -28,8 +28,12 @@ const TABS = {
   }
 };
 
-export const TabsSection = () => {
-  const [activeTab, setActiveTab] = useState(TABS.EMPLOYEES);
+export const TabsSection = ({ initialTab = "employees" }) => {
+  const [activeTab, setActiveTab] = useState(
+    initialTab === "schedules" ? TABS.SCHEDULES : 
+    initialTab === "services" ? TABS.SERVICES : 
+    TABS.EMPLOYEES
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [funcionarios, setFuncionarios] = useState([]);
   const [servicos, setServicos] = useState([]);
@@ -153,8 +157,16 @@ export const TabsSection = () => {
         throw new Error('Erro ao salvar funcionário');
       }
       
-      const novoFuncionario = response.data;
-      setFuncionarios(prev => [...prev, novoFuncionario]);
+      const funcionarioSalvo = response.data;
+      
+      if (data.id) {
+        setFuncionarios(prev => prev.map(f => 
+          f.id === funcionarioSalvo.id ? funcionarioSalvo : f
+        ));
+      } else {
+        setFuncionarios(prev => [...prev, funcionarioSalvo]);
+      }
+      
       setShowFuncionarioForm(false);
     } catch (error) {
       console.error('Erro ao salvar funcionário:', error);
@@ -173,8 +185,16 @@ export const TabsSection = () => {
         throw new Error('Erro ao salvar serviço');
       }
       
-      const novoServico = response.data;
-      setServicos(prev => [...prev, novoServico]);
+      const servicoSalvo = response.data;
+      
+      if (data.id) {
+        setServicos(prev => prev.map(s => 
+          s.id === servicoSalvo.id ? servicoSalvo : s
+        ));
+      } else {
+        setServicos(prev => [...prev, servicoSalvo]);
+      }
+      
       setShowServicoForm(false);
     } catch (error) {
       console.error('Erro ao salvar serviço:', error);
@@ -193,8 +213,16 @@ export const TabsSection = () => {
         throw new Error('Erro ao salvar agendamento');
       }
       
-      const novoAgendamento = response.data;
-      setAgendamentos(prev => [...prev, novoAgendamento]);
+      const agendamentoSalvo = response.data;
+      
+      if (data.id) {
+        setAgendamentos(prev => prev.map(a => 
+          a.id === agendamentoSalvo.id ? agendamentoSalvo : a
+        ));
+      } else {
+        setAgendamentos(prev => [...prev, agendamentoSalvo]);
+      }
+      
       setShowAgendamentoForm(false);
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);

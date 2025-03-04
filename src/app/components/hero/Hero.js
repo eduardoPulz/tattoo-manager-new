@@ -1,8 +1,15 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { ImageSlider } from "../image-slider/ImageSlider";
-import { MainHeading, HeroSection, HeroImage, OverlayContent } from "./styles";
+import { MainHeading, HeroSection, HeroImage, OverlayContent, AgendarButton } from "./styles";
 
 export const Hero = () => {
+  const router = useRouter();
+
+  const handleAgendarClick = () => {
+    router.push("/admin?tab=schedules");
+  };
+
   return (
     <section>
       <MainHeading>Agende um horário conosco!</MainHeading>
@@ -14,10 +21,11 @@ export const Hero = () => {
         />
         <OverlayContent>
           <ImageSlider totalDots={4} activeDot={0} />
+          <AgendarButton onClick={handleAgendarClick}>
+            Agendar
+          </AgendarButton>
         </OverlayContent>
       </HeroSection>
     </section>
   );
 };
-
-

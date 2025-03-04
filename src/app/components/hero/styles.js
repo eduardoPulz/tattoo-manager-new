@@ -41,3 +41,25 @@ export const OverlayContent = styled.div`
   align-items: center;
   background-color: rgba(0, 0, 0, 0.3);
 `;
+
+export const AgendarButton = styled.button`
+  background-color: #ff4d4d;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #ff3333;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+    padding: 10px 20px;
+  }
+`;
