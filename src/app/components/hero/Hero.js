@@ -1,5 +1,4 @@
 "use client";
-import { Button } from "../button/Button";
 import { ImageSlider } from "../image-slider/ImageSlider";
 import { MainHeading, HeroSection, HeroImage, OverlayContent } from "./styles";
 
@@ -14,9 +13,6 @@ export const Hero = () => {
           loading="lazy"
         />
         <OverlayContent>
-          <Button onClick={() => console.log("Schedule clicked")}>
-            Agendar
-          </Button>
           <ImageSlider totalDots={4} activeDot={0} />
         </OverlayContent>
       </HeroSection>
