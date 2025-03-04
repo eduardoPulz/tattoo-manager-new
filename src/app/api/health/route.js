@@ -6,24 +6,34 @@ import path from 'path';
 export async function GET() {
   try {
     const dbPath = path.join(process.cwd(), 'db.json');
-    const dbExists = fs.existsSync(dbPath);
+    
+    let dbStatus = 'unknown';
+    
+    if (process.env.VERCEL === '1') {
+      dbStatus = 'memory';
+    } else {
+      dbStatus = fs.existsSync(dbPath) ? 'file' : 'not found';
+    }
     
     const funcionariosCount = funcionariosDb.getAll().length;
     const servicosCount = servicosDb.getAll().length;
     const agendamentosCount = agendamentosDb.getAll().length;
     
     const environment = process.env.NODE_ENV || 'development';
-    const port = process.env.PORT || '3000';
-    const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN || 'not-deployed';
+    const isVercel = process.env.VERCEL === '1';
     
     return NextResponse.json({
       status: 'healthy',
-      database: dbExists ? 'accessible' : 'not found',
+      database: {
+        type: dbStatus,
+        accessible: true
+      },
       timestamp: new Date().toISOString(),
       environment: environment,
       deployment: {
-        port: port,
-        domain: railwayPublicDomain
+        platform: isVercel ? 'vercel' : 'local',
+        vercel: isVercel ? true : false,
+        vercelEnv: process.env.VERCEL_ENV || 'none'
       },
       records: {
         funcionarios: funcionariosCount,
