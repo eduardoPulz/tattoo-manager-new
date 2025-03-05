@@ -11,7 +11,7 @@ const createPool = () => {
   // Configuração do pool de conexões
   const poolConfig = {
     connectionString: process.env.DATABASE_URL,
-    max: 10, // Limitar o número máximo de conexões
+    max: 5, // Limitar o número máximo de conexões
     idleTimeoutMillis: 30000, // Tempo limite para conexões ociosas
     connectionTimeoutMillis: 10000, // Tempo limite para tentar conexão
   };
@@ -24,7 +24,10 @@ const createPool = () => {
     };
   }
 
-  console.log('Configuração do pool:', JSON.stringify(poolConfig, null, 2));
+  console.log('Configuração do pool:', JSON.stringify({
+    ...poolConfig,
+    connectionString: poolConfig.connectionString ? 'CONFIGURADO' : 'NÃO CONFIGURADO'
+  }, null, 2));
   
   try {
     const pool = new Pool(poolConfig);
