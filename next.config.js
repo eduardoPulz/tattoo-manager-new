@@ -28,7 +28,8 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@vercel/postgres'],
   },
   images: {
-    domains: ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'],
+    domains: ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com', 'tattoo-manager-new.vercel.app', 'cdn.builder.io'],
+    unoptimized: true
   },
   async headers() {
     return [

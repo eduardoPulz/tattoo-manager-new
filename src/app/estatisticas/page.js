@@ -88,345 +88,130 @@ const EstatisticasPage = () => {
   // Função para buscar dados de agendamentos
   async function fetchAgendamentos() {
     try {
+      console.log('Iniciando busca de agendamentos...');
       const response = await fetch('/api/agendamentos', {
         cache: 'no-store',
-        next: { revalidate: 0 }
+        next: { revalidate: 60 } // Revalidar a cada 60 segundos
       });
+      
+      if (!response.ok) {
+        console.error(`Erro ao buscar agendamentos: ${response.status} ${response.statusText}`);
+        throw new Error(`Erro ao buscar agendamentos: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
-      return data.success ? data.data : [];
+      console.log(`Agendamentos carregados com sucesso: ${data.length} registros`);
+      return data;
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
-      return [];
+      throw error;
     }
   }
 
-  const prepararDadosServicos = () => {
-    if (!agendamentos.length || !servicos.length) return [];
-    
-    const contagem = {};
-    const valorTotal = {};
-    const duracaoTotal = {};
-    const clientesUnicos = {};
-    const contadorServicos = {};
-    
-    servicos.forEach(servico => {
-      if (!servico || !servico.id) return;
+  // Função para processar dados de serviços com tratamento de erros
+  function processarDadosServicos(agendamentos, filtro) {
+    if (!agendamentos || !Array.isArray(agendamentos) || agendamentos.length === 0) {
+      console.log('Nenhum agendamento para processar dados de serviços');
+      return { labels: [], data: [] };
+    }
+
+    console.log(`Processando dados de serviços com filtro: ${filtro}`);
+    try {
+      // Agrupar por serviço
+      const servicosMap = new Map();
       
-      contagem[servico.id] = 0;
-      valorTotal[servico.id] = 0;
-      duracaoTotal[servico.id] = 0;
-      clientesUnicos[servico.id] = new Set();
-      contadorServicos[servico.id] = {
-        nome: servico.nome || servico.descricao || 'Serviço',
-        descricao: servico.descricao || '',
-        preco: parseFloat(servico.preco || 0),
-        duracao: parseInt(servico.duracao || 0)
-      };
-    });
-    
-    agendamentos.forEach(agendamento => {
-      if (!agendamento || !agendamento.servicoId || !contagem[agendamento.servicoId]) return;
-      
-      contagem[agendamento.servicoId]++;
-      
-      // Adicionar valor total com validação
-      try {
-        valorTotal[agendamento.servicoId] += parseFloat(agendamento.preco || 0);
-      } catch (e) {
-        console.error('Erro ao processar preço:', e);
-      }
-      
-      // Calcular duração com validação
-      try {
-        const servico = contadorServicos[agendamento.servicoId];
-        if (servico) {
-          duracaoTotal[agendamento.servicoId] += parseInt(servico.duracao || 0);
+      agendamentos.forEach(agendamento => {
+        if (!agendamento || !agendamento.servicoId || !agendamento.servicoNome) {
+          console.warn('Agendamento com dados de serviço incompletos:', agendamento);
+          return;
         }
-      } catch (e) {
-        console.error('Erro ao processar duração:', e);
-      }
-      
-      // Adicionar cliente único com validação
-      try {
+        
+        const servicoId = agendamento.servicoId;
+        if (!servicosMap.has(servicoId)) {
+          servicosMap.set(servicoId, {
+            nome: agendamento.servicoNome,
+            quantidade: 0,
+            valorTotal: 0,
+            duracaoTotal: 0,
+            clientesUnicos: new Set(),
+          });
+        }
+        
+        const servico = servicosMap.get(servicoId);
+        servico.quantidade += 1;
+        
+        // Valor total
+        if (agendamento.preco && !isNaN(parseFloat(agendamento.preco))) {
+          servico.valorTotal += parseFloat(agendamento.preco);
+        }
+        
+        // Duração
+        if (agendamento.horaInicio && agendamento.horaFim) {
+          const inicio = new Date(agendamento.horaInicio);
+          const fim = new Date(agendamento.horaFim);
+          if (inicio instanceof Date && !isNaN(inicio) && fim instanceof Date && !isNaN(fim)) {
+            const duracaoMinutos = Math.round((fim - inicio) / (1000 * 60));
+            servico.duracaoTotal += duracaoMinutos;
+          }
+        }
+        
+        // Clientes únicos
         if (agendamento.clienteNome) {
-          clientesUnicos[agendamento.servicoId].add(agendamento.clienteNome);
+          servico.clientesUnicos.add(agendamento.clienteNome);
         }
-      } catch (e) {
-        console.error('Erro ao processar cliente:', e);
-      }
-    });
-    
-    // Preparar dados para ordenação com validação
-    const servicosData = Object.keys(contagem).map(id => {
-      try {
-        return {
-          id,
-          nome: `Serviço: ${contadorServicos[id]?.nome || 'Desconhecido'}`,
-          quantidade: contagem[id] || 0,
-          valorTotal: valorTotal[id] || 0,
-          duracaoMedia: contagem[id] > 0 ? (duracaoTotal[id] || 0) / contagem[id] : 0,
-          clientesUnicos: (clientesUnicos[id]?.size) || 0
-        };
-      } catch (e) {
-        console.error('Erro ao preparar dados de serviço:', e);
-        return {
-          id,
-          nome: `Serviço: Desconhecido`,
-          quantidade: 0,
-          valorTotal: 0,
-          duracaoMedia: 0,
-          clientesUnicos: 0
-        };
-      }
-    });
-    
-    // Ordenar por quantidade (padrão) com validação
-    try {
-      servicosData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
-    } catch (e) {
-      console.error('Erro ao ordenar serviços:', e);
-    }
-    
-    return servicosData;
-  };
-
-  const prepararDadosFuncionarios = () => {
-    if (!agendamentos.length || !funcionarios.length) return [];
-    
-    const contagem = {};
-    const valorTotal = {};
-    const duracaoTotal = {};
-    const clientesUnicos = {};
-    const contadorFuncionarios = {};
-    
-    funcionarios.forEach(funcionario => {
-      contagem[funcionario.id] = 0;
-      valorTotal[funcionario.id] = 0;
-      duracaoTotal[funcionario.id] = 0;
-      clientesUnicos[funcionario.id] = new Set();
-      contadorFuncionarios[funcionario.id] = {
-        nome: funcionario.nome
-      };
-    });
-    
-    agendamentos.forEach(agendamento => {
-      if (contagem[agendamento.funcionarioId]) {
-        contagem[agendamento.funcionarioId]++;
-        valorTotal[agendamento.funcionarioId] += parseFloat(agendamento.preco || 0);
-        
-        // Calcular duração
-        const horaInicio = new Date(agendamento.horaInicio);
-        const horaFim = new Date(agendamento.horaFim);
-        const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
-        
-        duracaoTotal[agendamento.funcionarioId] += duracao;
-        
-        // Adicionar cliente único
-        clientesUnicos[agendamento.funcionarioId].add(agendamento.clienteNome);
-      }
-    });
-    
-    // Preparar dados para ordenação
-    const funcionariosData = Object.keys(contagem).map(id => ({
-      id,
-      nome: `Profissional: ${contadorFuncionarios[id]?.nome || 'Desconhecido'}`,
-      quantidade: contagem[id],
-      valorTotal: valorTotal[id],
-      duracaoMedia: contagem[id] > 0 ? duracaoTotal[id] / contagem[id] : 0,
-      clientesUnicos: clientesUnicos[id].size
-    }));
-    
-    // Ordenar por quantidade (padrão)
-    funcionariosData.sort((a, b) => b.quantidade - a.quantidade);
-    
-    return funcionariosData;
-  };
-
-  const prepararDadosDiasSemana = () => {
-    if (!agendamentos.length) return [];
-    
-    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const contagem = [0, 0, 0, 0, 0, 0, 0];
-    const valorTotal = [0, 0, 0, 0, 0, 0, 0];
-    const duracaoTotal = [0, 0, 0, 0, 0, 0, 0];
-    const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
-    
-    agendamentos.forEach(agendamento => {
-      if (!agendamento || !agendamento.horaInicio) return;
+      });
       
-      try {
-        const data = new Date(agendamento.horaInicio);
-        
-        // Verificar se a data é válida
-        if (isNaN(data.getTime())) return;
-        
-        const diaSemana = data.getDay();
-        
-        // Verificar se o índice é válido
-        if (diaSemana < 0 || diaSemana > 6) return;
-        
-        contagem[diaSemana]++;
-        
-        // Adicionar valor total com validação
-        try {
-          valorTotal[diaSemana] += parseFloat(agendamento.preco || 0);
-        } catch (e) {
-          console.error('Erro ao processar preço para dia da semana:', e);
-        }
-        
-        // Calcular duração com validação
-        try {
-          if (agendamento.horaFim) {
-            const horaInicio = new Date(agendamento.horaInicio);
-            const horaFim = new Date(agendamento.horaFim);
-            
-            // Verificar se as datas são válidas
-            if (!isNaN(horaInicio.getTime()) && !isNaN(horaFim.getTime())) {
-              const duracao = Math.max(0, (horaFim - horaInicio) / (1000 * 60)); // em minutos, não permite valores negativos
-              duracaoTotal[diaSemana] += duracao;
-            }
-          }
-        } catch (e) {
-          console.error('Erro ao processar duração para dia da semana:', e);
-        }
-        
-        // Adicionar cliente único com validação
-        try {
-          if (agendamento.clienteNome) {
-            clientesUnicos[diaSemana].add(agendamento.clienteNome);
-          }
-        } catch (e) {
-          console.error('Erro ao processar cliente para dia da semana:', e);
-        }
-      } catch (e) {
-        console.error('Erro ao processar agendamento para dia da semana:', e);
-      }
-    });
-    
-    // Preparar dados para ordenação com validação
-    const diasSemanaData = diasSemana.map((dia, index) => {
-      try {
-        return {
-          nome: `Dia: ${dia}`,
-          quantidade: contagem[index] || 0,
-          valorTotal: valorTotal[index] || 0,
-          duracaoMedia: contagem[index] > 0 ? (duracaoTotal[index] || 0) / contagem[index] : 0,
-          clientesUnicos: (clientesUnicos[index]?.size) || 0
-        };
-      } catch (e) {
-        console.error('Erro ao preparar dados de dia da semana:', e);
-        return {
-          nome: `Dia: ${dia}`,
-          quantidade: 0,
-          valorTotal: 0,
-          duracaoMedia: 0,
-          clientesUnicos: 0
-        };
-      }
-    });
-    
-    // Ordenar por quantidade (padrão) com validação
-    try {
-      diasSemanaData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
-    } catch (e) {
-      console.error('Erro ao ordenar dias da semana:', e);
-    }
-    
-    return diasSemanaData;
-  };
-
-  const prepararDadosMeses = () => {
-    if (!agendamentos.length) return [];
-    
-    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const valorTotal = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const duracaoTotal = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
-    
-    agendamentos.forEach(agendamento => {
-      if (!agendamento || !agendamento.horaInicio) return;
+      // Converter para arrays e ordenar
+      const servicosArray = Array.from(servicosMap.values())
+        .map(servico => ({
+          ...servico,
+          clientesUnicos: servico.clientesUnicos.size,
+          duracaoMedia: servico.quantidade > 0 ? Math.round(servico.duracaoTotal / servico.quantidade) : 0
+        }));
       
-      try {
-        const data = new Date(agendamento.horaInicio);
-        
-        // Verificar se a data é válida
-        if (isNaN(data.getTime())) return;
-        
-        const mes = data.getMonth();
-        
-        // Verificar se o índice é válido
-        if (mes < 0 || mes > 11) return;
-        
-        contagem[mes]++;
-        
-        // Adicionar valor total com validação
-        try {
-          valorTotal[mes] += parseFloat(agendamento.preco || 0);
-        } catch (e) {
-          console.error('Erro ao processar preço para mês:', e);
-        }
-        
-        // Calcular duração com validação
-        try {
-          if (agendamento.horaFim) {
-            const horaInicio = new Date(agendamento.horaInicio);
-            const horaFim = new Date(agendamento.horaFim);
-            
-            // Verificar se as datas são válidas
-            if (!isNaN(horaInicio.getTime()) && !isNaN(horaFim.getTime())) {
-              const duracao = Math.max(0, (horaFim - horaInicio) / (1000 * 60)); // em minutos, não permite valores negativos
-              duracaoTotal[mes] += duracao;
-            }
-          }
-        } catch (e) {
-          console.error('Erro ao processar duração para mês:', e);
-        }
-        
-        // Adicionar cliente único com validação
-        try {
-          if (agendamento.clienteNome) {
-            clientesUnicos[mes].add(agendamento.clienteNome);
-          }
-        } catch (e) {
-          console.error('Erro ao processar cliente para mês:', e);
-        }
-      } catch (e) {
-        console.error('Erro ao processar agendamento para mês:', e);
+      // Ordenar por quantidade (padrão)
+      let dadosOrdenados;
+      switch (filtro) {
+        case 'valor':
+          dadosOrdenados = servicosArray.sort((a, b) => b.valorTotal - a.valorTotal);
+          break;
+        case 'duracao':
+          dadosOrdenados = servicosArray.sort((a, b) => b.duracaoMedia - a.duracaoMedia);
+          break;
+        case 'clientes':
+          dadosOrdenados = servicosArray.sort((a, b) => b.clientesUnicos - a.clientesUnicos);
+          break;
+        default:
+          dadosOrdenados = servicosArray.sort((a, b) => b.quantidade - a.quantidade);
       }
-    });
-    
-    // Preparar dados para ordenação com validação
-    const mesesData = meses.map((mes, index) => {
-      try {
-        return {
-          nome: `Mês: ${mes}`,
-          quantidade: contagem[index] || 0,
-          valorTotal: valorTotal[index] || 0,
-          duracaoMedia: contagem[index] > 0 ? (duracaoTotal[index] || 0) / contagem[index] : 0,
-          clientesUnicos: (clientesUnicos[index]?.size) || 0
-        };
-      } catch (e) {
-        console.error('Erro ao preparar dados de mês:', e);
-        return {
-          nome: `Mês: ${mes}`,
-          quantidade: 0,
-          valorTotal: 0,
-          duracaoMedia: 0,
-          clientesUnicos: 0
-        };
+      
+      // Limitar a 10 itens para melhor visualização
+      const dadosTop = dadosOrdenados.slice(0, 10);
+      
+      // Extrair labels e dados
+      const labels = dadosTop.map(servico => servico.nome);
+      
+      let data;
+      switch (filtro) {
+        case 'valor':
+          data = dadosTop.map(servico => servico.valorTotal);
+          break;
+        case 'duracao':
+          data = dadosTop.map(servico => servico.duracaoMedia);
+          break;
+        case 'clientes':
+          data = dadosTop.map(servico => servico.clientesUnicos);
+          break;
+        default:
+          data = dadosTop.map(servico => servico.quantidade);
       }
-    });
-    
-    // Ordenar por quantidade (padrão) com validação
-    try {
-      mesesData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
-    } catch (e) {
-      console.error('Erro ao ordenar meses:', e);
+      
+      return { labels, data };
+    } catch (error) {
+      console.error('Erro ao processar dados de serviços:', error);
+      return { labels: [], data: [] };
     }
-    
-    return mesesData;
-  };
+  }
 
   const renderizarGrafico = () => {
     if (isLoading) return <LoadingMessage>Carregando dados...</LoadingMessage>;
@@ -434,26 +219,10 @@ const EstatisticasPage = () => {
     
     try {
       // Preparar dados com base no filtro selecionado
-      const dadosServicos = prepararDadosServicos();
-      const dadosFuncionarios = prepararDadosFuncionarios();
-      const dadosDiasSemana = prepararDadosDiasSemana();
-      const dadosMeses = prepararDadosMeses();
+      const dadosServicos = processarDadosServicos(agendamentos, filtroSelecionado);
       
       // Verificar se há dados para exibir
-      if (!dadosServicos.length && !dadosFuncionarios.length && !dadosDiasSemana.length && !dadosMeses.length) {
-        return <ErrorMessage>Não há dados suficientes para gerar estatísticas.</ErrorMessage>;
-      }
-      
-      // Combinar todos os dados em um único array
-      const todosDados = [
-        ...(dadosServicos || []), 
-        ...(dadosFuncionarios || []), 
-        ...(dadosDiasSemana || []), 
-        ...(dadosMeses || [])
-      ];
-      
-      // Verificar se há dados combinados
-      if (!todosDados.length) {
+      if (!dadosServicos.labels.length || !dadosServicos.data.length) {
         return <ErrorMessage>Não há dados suficientes para gerar estatísticas.</ErrorMessage>;
       }
       
@@ -464,49 +233,6 @@ const EstatisticasPage = () => {
         'Dia:': 'rgba(255, 159, 64, 0.8)',
         'Mês:': 'rgba(255, 99, 132, 0.8)'
       };
-      
-      // Obter valor com base no filtro selecionado
-      const obterValor = (item) => {
-        try {
-          switch (filtroSelecionado) {
-            case 'quantidade':
-              return item.quantidade || 0;
-            case 'valor':
-              return item.valorTotal || 0;
-            case 'duracao':
-              return item.duracaoMedia || 0;
-            case 'clientes':
-              return item.clientesUnicos || 0;
-            default:
-              return item.quantidade || 0;
-          }
-        } catch (e) {
-          console.error('Erro ao obter valor para o gráfico:', e);
-          return 0;
-        }
-      };
-      
-      // Ordenar todos os dados com base no filtro selecionado
-      try {
-        todosDados.sort((a, b) => obterValor(b) - obterValor(a));
-      } catch (e) {
-        console.error('Erro ao ordenar dados para o gráfico:', e);
-      }
-      
-      // Preparar dados para o gráfico
-      const labels = todosDados.map(item => item.nome || 'Desconhecido');
-      const data = todosDados.map(obterValor);
-      
-      // Determinar cores com base no prefixo do label
-      const backgroundColor = todosDados.map(item => {
-        try {
-          const prefixo = item.nome?.split(':')[0] + ':';
-          return cores[prefixo] || 'rgba(201, 203, 207, 0.8)';
-        } catch (e) {
-          console.error('Erro ao determinar cor para o gráfico:', e);
-          return 'rgba(201, 203, 207, 0.8)';
-        }
-      });
       
       // Configuração do gráfico
       const options = {
@@ -519,12 +245,9 @@ const EstatisticasPage = () => {
             callbacks: {
               label: function(context) {
                 try {
-                  const item = todosDados[context.dataIndex];
                   let valor = context.formattedValue;
                   
                   switch (filtroSelecionado) {
-                    case 'quantidade':
-                      return `Quantidade: ${valor}`;
                     case 'valor':
                       return `Valor Total: R$ ${parseFloat(valor).toFixed(2)}`;
                     case 'duracao':
@@ -567,7 +290,7 @@ const EstatisticasPage = () => {
       };
       
       // Altura dinâmica com base na quantidade de itens
-      const altura = Math.max(400, todosDados.length * 30);
+      const altura = Math.max(400, dadosServicos.labels.length * 30);
       
       return (
         <div>
@@ -587,11 +310,11 @@ const EstatisticasPage = () => {
           <ChartContainer style={{ height: altura + 'px' }}>
             <Bar 
               data={{
-                labels,
+                labels: dadosServicos.labels,
                 datasets: [{
-                  data,
-                  backgroundColor,
-                  borderColor: backgroundColor.map(cor => cor.replace('0.8', '1')),
+                  data: dadosServicos.data,
+                  backgroundColor: dadosServicos.labels.map(() => 'rgba(75, 192, 192, 0.8)'),
+                  borderColor: dadosServicos.labels.map(() => 'rgba(75, 192, 192, 1)'),
                   borderWidth: 1
                 }]
               }}

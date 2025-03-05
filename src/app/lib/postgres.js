@@ -5,17 +5,34 @@ import 'dotenv/config';
 // Configuração do pool de conexões
 const poolConfig = {
   connectionString: process.env.DATABASE_URL,
+  max: 20, // Limitar o número máximo de conexões
+  idleTimeoutMillis: 30000, // Tempo limite para conexões ociosas
+  connectionTimeoutMillis: 10000, // Tempo limite para tentar conexão
 };
 
 // Adiciona SSL apenas em produção (Vercel)
-if (process.env.VERCEL === '1') {
+if (process.env.VERCEL === '1' || process.env.NODE_ENV === 'production') {
+  console.log('Ambiente de produção detectado, configurando SSL');
   poolConfig.ssl = {
     rejectUnauthorized: false
   };
 }
 
 // Criar pool de conexões
-const pool = new Pool(poolConfig);
+let pool;
+try {
+  pool = new Pool(poolConfig);
+  
+  // Testar a conexão
+  pool.on('error', (err) => {
+    console.error('Erro inesperado no pool de conexões:', err);
+  });
+  
+  console.log('Pool de conexões PostgreSQL inicializado com sucesso');
+} catch (error) {
+  console.error('Erro ao inicializar o pool de conexões PostgreSQL:', error);
+  throw new Error('Falha na inicialização do banco de dados');
+}
 
 // Função para inicializar as tabelas do banco de dados
 export async function initDatabase() {
@@ -95,29 +112,39 @@ export async function initDatabase() {
 // Operações para funcionários
 export const funcionariosDb = {
   getAll: async () => {
+    let client;
     try {
-      const result = await pool.query('SELECT * FROM funcionarios ORDER BY nome');
+      client = await pool.connect();
+      const result = await client.query('SELECT * FROM funcionarios ORDER BY nome');
       return result.rows;
     } catch (error) {
       console.error('Erro ao buscar funcionários:', error);
       return [];
+    } finally {
+      if (client) client.release();
     }
   },
   
   getById: async (id) => {
+    let client;
     try {
-      const result = await pool.query('SELECT * FROM funcionarios WHERE id = $1', [id]);
+      client = await pool.connect();
+      const result = await client.query('SELECT * FROM funcionarios WHERE id = $1', [id]);
       return result.rows[0] || null;
     } catch (error) {
       console.error(`Erro ao buscar funcionário ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   create: async (funcionario) => {
+    let client;
     try {
+      client = await pool.connect();
       const id = uuidv4();
-      const result = await pool.query(
+      const result = await client.query(
         'INSERT INTO funcionarios (id, nome, especialidade, telefone) VALUES ($1, $2, $3, $4) RETURNING *',
         [id, funcionario.nome, funcionario.especialidade || '', funcionario.telefone || '']
       );
@@ -125,12 +152,16 @@ export const funcionariosDb = {
     } catch (error) {
       console.error('Erro ao criar funcionário:', error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   update: async (id, dados) => {
+    let client;
     try {
-      const result = await pool.query(
+      client = await pool.connect();
+      const result = await client.query(
         'UPDATE funcionarios SET nome = $1, especialidade = $2, telefone = $3 WHERE id = $4 RETURNING *',
         [dados.nome, dados.especialidade || '', dados.telefone || '', id]
       );
@@ -138,13 +169,17 @@ export const funcionariosDb = {
     } catch (error) {
       console.error(`Erro ao atualizar funcionário ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   delete: async (id) => {
+    let client;
     try {
+      client = await pool.connect();
       // Verificar se existem agendamentos relacionados
-      const agendamentos = await pool.query(
+      const agendamentos = await client.query(
         'SELECT COUNT(*) FROM agendamentos WHERE funcionarioId = $1',
         [id]
       );
@@ -153,11 +188,13 @@ export const funcionariosDb = {
         return { success: false, message: 'Funcionário possui agendamentos' };
       }
       
-      await pool.query('DELETE FROM funcionarios WHERE id = $1', [id]);
+      await client.query('DELETE FROM funcionarios WHERE id = $1', [id]);
       return { success: true };
     } catch (error) {
       console.error(`Erro ao excluir funcionário ${id}:`, error);
       return { success: false, message: error.message };
+    } finally {
+      if (client) client.release();
     }
   }
 };
@@ -165,29 +202,39 @@ export const funcionariosDb = {
 // Operações para serviços
 export const servicosDb = {
   getAll: async () => {
+    let client;
     try {
-      const result = await pool.query('SELECT * FROM servicos ORDER BY nome');
+      client = await pool.connect();
+      const result = await client.query('SELECT * FROM servicos ORDER BY nome');
       return result.rows;
     } catch (error) {
       console.error('Erro ao buscar serviços:', error);
       return [];
+    } finally {
+      if (client) client.release();
     }
   },
   
   getById: async (id) => {
+    let client;
     try {
-      const result = await pool.query('SELECT * FROM servicos WHERE id = $1', [id]);
+      client = await pool.connect();
+      const result = await client.query('SELECT * FROM servicos WHERE id = $1', [id]);
       return result.rows[0] || null;
     } catch (error) {
       console.error(`Erro ao buscar serviço ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   create: async (servico) => {
+    let client;
     try {
+      client = await pool.connect();
       const id = uuidv4();
-      const result = await pool.query(
+      const result = await client.query(
         'INSERT INTO servicos (id, nome, descricao, preco, duracao) VALUES ($1, $2, $3, $4, $5) RETURNING *',
         [id, servico.nome, servico.descricao || '', parseFloat(servico.preco), parseInt(servico.duracao)]
       );
@@ -195,12 +242,16 @@ export const servicosDb = {
     } catch (error) {
       console.error('Erro ao criar serviço:', error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   update: async (id, dados) => {
+    let client;
     try {
-      const result = await pool.query(
+      client = await pool.connect();
+      const result = await client.query(
         'UPDATE servicos SET nome = $1, descricao = $2, preco = $3, duracao = $4 WHERE id = $5 RETURNING *',
         [dados.nome, dados.descricao || '', parseFloat(dados.preco), parseInt(dados.duracao), id]
       );
@@ -208,13 +259,17 @@ export const servicosDb = {
     } catch (error) {
       console.error(`Erro ao atualizar serviço ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   delete: async (id) => {
+    let client;
     try {
+      client = await pool.connect();
       // Verificar se existem agendamentos relacionados
-      const agendamentos = await pool.query(
+      const agendamentos = await client.query(
         'SELECT COUNT(*) FROM agendamentos WHERE servicoId = $1',
         [id]
       );
@@ -223,11 +278,13 @@ export const servicosDb = {
         return { success: false, message: 'Serviço possui agendamentos' };
       }
       
-      await pool.query('DELETE FROM servicos WHERE id = $1', [id]);
+      await client.query('DELETE FROM servicos WHERE id = $1', [id]);
       return { success: true };
     } catch (error) {
       console.error(`Erro ao excluir serviço ${id}:`, error);
       return { success: false, message: error.message };
+    } finally {
+      if (client) client.release();
     }
   }
 };
@@ -235,8 +292,10 @@ export const servicosDb = {
 // Operações para agendamentos
 export const agendamentosDb = {
   getAll: async () => {
+    let client;
     try {
-      const result = await pool.query(`
+      client = await pool.connect();
+      const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
         JOIN funcionarios f ON a.funcionarioId = f.id
@@ -247,12 +306,16 @@ export const agendamentosDb = {
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
       return [];
+    } finally {
+      if (client) client.release();
     }
   },
   
   getById: async (id) => {
+    let client;
     try {
-      const result = await pool.query(`
+      client = await pool.connect();
+      const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
         JOIN funcionarios f ON a.funcionarioId = f.id
@@ -263,13 +326,17 @@ export const agendamentosDb = {
     } catch (error) {
       console.error(`Erro ao buscar agendamento ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   create: async (agendamento) => {
+    let client;
     try {
+      client = await pool.connect();
       const id = uuidv4();
-      await pool.query(`
+      await client.query(`
         INSERT INTO agendamentos (
           id, clienteNome, clienteTelefone, funcionarioId, 
           servicoId, horaInicio, horaFim, observacoes
@@ -287,7 +354,7 @@ export const agendamentosDb = {
       ]);
       
       // Buscar o agendamento completo
-      const result = await pool.query(`
+      const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
         JOIN funcionarios f ON a.funcionarioId = f.id
@@ -299,12 +366,16 @@ export const agendamentosDb = {
     } catch (error) {
       console.error('Erro ao criar agendamento:', error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   update: async (id, dados) => {
+    let client;
     try {
-      await pool.query(`
+      client = await pool.connect();
+      await client.query(`
         UPDATE agendamentos 
         SET clienteNome = $1, clienteTelefone = $2, funcionarioId = $3, 
             servicoId = $4, horaInicio = $5, horaFim = $6, observacoes = $7
@@ -321,7 +392,7 @@ export const agendamentosDb = {
       ]);
       
       // Buscar o agendamento atualizado
-      const result = await pool.query(`
+      const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
         JOIN funcionarios f ON a.funcionarioId = f.id
@@ -333,16 +404,22 @@ export const agendamentosDb = {
     } catch (error) {
       console.error(`Erro ao atualizar agendamento ${id}:`, error);
       return null;
+    } finally {
+      if (client) client.release();
     }
   },
   
   delete: async (id) => {
+    let client;
     try {
-      await pool.query('DELETE FROM agendamentos WHERE id = $1', [id]);
+      client = await pool.connect();
+      await client.query('DELETE FROM agendamentos WHERE id = $1', [id]);
       return { success: true };
     } catch (error) {
       console.error(`Erro ao excluir agendamento ${id}:`, error);
       return { success: false, message: error.message };
+    } finally {
+      if (client) client.release();
     }
   }
 };
