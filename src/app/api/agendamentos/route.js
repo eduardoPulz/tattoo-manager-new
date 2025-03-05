@@ -108,8 +108,6 @@ export async function POST(request) {
       horaFim: body.horaFim,
     });
     
-    console.log('Agendamento criado com sucesso:', novoAgendamento);
-    
     return NextResponse.json({
       success: true,
       message: 'Agendamento criado com sucesso',
