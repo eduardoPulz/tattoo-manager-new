@@ -1,7 +1,16 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": ".next",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "NODE_ENV": "production",
+    "VERCEL": "1",
+    "PGSSLMODE": "require",
+    "DEBUG": "true"
+  },
+  "github": {
+    "silent": true
+  }
 }
