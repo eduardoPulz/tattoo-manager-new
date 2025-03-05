@@ -19,11 +19,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao buscar agendamentos',
-      data: []
-    });
+    return handleError(error);
   }
 }
 
@@ -39,12 +35,33 @@ export async function POST(request) {
     }
     
     // Processar datas
-    const horaInicio = new Date(body.horaInicio);
+    let horaInicio;
+    try {
+      horaInicio = new Date(body.horaInicio);
+      if (isNaN(horaInicio.getTime())) {
+        throw new Error('Data de início inválida');
+      }
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        message: 'Data de início inválida'
+      }, { status: 400 });
+    }
     
     // Calcular horaFim se não foi fornecida
     let horaFim;
     if (body.horaFim) {
-      horaFim = new Date(body.horaFim);
+      try {
+        horaFim = new Date(body.horaFim);
+        if (isNaN(horaFim.getTime())) {
+          throw new Error('Data de fim inválida');
+        }
+      } catch (error) {
+        return NextResponse.json({
+          success: false,
+          message: 'Data de fim inválida'
+        }, { status: 400 });
+      }
     } else if (body.duracao) {
       horaFim = new Date(horaInicio.getTime() + body.duracao * 60000);
     } else {
@@ -85,6 +102,13 @@ export async function POST(request) {
         horaFim,
         observacoes: body.observacoes || ''
       });
+      
+      if (!novoAgendamento) {
+        return NextResponse.json({
+          success: false,
+          message: 'Erro ao criar agendamento'
+        }, { status: 500 });
+      }
       
       return NextResponse.json({
         success: true,
