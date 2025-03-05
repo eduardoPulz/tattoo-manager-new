@@ -32,16 +32,14 @@ const funcionariosRepository = {
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO funcionarios 
-         (id, nome, cargo, email, especialidade, telefone) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
+         (id, nome, especialidade,  telefone) 
+         VALUES ($1, $2, $3, $4, $5) 
          RETURNING *`,
         [
           id,
           funcionario.nome,
-          funcionario.cargo,
-          funcionario.email,
-          funcionario.especialidade,
-          funcionario.telefone
+          funcionario.especialidade || '',
+          funcionario.telefone || ''
         ]
       );
       return result.rows[0];
@@ -56,18 +54,14 @@ const funcionariosRepository = {
       const result = await db.query(
         `UPDATE funcionarios 
          SET nome = $1, 
-             cargo = $2, 
-             email = $3, 
-             especialidade = $4, 
-             telefone = $5 
-         WHERE id = $6 
+             especialidade = $2, 
+             telefone = $4 
+         WHERE id = $5 
          RETURNING *`,
         [
           funcionario.nome,
-          funcionario.cargo,
-          funcionario.email,
-          funcionario.especialidade,
-          funcionario.telefone,
+          funcionario.especialidade || '',
+          funcionario.telefone || '',
           id
         ]
       );

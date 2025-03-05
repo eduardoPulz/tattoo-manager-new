@@ -2,8 +2,6 @@
 CREATE TABLE IF NOT EXISTS funcionarios (
     id UUID PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
-    cargo VARCHAR(100),
-    email VARCHAR(255),
     especialidade VARCHAR(100) NOT NULL,
     telefone VARCHAR(20)
 );
