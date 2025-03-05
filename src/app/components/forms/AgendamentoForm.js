@@ -41,6 +41,20 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           console.error('Resposta inválida de serviços:', servicosRes);
           setServicos([]);
         }
+
+        // Atualizar formData com os dados iniciais após carregar os dados
+        if (initialData && initialData.id) {
+          console.log('Carregando dados iniciais:', initialData);
+          setFormData({
+            id: initialData.id || null,
+            nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+            clienteTelefone: initialData.clienteTelefone || '',
+            funcionarioId: initialData.funcionarioId || '',
+            servicoId: initialData.servicoId || '',
+            horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+            horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
+          });
+        }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
@@ -52,7 +66,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     };
     
     fetchData();
-  }, []);
+  }, [initialData]);
 
   useEffect(() => {
     if (formData.horaInicio && formData.servicoId) {

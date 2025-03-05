@@ -215,12 +215,21 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       
       const agendamentoSalvo = response.data;
       
+      const funcionario = funcionarios.find(f => f.id === agendamentoSalvo.funcionarioId);
+      const servico = servicos.find(s => s.id === agendamentoSalvo.servicoId);
+      
+      const agendamentoCompleto = {
+        ...agendamentoSalvo,
+        funcionarioNome: funcionario ? funcionario.nome : 'Desconhecido',
+        servicoNome: servico ? servico.descricao : 'Desconhecido'
+      };
+      
       if (data.id) {
         setAgendamentos(prev => prev.map(a => 
-          a.id === agendamentoSalvo.id ? agendamentoSalvo : a
+          a.id === agendamentoCompleto.id ? agendamentoCompleto : a
         ));
       } else {
-        setAgendamentos(prev => [...prev, agendamentoSalvo]);
+        setAgendamentos(prev => [...prev, agendamentoCompleto]);
       }
       
       setShowAgendamentoForm(false);
@@ -249,9 +258,6 @@ export const TabsSection = ({ initialTab = "employees" }) => {
   };
 
   const formatAgendamentoRow = (agendamento) => {
-    const funcionario = funcionarios.find(f => f.id === agendamento.funcionarioId);
-    const servico = servicos.find(s => s.id === agendamento.servicoId);
-    
     const formatDate = (date) => {
       const d = new Date(date);
       return d.toLocaleString('pt-BR', { 
@@ -267,8 +273,8 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       agendamento.nomeCliente,
       formatDate(agendamento.horaInicio),
       formatDate(agendamento.horaFim),
-      servico ? servico.descricao : 'Serviço não encontrado',
-      funcionario ? funcionario.nome : 'Funcionário não encontrado'
+      agendamento.servicoNome,
+      agendamento.funcionarioNome
     ];
   };
 
