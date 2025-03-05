@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { FormContainer, FormGroup, Label, Input, Select, ErrorMessage, Button, ButtonGroup, DateTimeInput } from './styles';
 
-export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
+export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {}, sharedState }) => {
   const [funcionarios, setFuncionarios] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,53 +20,76 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Usar o estado compartilhado se disponível
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [funcionariosRes, servicosRes] = await Promise.all([
-          fetch('/api/funcionarios').then(res => res.json()),
-          fetch('/api/servicos').then(res => res.json())
-        ]);
-        
-        if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
-          setFuncionarios(funcionariosRes.data);
-        } else {
-          console.error('Resposta inválida de funcionários:', funcionariosRes);
-          setFuncionarios([]);
-        }
-        
-        if (servicosRes.success && Array.isArray(servicosRes.data)) {
-          setServicos(servicosRes.data);
-        } else {
-          console.error('Resposta inválida de serviços:', servicosRes);
-          setServicos([]);
-        }
-
-        // Atualizar formData com os dados iniciais após carregar os dados
-        if (initialData && initialData.id) {
-          console.log('Carregando dados iniciais:', initialData);
-          setFormData({
-            id: initialData.id || null,
-            nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
-            clienteTelefone: initialData.clienteTelefone || '',
-            funcionarioId: initialData.funcionarioId || '',
-            servicoId: initialData.servicoId || '',
-            horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
-            horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
-          });
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
-        setFuncionarios([]);
-        setServicos([]);
-      } finally {
-        setLoading(false);
+    if (sharedState) {
+      console.log('Usando estado compartilhado:', sharedState);
+      setFuncionarios(sharedState.funcionarios || []);
+      setServicos(sharedState.servicos || []);
+      setLoading(false);
+      
+      // Atualizar formData com os dados iniciais
+      if (initialData && initialData.id) {
+        console.log('Carregando dados iniciais:', initialData);
+        setFormData({
+          id: initialData.id || null,
+          nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+          clienteTelefone: initialData.clienteTelefone || '',
+          funcionarioId: initialData.funcionarioId || '',
+          servicoId: initialData.servicoId || '',
+          horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+          horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
+        });
       }
-    };
-    
-    fetchData();
-  }, [initialData]);
+    } else {
+      // Carregar dados da API apenas se não houver estado compartilhado
+      const fetchData = async () => {
+        try {
+          const [funcionariosRes, servicosRes] = await Promise.all([
+            fetch('/api/funcionarios').then(res => res.json()),
+            fetch('/api/servicos').then(res => res.json())
+          ]);
+          
+          if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
+            setFuncionarios(funcionariosRes.data);
+          } else {
+            console.error('Resposta inválida de funcionários:', funcionariosRes);
+            setFuncionarios([]);
+          }
+          
+          if (servicosRes.success && Array.isArray(servicosRes.data)) {
+            setServicos(servicosRes.data);
+          } else {
+            console.error('Resposta inválida de serviços:', servicosRes);
+            setServicos([]);
+          }
+
+          // Atualizar formData com os dados iniciais após carregar os dados
+          if (initialData && initialData.id) {
+            console.log('Carregando dados iniciais:', initialData);
+            setFormData({
+              id: initialData.id || null,
+              nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+              clienteTelefone: initialData.clienteTelefone || '',
+              funcionarioId: initialData.funcionarioId || '',
+              servicoId: initialData.servicoId || '',
+              horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+              horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados:', error);
+          setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
+          setFuncionarios([]);
+          setServicos([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchData();
+    }
+  }, [initialData, sharedState]);
 
   useEffect(() => {
     if (formData.horaInicio && formData.servicoId) {
@@ -296,7 +319,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           <option value="">Selecione um serviço</option>
           {servicos.map(servico => (
             <option key={servico.id} value={servico.id}>
-              {servico.descricao} - {servico.duracao} min - R$ {servico.preco.toFixed(2)}
+              {servico.descricao} - {servico.duracao} min - R$ {servico.preco}
             </option>
           ))}
         </Select>

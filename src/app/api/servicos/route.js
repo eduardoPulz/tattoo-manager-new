@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { servicosDb } from '../../lib/postgres';
+import servicosRepository from '../../repositories/servicosRepository';
 
 // Definir que esta rota não usa o Edge Runtime
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ function handleError(error) {
 export async function GET() {
   try {
     console.log('GET /api/servicos - Iniciando busca de serviços');
-    const servicos = await servicosDb.getAll();
+    const servicos = await servicosRepository.getAll();
     console.log(`GET /api/servicos - Serviços encontrados: ${servicos.length}`);
     return NextResponse.json({
       success: true,
@@ -36,7 +36,7 @@ export async function POST(request) {
     console.log('POST /api/servicos - Corpo da requisição:', body);
     
     // Validar campos obrigatórios
-    if (!body.nome || !body.preco || !body.duracao) {
+    if (!body.descricao || !body.preco || !body.duracao) {
       console.log('POST /api/servicos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
@@ -56,7 +56,7 @@ export async function POST(request) {
     // Atualizar ou criar serviço
     if (body.id) {
       console.log(`POST /api/servicos - Atualizando serviço ID: ${body.id}`);
-      const servicoAtualizado = await servicosDb.update(body.id, {
+      const servicoAtualizado = await servicosRepository.update(body.id, {
         nome: body.nome,
         descricao: body.descricao || '',
         preco: parseFloat(body.preco),
@@ -79,7 +79,7 @@ export async function POST(request) {
       });
     } else {
       console.log('POST /api/servicos - Criando novo serviço');
-      const novoServico = await servicosDb.create({
+      const novoServico = await servicosRepository.create({
         nome: body.nome,
         descricao: body.descricao || '',
         preco: parseFloat(body.preco),
@@ -114,15 +114,7 @@ export async function DELETE(request) {
     }
     
     console.log(`DELETE /api/servicos - Excluindo serviço ID: ${id}`);
-    const result = await servicosDb.delete(id);
-    
-    if (!result.success) {
-      console.log(`DELETE /api/servicos - Erro ao excluir serviço ID: ${id} - ${result.message}`);
-      return NextResponse.json({
-        success: false,
-        message: result.message || 'Erro ao excluir serviço'
-      }, { status: 400 });
-    }
+    await servicosRepository.delete(id);
     
     console.log(`DELETE /api/servicos - Serviço ID: ${id} excluído com sucesso`);
     return NextResponse.json({

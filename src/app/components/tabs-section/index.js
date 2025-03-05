@@ -250,10 +250,13 @@ export const TabsSection = ({ initialTab = "employees" }) => {
   };
 
   const formatServicoRow = (servico) => {
+    // Garantir que o preço seja um número
+    const preco = typeof servico.preco === 'number' ? servico.preco : parseFloat(servico.preco || 0);
+    
     return [
       servico.descricao,
       `${servico.duracao} min`,
-      `R$ ${servico.preco.toFixed(2)}`
+      `R$ ${preco}`
     ];
   };
 
@@ -344,6 +347,23 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       setIsLoading(false);
     }
   };
+
+  const handleAddAgendamento = () => {
+    setCurrentAgendamento(null);
+    setShowAgendamentoForm(true);
+  };
+
+  const [sharedState, setSharedState] = useState({
+    funcionarios: [],
+    servicos: []
+  });
+
+  useEffect(() => {
+    setSharedState({
+      funcionarios,
+      servicos
+    });
+  }, [funcionarios, servicos]);
 
   const renderTabContent = () => {
     switch (activeTab.id) {
@@ -474,10 +494,7 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       case TABS.SCHEDULES.id:
         return (
           <TabContent>
-            <AddButton text="Adicionar Agendamento" onClick={() => {
-              setCurrentAgendamento(null);
-              setShowAgendamentoForm(true);
-            }} />
+            <AddButton text="Adicionar Agendamento" onClick={handleAddAgendamento} />
             
             {isLoading ? (
               <Loading>Carregando...</Loading>
@@ -529,8 +546,7 @@ export const TabsSection = ({ initialTab = "employees" }) => {
                   onSubmit={handleAgendamentoSubmit}
                   onCancel={() => setShowAgendamentoForm(false)}
                   initialData={currentAgendamento || {}}
-                  funcionarios={funcionarios}
-                  servicos={servicos}
+                  sharedState={sharedState}
                 />
               </Modal>
             )}

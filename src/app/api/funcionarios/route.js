@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { funcionariosDb } from '../../lib/postgres';
+import funcionariosRepository from '../../repositories/funcionariosRepository';
 
 // Definir que esta rota não usa o Edge Runtime
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ function handleError(error) {
 export async function GET() {
   try {
     console.log('GET /api/funcionarios - Iniciando busca de funcionários');
-    const funcionarios = await funcionariosDb.getAll();
+    const funcionarios = await funcionariosRepository.getAll();
     console.log(`GET /api/funcionarios - Funcionários encontrados: ${funcionarios.length}`);
     return NextResponse.json({
       success: true,
@@ -43,7 +43,7 @@ export async function POST(request) {
     
     if (body.id) {
       console.log(`POST /api/funcionarios - Atualizando funcionário ID: ${body.id}`);
-      const funcionarioAtualizado = await funcionariosDb.update(body.id, {
+      const funcionarioAtualizado = await funcionariosRepository.update(body.id, {
         nome: body.nome,
         especialidade: body.especialidade || '',
         telefone: body.telefone || ''
@@ -65,7 +65,7 @@ export async function POST(request) {
       });
     } else {
       console.log('POST /api/funcionarios - Criando novo funcionário');
-      const novoFuncionario = await funcionariosDb.create({
+      const novoFuncionario = await funcionariosRepository.create({
         nome: body.nome,
         especialidade: body.especialidade || '',
         telefone: body.telefone || ''
@@ -99,15 +99,7 @@ export async function DELETE(request) {
     }
     
     console.log(`DELETE /api/funcionarios - Excluindo funcionário ID: ${id}`);
-    const result = await funcionariosDb.delete(id);
-    
-    if (!result.success) {
-      console.log(`DELETE /api/funcionarios - Erro ao excluir funcionário ID: ${id} - ${result.message}`);
-      return NextResponse.json({
-        success: false,
-        message: result.message || 'Erro ao excluir funcionário'
-      }, { status: 400 });
-    }
+    await funcionariosRepository.delete(id);
     
     console.log(`DELETE /api/funcionarios - Funcionário ID: ${id} excluído com sucesso`);
     return NextResponse.json({

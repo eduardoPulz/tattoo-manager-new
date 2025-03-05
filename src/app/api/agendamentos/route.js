@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { agendamentosDb } from '../../lib/postgres';
+import agendamentosRepository from '../../repositories/agendamentosRepository';
 
 // Definir que esta rota não usa o Edge Runtime
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ function handleError(error) {
 export async function GET() {
   try {
     console.log('GET /api/agendamentos - Iniciando busca de agendamentos');
-    const agendamentos = await agendamentosDb.getAll();
+    const agendamentos = await agendamentosRepository.getAll();
     console.log(`GET /api/agendamentos - Agendamentos encontrados: ${agendamentos.length}`);
     return NextResponse.json({
       success: true,
@@ -83,7 +83,7 @@ export async function POST(request) {
     };
     
     console.log('POST /api/agendamentos - Criando agendamento:', agendamentoData);
-    const novoAgendamento = await agendamentosDb.create(agendamentoData);
+    const novoAgendamento = await agendamentosRepository.create(agendamentoData);
     
     console.log('POST /api/agendamentos - Agendamento criado com sucesso:', novoAgendamento);
     return NextResponse.json({
@@ -110,7 +110,7 @@ export async function DELETE(request) {
     }
     
     console.log(`DELETE /api/agendamentos - Excluindo agendamento: ${id}`);
-    const resultado = await agendamentosDb.delete(id);
+    const resultado = await agendamentosRepository.delete(id);
     
     return NextResponse.json({
       success: true,

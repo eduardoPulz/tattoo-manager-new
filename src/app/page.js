@@ -182,7 +182,7 @@ export default function Home() {
               <ul>
                 {dados.data.servicos.map(s => (
                   <li key={s.id} className="mb-2 pb-2 border-b">
-                    <strong>{s.nome}</strong> - R$ {s.preco.toFixed(2)} ({s.duracao} min)
+                    <strong>{s.nome}</strong> - R$ {s.preco} ({s.duracao} min)
                   </li>
                 ))}
               </ul>
