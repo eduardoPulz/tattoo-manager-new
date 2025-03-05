@@ -1,6 +1,7 @@
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from './registry'
+import { AccessibilityProvider } from './contexts/AccessibilityContext';
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -31,7 +32,11 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.variable} ${robotoMono.variable}`}>
-        <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+        <AccessibilityProvider>
+          <StyledComponentsRegistry>
+            {children}
+          </StyledComponentsRegistry>
+        </AccessibilityProvider>
       </body>
     </html>
   );

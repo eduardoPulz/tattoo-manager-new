@@ -43,3 +43,42 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Estilos para acessibilidade */
+
+/* Alto contraste */
+body.high-contrast {
+  --background: #000000;
+  --foreground: #ffffff;
+  --primary: #ffff00;
+  --secondary: #00ffff;
+  --accent: #ff00ff;
+  --error: #ff0000;
+  --success: #00ff00;
+  --border: #ffffff;
+}
+
+body.high-contrast * {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+body.high-contrast a,
+body.high-contrast button,
+body.high-contrast input,
+body.high-contrast select {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border: 1px solid #ffffff !important;
+}
+
+body.high-contrast button:hover,
+body.high-contrast a:hover {
+  background-color: #333333 !important;
+  text-decoration: underline;
+}
+
+body.high-contrast img {
+  filter: grayscale(100%) contrast(150%);
+}

@@ -46,14 +46,35 @@ export const PersonIcon = styled.i`
   color: white;
 `;
 
-export const AdminText = styled.span`
-  font-family: Ubuntu, sans-serif;
-  font-size: 14px;
+export const AdminText = styled.div`
+  font-weight: 500;
+  margin-left: 8px;
   color: white;
-  text-transform: uppercase;
-
+  
   a {
     color: inherit;
     text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+export const NavItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  font-weight: 500;
+  color: white;
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0 8px;
+    font-size: 0.9rem;
   }
 `;
