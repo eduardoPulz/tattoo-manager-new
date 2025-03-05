@@ -15,7 +15,6 @@
     "PGSSLMODE": "require",
     "DEBUG": "true"
   },
-  "regions": ["sfo1", "gru1"],
   "headers": [
     {
       "source": "/(.*)",
