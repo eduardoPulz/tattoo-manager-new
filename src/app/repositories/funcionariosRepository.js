@@ -32,8 +32,8 @@ const funcionariosRepository = {
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO funcionarios 
-         (id, nome, especialidade,  telefone) 
-         VALUES ($1, $2, $3, $4, $5) 
+         (id, nome, especialidade, telefone) 
+         VALUES ($1, $2, $3, $4) 
          RETURNING *`,
         [
           id,
@@ -55,8 +55,8 @@ const funcionariosRepository = {
         `UPDATE funcionarios 
          SET nome = $1, 
              especialidade = $2, 
-             telefone = $4 
-         WHERE id = $5 
+             telefone = $3 
+         WHERE id = $4 
          RETURNING *`,
         [
           funcionario.nome,
