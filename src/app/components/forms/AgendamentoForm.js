@@ -55,13 +55,32 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
 
   useEffect(() => {
     if (formData.horaInicio) {
-      const horaInicio = new Date(formData.horaInicio);
-      // Sempre define a hora de fim para 1 hora após o início
-      const horaFim = new Date(horaInicio.getTime() + 60 * 60000);
-      setFormData(prev => ({
-        ...prev,
-        horaFim: horaFim.toISOString().slice(0, 16)
-      }));
+      try {
+        const horaInicioStr = formData.horaInicio;
+        
+        const [dataStr, horaStr] = horaInicioStr.split('T');
+        const [hora, minuto] = horaStr.split(':').map(Number);
+        
+        let novaHora = hora + 1;
+        
+        if (novaHora >= 24) {
+          novaHora = 23;
+          const novoMinuto = 59;
+          const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${novoMinuto.toString().padStart(2, '0')}`;
+          setFormData(prev => ({
+            ...prev,
+            horaFim: horaFimStr
+          }));
+        } else {
+          const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+          setFormData(prev => ({
+            ...prev,
+            horaFim: horaFimStr
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao calcular hora de fim:', error);
+      }
     }
   }, [formData.horaInicio]);
 
