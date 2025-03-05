@@ -46,13 +46,13 @@ const EstatisticasPage = () => {
       
       try {
         const [agendamentosRes, servicosRes, funcionariosRes] = await Promise.all([
-          fetch('/api/agendamentos').then(res => res.json()),
+          fetchAgendamentos(),
           fetch('/api/servicos').then(res => res.json()),
           fetch('/api/funcionarios').then(res => res.json())
         ]);
         
-        if (agendamentosRes.success && Array.isArray(agendamentosRes.data)) {
-          setAgendamentos(agendamentosRes.data);
+        if (agendamentosRes) {
+          setAgendamentos(agendamentosRes);
         } else {
           console.error('Resposta inválida de agendamentos:', agendamentosRes);
           setAgendamentos([]);
@@ -81,6 +81,21 @@ const EstatisticasPage = () => {
     
     fetchData();
   }, []);
+
+  // Função para buscar dados de agendamentos
+  async function fetchAgendamentos() {
+    try {
+      const response = await fetch('/api/agendamentos', {
+        cache: 'no-store',
+        next: { revalidate: 0 }
+      });
+      const data = await response.json();
+      return data.success ? data.data : [];
+    } catch (error) {
+      console.error('Erro ao buscar agendamentos:', error);
+      return [];
+    }
+  }
 
   const prepararDadosServicos = () => {
     if (!agendamentos.length || !servicos.length) return { labels: [], data: [] };

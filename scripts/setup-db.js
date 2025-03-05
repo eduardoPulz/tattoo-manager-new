@@ -1,39 +1,22 @@
-const fs = require('fs');
-const path = require('path');
+import { initDatabase } from '../src/app/lib/postgres.js';
+import 'dotenv/config';
 
-const dbPath = path.join(process.cwd(), 'db.json');
-const dbMinimo = '{"funcionarios":[],"servicos":[],"agendamentos":[]}';
+console.log('Iniciando configuração do banco de dados PostgreSQL...');
 
-// Verifica se estamos rodando na Vercel
-if (process.env.VERCEL === '1') {
-  console.log('Ambiente Vercel detectado: Ignorando setup do arquivo db.json');
-  process.exit(0);
-}
-
-try {
-  if (!fs.existsSync(dbPath)) {
-    fs.writeFileSync(dbPath, dbMinimo);
-    console.log('Arquivo db.json criado com sucesso!');
-  } else {
-    try {
-      JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-      console.log('Arquivo db.json validado com sucesso!');
-    } catch (parseError) {
-      console.warn('Arquivo db.json existente não é um JSON válido. Recriando...');
-      fs.writeFileSync(dbPath, dbMinimo);
-      console.log('Arquivo db.json recriado com sucesso!');
-    }
-  }
-  
+async function setupDatabase() {
   try {
-    fs.chmodSync(dbPath, 0o666);
-    console.log('Permissões do arquivo db.json configuradas.');
-  } catch (permError) {
-    console.log('Aviso: Não foi possível configurar permissões do arquivo.');
+    const result = await initDatabase();
+    
+    if (result.success) {
+      console.log('✅ Banco de dados PostgreSQL inicializado com sucesso!');
+    } else {
+      console.error('❌ Erro ao inicializar o banco de dados:', result.error);
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Erro inesperado ao configurar o banco de dados:', error);
+    process.exit(1);
   }
-  
-  console.log('Configuração do banco de dados concluída.');
-} catch (error) {
-  console.error('Erro ao configurar banco de dados:', error.message);
-  process.exit(1);
 }
+
+setupDatabase();

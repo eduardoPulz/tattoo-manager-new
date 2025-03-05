@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
-import { servicosDb } from '../../lib/db';
+import { servicosDb } from '../../lib/postgres';
+
+function handleError(error) {
+  console.error('Erro na API:', error);
+  return NextResponse.json({
+    success: false,
+    message: 'Erro ao processar solicitação',
+    error: error.message
+  }, { status: 500 });
+}
 
 export async function GET() {
   try {
-    const servicos = servicosDb.getAll();
+    const servicos = await servicosDb.getAll();
     return NextResponse.json({
       success: true,
       data: servicos
@@ -22,19 +31,19 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    if (!body.descricao) {
+    if (!body.nome || !body.preco || !body.duracao) {
       return NextResponse.json({
         success: false,
-        message: 'Descrição é obrigatória'
+        message: 'Nome, preço e duração são obrigatórios'
       }, { status: 400 });
     }
     
     if (body.id) {
-      const servicoAtualizado = servicosDb.update(body.id, {
-        nome: body.descricao,
-        descricao: body.descricao,
-        duracao: body.duracao || 60,
-        preco: body.preco || 0
+      const servicoAtualizado = await servicosDb.update(body.id, {
+        nome: body.nome,
+        descricao: body.descricao || '',
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
       });
       
       if (!servicoAtualizado) {
@@ -46,31 +55,25 @@ export async function POST(request) {
       
       return NextResponse.json({
         success: true,
-        message: 'Serviço atualizado com sucesso',
-        data: servicoAtualizado
+        data: servicoAtualizado,
+        message: 'Serviço atualizado com sucesso'
       });
+    } else {
+      const novoServico = await servicosDb.create({
+        nome: body.nome,
+        descricao: body.descricao || '',
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
+      });
+      
+      return NextResponse.json({
+        success: true,
+        data: novoServico,
+        message: 'Serviço criado com sucesso'
+      }, { status: 201 });
     }
-    
-    const novoServico = servicosDb.create({
-      nome: body.descricao,
-      descricao: body.descricao,
-      duracao: body.duracao || 60,
-      preco: body.preco || 0
-    });
-    
-    console.log('Serviço criado com sucesso:', novoServico);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Serviço criado com sucesso',
-      data: novoServico
-    }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao criar/atualizar serviço',
-      error: error.message
-    }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -82,36 +85,24 @@ export async function DELETE(request) {
     if (!id) {
       return NextResponse.json({
         success: false,
-        message: 'ID não fornecido'
+        message: 'ID é obrigatório'
       }, { status: 400 });
     }
     
-    if (id.startsWith('[object')) {
+    const result = await servicosDb.delete(id);
+    
+    if (!result.success) {
       return NextResponse.json({
         success: false,
-        message: 'Formato de ID inválido'
+        message: result.message || 'Erro ao excluir serviço'
       }, { status: 400 });
-    }
-    
-    const resultado = servicosDb.delete(id);
-    
-    if (!resultado.success) {
-      return NextResponse.json({
-        success: false,
-        message: resultado.message
-      }, { status: 409 });
     }
     
     return NextResponse.json({
       success: true,
-      message: 'Serviço removido com sucesso'
+      message: 'Serviço excluído com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao excluir serviço:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao excluir serviço',
-      error: error.message
-    }, { status: 500 });
+    return handleError(error);
   }
 }
