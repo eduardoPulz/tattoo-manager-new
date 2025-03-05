@@ -29,6 +29,19 @@ const servicosRepository = {
 
   async create(servico) {
     try {
+      // Validação de campos obrigatórios
+      if (!servico.nome) {
+        throw new Error('Nome do serviço é obrigatório');
+      }
+      
+      if (isNaN(parseFloat(servico.preco)) || parseFloat(servico.preco) < 0) {
+        throw new Error('Preço deve ser um número válido');
+      }
+      
+      if (isNaN(parseInt(servico.duracao)) || parseInt(servico.duracao) <= 0) {
+        throw new Error('Duração deve ser um número inteiro positivo');
+      }
+
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO servicos 
@@ -38,9 +51,9 @@ const servicosRepository = {
         [
           id,
           servico.nome,
-          servico.preco,
-          servico.duracao,
-          servico.descricao
+          parseFloat(servico.preco),
+          parseInt(servico.duracao),
+          servico.descricao || ''
         ]
       );
       return result.rows[0];
@@ -52,6 +65,19 @@ const servicosRepository = {
 
   async update(id, servico) {
     try {
+      // Validação de campos obrigatórios
+      if (!servico.nome) {
+        throw new Error('Nome do serviço é obrigatório');
+      }
+      
+      if (isNaN(parseFloat(servico.preco)) || parseFloat(servico.preco) < 0) {
+        throw new Error('Preço deve ser um número válido');
+      }
+      
+      if (isNaN(parseInt(servico.duracao)) || parseInt(servico.duracao) <= 0) {
+        throw new Error('Duração deve ser um número inteiro positivo');
+      }
+
       const result = await db.query(
         `UPDATE servicos 
          SET nome = $1, 
@@ -62,9 +88,9 @@ const servicosRepository = {
          RETURNING *`,
         [
           servico.nome,
-          servico.preco,
-          servico.duracao,
-          servico.descricao,
+          parseFloat(servico.preco),
+          parseInt(servico.duracao),
+          servico.descricao || '',
           id
         ]
       );

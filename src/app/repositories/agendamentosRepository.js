@@ -29,6 +29,23 @@ const agendamentosRepository = {
 
   async create(agendamento) {
     try {
+      // Validação de campos obrigatórios
+      if (!agendamento.nomeCliente) {
+        throw new Error('Nome do cliente é obrigatório');
+      }
+      
+      if (!agendamento.funcionarioId) {
+        throw new Error('Funcionário é obrigatório');
+      }
+      
+      if (!agendamento.servicoId) {
+        throw new Error('Serviço é obrigatório');
+      }
+      
+      if (!agendamento.horaInicio || !agendamento.horaFim) {
+        throw new Error('Horário de início e fim são obrigatórios');
+      }
+      
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO agendamentos 
@@ -38,7 +55,7 @@ const agendamentosRepository = {
         [
           id,
           agendamento.nomeCliente,
-          agendamento.clienteTelefone,
+          agendamento.clienteTelefone || '',
           agendamento.funcionarioId,
           agendamento.servicoId,
           agendamento.horaInicio,
@@ -54,6 +71,23 @@ const agendamentosRepository = {
 
   async update(id, agendamento) {
     try {
+      // Validação de campos obrigatórios
+      if (!agendamento.nomeCliente) {
+        throw new Error('Nome do cliente é obrigatório');
+      }
+      
+      if (!agendamento.funcionarioId) {
+        throw new Error('Funcionário é obrigatório');
+      }
+      
+      if (!agendamento.servicoId) {
+        throw new Error('Serviço é obrigatório');
+      }
+      
+      if (!agendamento.horaInicio || !agendamento.horaFim) {
+        throw new Error('Horário de início e fim são obrigatórios');
+      }
+      
       const result = await db.query(
         `UPDATE agendamentos 
          SET nomeCliente = $1, 
@@ -66,7 +100,7 @@ const agendamentosRepository = {
          RETURNING *`,
         [
           agendamento.nomeCliente,
-          agendamento.clienteTelefone,
+          agendamento.clienteTelefone || '',
           agendamento.funcionarioId,
           agendamento.servicoId,
           agendamento.horaInicio,

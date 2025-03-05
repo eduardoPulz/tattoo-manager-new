@@ -36,7 +36,7 @@ export async function POST(request) {
     console.log('POST /api/servicos - Corpo da requisição:', body);
     
     // Validar campos obrigatórios
-    if (!body.descricao || !body.preco || !body.duracao) {
+    if (!body.nome || !body.preco || !body.duracao) {
       console.log('POST /api/servicos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
