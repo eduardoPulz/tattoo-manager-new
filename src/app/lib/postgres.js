@@ -2,127 +2,22 @@ const pg = require('pg');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv/config');
 
-// Função para criar o pool de conexões
-const createPool = () => {
-  console.log('Inicializando conexão com o banco de dados...');
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('VERCEL:', process.env.VERCEL);
-  
-  // Configuração do pool de conexões
-  const poolConfig = {
-    max: 5, // Limitar o número máximo de conexões
-    idleTimeoutMillis: 30000, // Tempo limite para conexões ociosas
-    connectionTimeoutMillis: 10000, // Tempo limite para tentar conexão
-  };
-
-  // Verificar se estamos em produção (Vercel)
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
-    console.log('Ambiente de produção detectado, usando configurações da Vercel');
-    
-    // Usar variáveis de ambiente específicas do Neon
-    poolConfig.host = process.env.PGHOST;
-    poolConfig.database = process.env.PGDATABASE;
-    poolConfig.user = process.env.PGUSER;
-    poolConfig.password = process.env.PGPASSWORD;
-    poolConfig.port = 5432;
-    
-    // Configurar SSL para o Neon
-    poolConfig.ssl = {
-      rejectUnauthorized: false
-    };
-    
-    console.log('Configuração do pool para produção:', JSON.stringify({
-      ...poolConfig,
-      host: poolConfig.host || 'não configurado',
-      database: poolConfig.database || 'não configurado',
-      user: poolConfig.user ? 'configurado' : 'não configurado',
-      password: poolConfig.password ? 'configurado' : 'não configurado',
-      ssl: poolConfig.ssl ? 'configurado' : 'não configurado'
-    }, null, 2));
-  } else {
-    // Ambiente de desenvolvimento
-    console.log('Ambiente de desenvolvimento detectado');
-    
-    // Usar DATABASE_URL se disponível, caso contrário usar variáveis individuais
-    if (process.env.DATABASE_URL) {
-      poolConfig.connectionString = process.env.DATABASE_URL;
-      console.log('Usando DATABASE_URL para conexão');
-    } else {
-      poolConfig.host = process.env.PGHOST || 'localhost';
-      poolConfig.database = process.env.PGDATABASE || 'postgres';
-      poolConfig.user = process.env.PGUSER || 'postgres';
-      poolConfig.password = process.env.PGPASSWORD || '';
-      poolConfig.port = parseInt(process.env.PGPORT || '5432');
-      console.log('Usando variáveis individuais para conexão');
-    }
-  }
-  
-  console.log('Configuração final do pool:', JSON.stringify({
-    ...poolConfig,
-    connectionString: poolConfig.connectionString ? 'CONFIGURADO' : 'NÃO CONFIGURADO',
-    host: poolConfig.host || 'não configurado',
-    database: poolConfig.database || 'não configurado',
-    user: poolConfig.user ? 'configurado' : 'não configurado',
-    password: poolConfig.password ? 'configurado' : 'não configurado'
-  }, null, 2));
-  
-  try {
-    const pool = new pg.Pool(poolConfig);
-    
-    // Testar a conexão
-    pool.on('error', (err) => {
-      console.error('Erro inesperado no pool de conexões:', err);
-    });
-    
-    pool.on('connect', (client) => {
-      console.log('Nova conexão estabelecida com o banco de dados');
-    });
-    
-    console.log('Pool de conexões PostgreSQL inicializado com sucesso');
-    return pool;
-  } catch (error) {
-    console.error('Erro ao inicializar o pool de conexões PostgreSQL:', error);
-    throw new Error('Falha na inicialização do banco de dados: ' + error.message);
-  }
-};
-
 // Criar pool de conexões
 let pool;
 
 try {
-  pool = createPool();
-} catch (error) {
-  console.error('Erro fatal ao criar pool de conexões:', error);
-  // Em produção, não queremos que a aplicação falhe completamente
-  // Vamos criar um pool vazio que será recriado na próxima tentativa
-  pool = {
-    connect: async () => {
-      console.log('Tentando recriar o pool de conexões...');
-      try {
-        const newPool = createPool();
-        pool = newPool;
-        return newPool.connect();
-      } catch (error) {
-        console.error('Falha ao recriar o pool de conexões:', error);
-        throw error;
-      }
-    },
-    query: async (...args) => {
-      console.log('Tentando recriar o pool de conexões para query...');
-      try {
-        const newPool = createPool();
-        pool = newPool;
-        return newPool.query(...args);
-      } catch (error) {
-        console.error('Falha ao recriar o pool de conexões para query:', error);
-        throw error;
-      }
-    },
-    end: async () => {
-      console.log('Pool não inicializado, nada para encerrar');
-      return Promise.resolve();
-    }
+  // Configuração simples do pool
+  const poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
   };
+  
+  console.log('Conectando ao banco de dados...');
+  pool = new pg.Pool(poolConfig);
+  console.log('Conexão com o banco de dados estabelecida');
+} catch (error) {
+  console.error('Erro ao conectar ao banco de dados:', error);
+  throw error;
 }
 
 // Função para inicializar as tabelas do banco de dados
@@ -142,7 +37,6 @@ async function initDatabase() {
         telefone TEXT
       )
     `);
-    console.log('Tabela funcionarios criada ou já existente');
 
     // Criar tabela de serviços
     await client.query(`
@@ -154,7 +48,6 @@ async function initDatabase() {
         duracao INTEGER NOT NULL
       )
     `);
-    console.log('Tabela servicos criada ou já existente');
 
     // Criar tabela de agendamentos
     await client.query(`
@@ -169,22 +62,18 @@ async function initDatabase() {
         observacoes TEXT
       )
     `);
-    console.log('Tabela agendamentos criada ou já existente');
     
-    console.log('Inicialização do banco de dados concluída com sucesso');
+    console.log('Tabelas criadas com sucesso');
     return true;
   } catch (error) {
     console.error('Erro durante a inicialização do banco de dados:', error);
     throw error;
   } finally {
-    if (client) {
-      client.release();
-      console.log('Cliente liberado após inicialização do banco de dados');
-    }
+    if (client) client.release();
   }
 }
 
-// Função auxiliar para executar consultas com tratamento de erros
+// Função auxiliar para executar consultas
 async function executeQuery(queryFn) {
   let client;
   try {
@@ -194,9 +83,7 @@ async function executeQuery(queryFn) {
     console.error('Erro ao executar consulta:', error);
     throw error;
   } finally {
-    if (client) {
-      client.release();
-    }
+    if (client) client.release();
   }
 }
 
@@ -239,16 +126,6 @@ const funcionariosDb = {
   
   delete: async (id) => {
     return executeQuery(async (client) => {
-      // Verificar se existem agendamentos relacionados
-      const agendamentos = await client.query(
-        'SELECT COUNT(*) FROM agendamentos WHERE funcionarioId = $1',
-        [id]
-      );
-      
-      if (parseInt(agendamentos.rows[0].count) > 0) {
-        return { success: false, message: 'Funcionário possui agendamentos' };
-      }
-      
       await client.query('DELETE FROM funcionarios WHERE id = $1', [id]);
       return { success: true };
     });
@@ -294,16 +171,6 @@ const servicosDb = {
   
   delete: async (id) => {
     return executeQuery(async (client) => {
-      // Verificar se existem agendamentos relacionados
-      const agendamentos = await client.query(
-        'SELECT COUNT(*) FROM agendamentos WHERE servicoId = $1',
-        [id]
-      );
-      
-      if (parseInt(agendamentos.rows[0].count) > 0) {
-        return { success: false, message: 'Serviço possui agendamentos' };
-      }
-      
       await client.query('DELETE FROM servicos WHERE id = $1', [id]);
       return { success: true };
     });
@@ -357,7 +224,6 @@ const agendamentosDb = {
         agendamento.observacoes || ''
       ]);
       
-      // Buscar o agendamento completo
       const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
@@ -388,7 +254,6 @@ const agendamentosDb = {
         id
       ]);
       
-      // Buscar o agendamento atualizado
       const result = await client.query(`
         SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
         FROM agendamentos a
