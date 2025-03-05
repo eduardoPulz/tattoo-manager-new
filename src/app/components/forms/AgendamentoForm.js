@@ -58,7 +58,8 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       const servicoSelecionado = servicos.find(s => s.id === formData.servicoId);
       if (servicoSelecionado) {
         const horaInicio = new Date(formData.horaInicio);
-        const horaFim = new Date(horaInicio.getTime() + servicoSelecionado.duracao * 60000);
+        // Ajusta para 1 hora de diferença em vez de usar a duração do serviço
+        const horaFim = new Date(horaInicio.getTime() + 60 * 60000);
         setFormData(prev => ({
           ...prev,
           horaFim: horaFim.toISOString().slice(0, 16)

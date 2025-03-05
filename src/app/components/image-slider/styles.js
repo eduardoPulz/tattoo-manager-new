@@ -20,14 +20,21 @@ export const SlideImage = styled.img`
 export const DotsContainer = styled.div`
   display: flex;
   gap: 8px;
-  margin-top: 36px;
+  justify-content: center;
+  margin-bottom: 16px;
 `;
 
 export const Dot = styled.div`
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background-color: white;
   opacity: ${(props) => (props.$active ? 1 : 0.5)};
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  
+  &:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
 `;

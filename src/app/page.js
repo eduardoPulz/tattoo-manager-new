@@ -78,6 +78,11 @@ export default function Home() {
     <main className="p-8">
       <h1 className="text-3xl font-bold mb-8">Tattoo Manager - Versão Simplificada</h1>
       
+      {/* Galeria de Imagens */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Galeria de Trabalhos</h2>
+      </div>
+      
       {/* Status da API */}
       <div className="mb-8 p-4 bg-gray-100 rounded">
         <h2 className="text-xl font-semibold mb-2">Status da API</h2>
