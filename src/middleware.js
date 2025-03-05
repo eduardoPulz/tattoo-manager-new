@@ -27,11 +27,19 @@ export async function middleware(request) {
     
     // Se for uma rota de API, retornar erro JSON
     if (request.nextUrl.pathname.startsWith('/api')) {
-      return NextResponse.json({
-        success: false,
-        message: 'Erro ao inicializar banco de dados',
-        error: initializationError.message
-      }, { status: 500 });
+      return new NextResponse(
+        JSON.stringify({
+          success: false,
+          message: 'Erro ao inicializar banco de dados',
+          error: initializationError.message
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
     
     // Para outras rotas, apenas prosseguir (o erro será tratado na UI)
@@ -49,26 +57,11 @@ export async function middleware(request) {
     console.log('Middleware: Inicializando banco de dados PostgreSQL...');
     initializationInProgress = true;
     
-    const result = await initDatabase();
+    await initDatabase();
     
-    if (result.success) {
-      console.log('Middleware: Banco de dados PostgreSQL inicializado com sucesso!');
-      databaseInitialized = true;
-      initializationInProgress = false;
-    } else {
-      console.error('Middleware: Erro ao inicializar o banco de dados:', result.error);
-      initializationError = new Error(result.error?.message || 'Falha na inicialização do banco de dados');
-      initializationInProgress = false;
-      
-      // Se for uma rota de API, retornar erro JSON
-      if (request.nextUrl.pathname.startsWith('/api')) {
-        return NextResponse.json({
-          success: false,
-          message: 'Erro ao inicializar banco de dados',
-          error: initializationError.message
-        }, { status: 500 });
-      }
-    }
+    console.log('Middleware: Banco de dados PostgreSQL inicializado com sucesso!');
+    databaseInitialized = true;
+    initializationInProgress = false;
   } catch (error) {
     console.error('Middleware: Erro inesperado ao inicializar o banco de dados:', error);
     initializationError = error;
@@ -76,11 +69,19 @@ export async function middleware(request) {
     
     // Se for uma rota de API, retornar erro JSON
     if (request.nextUrl.pathname.startsWith('/api')) {
-      return NextResponse.json({
-        success: false,
-        message: 'Erro inesperado ao inicializar banco de dados',
-        error: error.message
-      }, { status: 500 });
+      return new NextResponse(
+        JSON.stringify({
+          success: false,
+          message: 'Erro inesperado ao inicializar banco de dados',
+          error: error.message
+        }),
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     }
   }
   

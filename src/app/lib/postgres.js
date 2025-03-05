@@ -135,6 +135,7 @@ export async function initDatabase() {
     console.log('Tabela agendamentos criada ou já existente');
     
     console.log('Inicialização do banco de dados concluída com sucesso');
+    return true;
   } catch (error) {
     console.error('Erro durante a inicialização do banco de dados:', error);
     throw error;
