@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { agendamentosDb } from '../../lib/postgres';
+const { NextResponse } = require('next/server');
+const { agendamentosDb } = require('../../lib/postgres');
 
 function handleError(error) {
   console.error('Erro na API de agendamentos:', error);
@@ -10,7 +10,7 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-export async function GET() {
+async function GET() {
   try {
     console.log('GET /api/agendamentos - Iniciando busca de agendamentos');
     const agendamentos = await agendamentosDb.getAll();
@@ -25,7 +25,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request) {
+async function POST(request) {
   try {
     console.log('POST /api/agendamentos - Iniciando processamento');
     const body = await request.json();
@@ -123,7 +123,7 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+async function DELETE(request) {
   try {
     console.log('DELETE /api/agendamentos - Iniciando processamento');
     const { searchParams } = new URL(request.url);
@@ -158,3 +158,9 @@ export async function DELETE(request) {
     return handleError(error);
   }
 }
+
+module.exports = {
+  GET,
+  POST,
+  DELETE
+};

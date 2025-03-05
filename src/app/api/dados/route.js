@@ -1,18 +1,24 @@
-import { NextResponse } from 'next/server';
-import { funcionariosDb, servicosDb, agendamentosDb } from '../../lib/db';
+const { NextResponse } = require('next/server');
+const { funcionariosDb, servicosDb, agendamentosDb } = require('../../lib/postgres');
 
-export async function GET() {
+async function GET() {
   try {
     const funcionarios = funcionariosDb.getAll();
     const servicos = servicosDb.getAll();
     const agendamentos = agendamentosDb.getAll();
-
+    
+    const [funcionariosData, servicosData, agendamentosData] = await Promise.all([
+      funcionarios,
+      servicos,
+      agendamentos
+    ]);
+    
     return NextResponse.json({
       success: true,
       data: {
-        funcionarios,
-        servicos,
-        agendamentos,
+        funcionarios: funcionariosData,
+        servicos: servicosData,
+        agendamentos: agendamentosData,
         sistema: {
           versao: '2.0',
           ambiente: process.env.NODE_ENV || 'development',
@@ -24,13 +30,13 @@ export async function GET() {
     console.error('Erro ao buscar dados:', error);
     return NextResponse.json({
       success: false,
-      message: 'Erro ao buscar dados',
+      message: 'Erro ao processar solicitação',
       error: error.message
     }, { status: 500 });
   }
 }
 
-export async function POST(request) {
+async function POST(request) {
   try {
     const { tipo, dados } = await request.json();
     
@@ -40,26 +46,23 @@ export async function POST(request) {
         message: 'Tipo e dados são obrigatórios'
       }, { status: 400 });
     }
-
+    
     let resultado;
     
     switch (tipo) {
       case 'funcionario':
-        resultado = funcionariosDb.create(dados);
+        resultado = await funcionariosDb.create(dados);
         break;
-      
       case 'servico':
-        resultado = servicosDb.create(dados);
+        resultado = await servicosDb.create(dados);
         break;
-      
       case 'agendamento':
-        resultado = agendamentosDb.create(dados);
+        resultado = await agendamentosDb.create(dados);
         break;
-      
       default:
         return NextResponse.json({
           success: false,
-          message: `Tipo inválido: ${tipo}`
+          message: 'Tipo inválido'
         }, { status: 400 });
     }
     
@@ -68,11 +71,13 @@ export async function POST(request) {
       data: resultado
     });
   } catch (error) {
-    console.error('Erro ao criar registro:', error);
+    console.error('Erro ao processar dados:', error);
     return NextResponse.json({
       success: false,
-      message: 'Erro ao criar registro',
+      message: 'Erro ao processar solicitação',
       error: error.message
     }, { status: 500 });
   }
 }
+
+module.exports = { GET, POST };
