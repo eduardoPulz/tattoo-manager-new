@@ -80,8 +80,6 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
-    console.log('ID recebido para exclusão:', id);
-    
     if (!id) {
       return NextResponse.json({
         success: false,
@@ -104,8 +102,6 @@ export async function DELETE(request) {
         message: resultado.message
       }, { status: 409 });
     }
-    
-    console.log('Funcionário removido com sucesso. ID:', id);
     
     return NextResponse.json({
       success: true,

@@ -100,8 +100,6 @@ export async function DELETE(request) {
       }, { status: 409 });
     }
     
-    console.log('Serviço removido com sucesso. ID:', id);
-    
     return NextResponse.json({
       success: true,
       message: 'Serviço removido com sucesso'

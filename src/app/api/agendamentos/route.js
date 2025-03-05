@@ -153,8 +153,6 @@ export async function DELETE(request) {
       }, { status: 409 });
     }
     
-    console.log('Agendamento removido com sucesso. ID:', id);
-    
     return NextResponse.json({
       success: true,
       message: 'Agendamento removido com sucesso'

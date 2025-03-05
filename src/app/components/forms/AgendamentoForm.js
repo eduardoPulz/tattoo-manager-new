@@ -122,14 +122,22 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     setIsSubmitting(true);
     
     try {
+      // Garantir que as datas sejam formatadas corretamente
+      const horaInicio = new Date(formData.horaInicio);
+      const horaFim = new Date(formData.horaFim);
+      
+      // Verificar se as datas são válidas antes de enviar
+      if (isNaN(horaInicio.getTime()) || isNaN(horaFim.getTime())) {
+        throw new Error('Datas inválidas. Verifique o formato.');
+      }
+      
       const dataToSubmit = {
         id: formData.id,
-        nomeCliente: formData.nomeCliente,
+        nomeCliente: formData.nomeCliente.trim(),
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
-        horaInicio: new Date(formData.horaInicio).toISOString(),
-        horaFim: new Date(formData.horaFim).toISOString(),
-        status: formData.status
+        horaInicio: horaInicio.toISOString(),
+        horaFim: horaFim.toISOString()
       };
       
       await onSubmit(dataToSubmit);
@@ -146,7 +154,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      setErrors({ submit: 'Erro ao salvar. Por favor, tente novamente.' });
+      setErrors({ submit: `Erro ao salvar: ${error.message}` });
     } finally {
       setIsSubmitting(false);
     }
