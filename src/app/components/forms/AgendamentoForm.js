@@ -54,19 +54,16 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   }, []);
 
   useEffect(() => {
-    if (formData.servicoId && formData.horaInicio) {
-      const servicoSelecionado = servicos.find(s => s.id === formData.servicoId);
-      if (servicoSelecionado) {
-        const horaInicio = new Date(formData.horaInicio);
-        // Ajusta para 1 hora de diferença em vez de usar a duração do serviço
-        const horaFim = new Date(horaInicio.getTime() + 60 * 60000);
-        setFormData(prev => ({
-          ...prev,
-          horaFim: horaFim.toISOString().slice(0, 16)
-        }));
-      }
+    if (formData.horaInicio) {
+      const horaInicio = new Date(formData.horaInicio);
+      // Sempre define a hora de fim para 1 hora após o início
+      const horaFim = new Date(horaInicio.getTime() + 60 * 60000);
+      setFormData(prev => ({
+        ...prev,
+        horaFim: horaFim.toISOString().slice(0, 16)
+      }));
     }
-  }, [formData.servicoId, formData.horaInicio, servicos]);
+  }, [formData.horaInicio]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -243,12 +240,10 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           value={formData.horaFim}
           onChange={handleChange}
           data-error={!!errors.horaFim}
-          readOnly={!!formData.servicoId}
+          readOnly={true}
         />
         {errors.horaFim && <ErrorMessage>{errors.horaFim}</ErrorMessage>}
-        {formData.servicoId && (
-          <small>Calculado automaticamente com base na duração do serviço</small>
-        )}
+        <small>Calculado automaticamente para 1 hora após o início</small>
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}
