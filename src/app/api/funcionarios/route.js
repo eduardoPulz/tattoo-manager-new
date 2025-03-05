@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { funcionariosDb } from '../../lib/db';
+import { funcionariosDb } from '../../lib/postgres';
 
 function handleError(error) {
   console.error('Erro na API:', error);
@@ -12,7 +12,7 @@ function handleError(error) {
 
 export async function GET() {
   try {
-    const funcionarios = funcionariosDb.getAll();
+    const funcionarios = await funcionariosDb.getAll();
     return NextResponse.json({
       success: true,
       data: funcionarios
@@ -39,7 +39,7 @@ export async function POST(request) {
     }
     
     if (body.id) {
-      const funcionarioAtualizado = funcionariosDb.update(body.id, {
+      const funcionarioAtualizado = await funcionariosDb.update(body.id, {
         nome: body.nome,
         especialidade: body.especialidade || '',
         telefone: body.telefone || ''
@@ -54,22 +54,22 @@ export async function POST(request) {
       
       return NextResponse.json({
         success: true,
-        message: 'Funcionário atualizado com sucesso',
-        data: funcionarioAtualizado
+        data: funcionarioAtualizado,
+        message: 'Funcionário atualizado com sucesso'
       });
+    } else {
+      const novoFuncionario = await funcionariosDb.create({
+        nome: body.nome,
+        especialidade: body.especialidade || '',
+        telefone: body.telefone || ''
+      });
+      
+      return NextResponse.json({
+        success: true,
+        data: novoFuncionario,
+        message: 'Funcionário criado com sucesso'
+      }, { status: 201 });
     }
-    
-    const novoFuncionario = funcionariosDb.create({
-      nome: body.nome,
-      especialidade: body.especialidade || '',
-      telefone: body.telefone || ''
-    });
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Funcionário criado com sucesso',
-      data: novoFuncionario
-    }, { status: 201 });
   } catch (error) {
     return handleError(error);
   }
@@ -83,36 +83,24 @@ export async function DELETE(request) {
     if (!id) {
       return NextResponse.json({
         success: false,
-        message: 'ID não fornecido'
+        message: 'ID é obrigatório'
       }, { status: 400 });
     }
     
-    if (id.startsWith('[object')) {
+    const result = await funcionariosDb.delete(id);
+    
+    if (!result.success) {
       return NextResponse.json({
         success: false,
-        message: 'Formato de ID inválido'
+        message: result.message || 'Erro ao excluir funcionário'
       }, { status: 400 });
-    }
-    
-    const resultado = funcionariosDb.delete(id);
-    
-    if (!resultado.success) {
-      return NextResponse.json({
-        success: false,
-        message: resultado.message
-      }, { status: 409 });
     }
     
     return NextResponse.json({
       success: true,
-      message: 'Funcionário removido com sucesso'
+      message: 'Funcionário excluído com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao excluir funcionário:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao excluir funcionário',
-      error: error.message
-    }, { status: 500 });
+    return handleError(error);
   }
 }

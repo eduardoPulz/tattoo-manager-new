@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
-import { agendamentosDb, funcionariosDb, servicosDb } from '../../lib/db';
+import { agendamentosDb } from '../../lib/postgres';
+
+function handleError(error) {
+  console.error('Erro na API:', error);
+  return NextResponse.json({
+    success: false,
+    message: 'Erro ao processar solicitação',
+    error: error.message
+  }, { status: 500 });
+}
 
 export async function GET() {
   try {
-    const agendamentos = agendamentosDb.getAll();
+    const agendamentos = await agendamentosDb.getAll();
     return NextResponse.json({
       success: true,
       data: agendamentos
@@ -22,68 +31,36 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    const errors = {};
-    
-    if (!body.nomeCliente) {
-      errors.nomeCliente = 'Nome do cliente é obrigatório';
-    }
-    
-    if (!body.funcionarioId) {
-      errors.funcionarioId = 'Funcionário é obrigatório';
-    } else {
-      const funcionario = funcionariosDb.getById(body.funcionarioId);
-      if (!funcionario) {
-        errors.funcionarioId = 'Funcionário não encontrado';
-      }
-    }
-    
-    if (!body.servicoId) {
-      errors.servicoId = 'Serviço é obrigatório';
-    } else {
-      const servico = servicosDb.getById(body.servicoId);
-      if (!servico) {
-        errors.servicoId = 'Serviço não encontrado';
-      }
-    }
-    
-    if (!body.horaInicio) {
-      errors.horaInicio = 'Hora de início é obrigatória';
-    }
-    
-    if (!body.horaFim) {
-      errors.horaFim = 'Hora de fim é obrigatória';
-    }
-    
-    const horaInicio = new Date(body.horaInicio);
-    const horaFim = new Date(body.horaFim);
-    
-    if (isNaN(horaInicio.getTime())) {
-      errors.horaInicio = 'Data de início inválida';
-    }
-    
-    if (isNaN(horaFim.getTime())) {
-      errors.horaFim = 'Data de fim inválida';
-    }
-    
-    if (horaInicio && horaFim && horaFim <= horaInicio) {
-      errors.horaFim = 'A data de fim deve ser posterior à data de início';
-    }
-    
-    if (Object.keys(errors).length > 0) {
+    if (!body.clienteNome || !body.clienteTelefone || !body.funcionarioId || !body.servicoId || !body.horaInicio) {
       return NextResponse.json({
         success: false,
-        message: 'Erros de validação',
-        errors
+        message: 'Todos os campos obrigatórios devem ser preenchidos'
       }, { status: 400 });
     }
     
+    // Processar datas
+    const horaInicio = new Date(body.horaInicio);
+    
+    // Calcular horaFim se não foi fornecida
+    let horaFim;
+    if (body.horaFim) {
+      horaFim = new Date(body.horaFim);
+    } else if (body.duracao) {
+      horaFim = new Date(horaInicio.getTime() + body.duracao * 60000);
+    } else {
+      // Padrão: 1 hora
+      horaFim = new Date(horaInicio.getTime() + 60 * 60000);
+    }
+    
     if (body.id) {
-      const agendamentoAtualizado = agendamentosDb.update(body.id, {
-        nomeCliente: body.nomeCliente,
+      const agendamentoAtualizado = await agendamentosDb.update(body.id, {
+        clienteNome: body.clienteNome,
+        clienteTelefone: body.clienteTelefone,
         funcionarioId: body.funcionarioId,
         servicoId: body.servicoId,
-        horaInicio: body.horaInicio,
-        horaFim: body.horaFim,
+        horaInicio,
+        horaFim,
+        observacoes: body.observacoes || ''
       });
       
       if (!agendamentoAtualizado) {
@@ -95,31 +72,28 @@ export async function POST(request) {
       
       return NextResponse.json({
         success: true,
-        message: 'Agendamento atualizado com sucesso',
-        data: agendamentoAtualizado
+        data: agendamentoAtualizado,
+        message: 'Agendamento atualizado com sucesso'
       });
+    } else {
+      const novoAgendamento = await agendamentosDb.create({
+        clienteNome: body.clienteNome,
+        clienteTelefone: body.clienteTelefone,
+        funcionarioId: body.funcionarioId,
+        servicoId: body.servicoId,
+        horaInicio,
+        horaFim,
+        observacoes: body.observacoes || ''
+      });
+      
+      return NextResponse.json({
+        success: true,
+        data: novoAgendamento,
+        message: 'Agendamento criado com sucesso'
+      }, { status: 201 });
     }
-    
-    const novoAgendamento = agendamentosDb.create({
-      nomeCliente: body.nomeCliente,
-      funcionarioId: body.funcionarioId,
-      servicoId: body.servicoId,
-      horaInicio: body.horaInicio,
-      horaFim: body.horaFim,
-    });
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Agendamento criado com sucesso',
-      data: novoAgendamento
-    }, { status: 201 });
   } catch (error) {
-    console.error('Erro ao criar/atualizar agendamento:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao criar/atualizar agendamento',
-      error: error.message
-    }, { status: 500 });
+    return handleError(error);
   }
 }
 
@@ -131,36 +105,24 @@ export async function DELETE(request) {
     if (!id) {
       return NextResponse.json({
         success: false,
-        message: 'ID não fornecido'
+        message: 'ID é obrigatório'
       }, { status: 400 });
     }
     
-    if (id.startsWith('[object')) {
+    const result = await agendamentosDb.delete(id);
+    
+    if (!result.success) {
       return NextResponse.json({
         success: false,
-        message: 'Formato de ID inválido'
+        message: result.message || 'Erro ao excluir agendamento'
       }, { status: 400 });
-    }
-    
-    const resultado = agendamentosDb.delete(id);
-    
-    if (!resultado.success) {
-      return NextResponse.json({
-        success: false,
-        message: resultado.message
-      }, { status: 409 });
     }
     
     return NextResponse.json({
       success: true,
-      message: 'Agendamento removido com sucesso'
+      message: 'Agendamento excluído com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao excluir agendamento:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Erro ao excluir agendamento',
-      error: error.message
-    }, { status: 500 });
+    return handleError(error);
   }
 }

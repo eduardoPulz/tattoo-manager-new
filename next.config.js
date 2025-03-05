@@ -23,6 +23,9 @@ const nextConfig = {
         permanent: true,
       },
     ];
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['@vercel/postgres'],
   }
 }
 
