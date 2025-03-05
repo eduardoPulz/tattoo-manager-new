@@ -54,25 +54,35 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   }, []);
 
   useEffect(() => {
-    if (formData.horaInicio) {
+    if (formData.horaInicio && formData.servicoId) {
       try {
-        const horaInicioStr = formData.horaInicio;
+        // Encontrar o serviço selecionado
+        const servicoSelecionado = servicos.find(s => s.id === formData.servicoId);
         
-        const [dataStr, horaStr] = horaInicioStr.split('T');
-        const [hora, minuto] = horaStr.split(':').map(Number);
-        
-        let novaHora = hora + 1;
-        
-        if (novaHora >= 24) {
-          novaHora = 23;
-          const novoMinuto = 59;
+        if (servicoSelecionado) {
+          // Obter a duração do serviço em minutos
+          const duracaoMinutos = parseInt(servicoSelecionado.duracao, 10) || 60;
+          
+          const horaInicioStr = formData.horaInicio;
+          const [dataStr, horaStr] = horaInicioStr.split('T');
+          const [hora, minuto] = horaStr.split(':').map(Number);
+          
+          // Calcular os minutos totais
+          let totalMinutos = hora * 60 + minuto + duracaoMinutos;
+          
+          // Calcular a nova hora e minuto
+          let novaHora = Math.floor(totalMinutos / 60);
+          let novoMinuto = totalMinutos % 60;
+          
+          // Se a nova hora for 24 ou mais, ajustar para 23:59 para manter no mesmo dia
+          if (novaHora >= 24) {
+            novaHora = 23;
+            novoMinuto = 59;
+          }
+          
+          // Criar a string da nova data/hora de fim
           const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${novoMinuto.toString().padStart(2, '0')}`;
-          setFormData(prev => ({
-            ...prev,
-            horaFim: horaFimStr
-          }));
-        } else {
-          const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+          
           setFormData(prev => ({
             ...prev,
             horaFim: horaFimStr
@@ -82,7 +92,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         console.error('Erro ao calcular hora de fim:', error);
       }
     }
-  }, [formData.horaInicio]);
+  }, [formData.horaInicio, formData.servicoId, servicos]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -259,10 +269,12 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           value={formData.horaFim}
           onChange={handleChange}
           data-error={!!errors.horaFim}
-          readOnly={true}
+          readOnly={!!formData.servicoId}
         />
         {errors.horaFim && <ErrorMessage>{errors.horaFim}</ErrorMessage>}
-        <small>Calculado automaticamente para 1 hora após o início</small>
+        {formData.servicoId && (
+          <small>Calculado automaticamente com base na duração do serviço</small>
+        )}
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}
