@@ -86,6 +86,17 @@ export const ErrorMessage = styled.div`
   padding: 0 20px;
 `;
 
+export const StatisticsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+`;
+
 export const FilterContainer = styled.div`
   display: flex;
   align-items: center;
@@ -100,8 +111,9 @@ export const FilterContainer = styled.div`
 
 export const FilterLabel = styled.label`
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 10px;
+  color: #333;
   
   @media (max-width: 768px) {
     margin-bottom: 5px;
@@ -111,26 +123,18 @@ export const FilterLabel = styled.label`
 export const FilterSelect = styled.select`
   padding: 8px 12px;
   border-radius: 4px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #ddd;
   background-color: white;
   font-size: 0.9rem;
   min-width: 200px;
-  cursor: pointer;
   
   &:focus {
     outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
   }
-`;
-
-export const StatisticsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  width: 100%;
   
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;

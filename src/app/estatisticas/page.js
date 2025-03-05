@@ -20,7 +20,9 @@ import {
   StatisticsHeader, 
   LoadingMessage, 
   ErrorMessage,
-  StatisticsGrid
+  FilterContainer,
+  FilterLabel,
+  FilterSelect
 } from "./styles";
 
 ChartJS.register(
@@ -38,6 +40,7 @@ const EstatisticasPage = () => {
   const [funcionarios, setFuncionarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filtroSelecionado, setFiltroSelecionado] = useState('quantidade');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,168 +104,263 @@ const EstatisticasPage = () => {
     if (!agendamentos.length || !servicos.length) return { labels: [], data: [] };
     
     const contagem = {};
+    const valorTotal = {};
+    const duracaoTotal = {};
+    const clientesUnicos = {};
+    const contadorServicos = {};
     
     servicos.forEach(servico => {
-      contagem[servico.id] = {
-        nome: servico.descricao,
-        count: 0
+      contagem[servico.id] = 0;
+      valorTotal[servico.id] = 0;
+      duracaoTotal[servico.id] = 0;
+      clientesUnicos[servico.id] = new Set();
+      contadorServicos[servico.id] = {
+        nome: servico.nome,
+        descricao: servico.descricao,
+        preco: servico.preco,
+        duracao: servico.duracao
       };
     });
     
     agendamentos.forEach(agendamento => {
       if (contagem[agendamento.servicoId]) {
-        contagem[agendamento.servicoId].count++;
+        contagem[agendamento.servicoId]++;
+        valorTotal[agendamento.servicoId] += parseFloat(agendamento.preco || 0);
+        
+        // Calcular duração
+        const servico = contadorServicos[agendamento.servicoId];
+        duracaoTotal[agendamento.servicoId] += parseInt(servico?.duracao || 0);
+        
+        // Adicionar cliente único
+        clientesUnicos[agendamento.servicoId].add(agendamento.clienteNome);
       }
     });
     
-    const servicosOrdenados = Object.values(contagem)
-      .sort((a, b) => b.count - a.count);
+    // Preparar dados para ordenação
+    const servicosData = Object.keys(contagem).map(id => ({
+      id,
+      nome: `Serviço: ${contadorServicos[id]?.nome || 'Desconhecido'}`,
+      quantidade: contagem[id],
+      valorTotal: valorTotal[id],
+      duracaoMedia: contagem[id] > 0 ? duracaoTotal[id] / contagem[id] : 0,
+      clientesUnicos: clientesUnicos[id].size
+    }));
     
-    return {
-      labels: servicosOrdenados.map(item => item.nome),
-      data: servicosOrdenados.map(item => item.count)
-    };
+    // Ordenar por quantidade (padrão)
+    servicosData.sort((a, b) => b.quantidade - a.quantidade);
+    
+    return servicosData;
   };
 
   const prepararDadosFuncionarios = () => {
-    if (!agendamentos.length || !funcionarios.length) return { labels: [], data: [] };
+    if (!agendamentos.length || !funcionarios.length) return [];
     
     const contagem = {};
+    const valorTotal = {};
+    const duracaoTotal = {};
+    const clientesUnicos = {};
+    const contadorFuncionarios = {};
     
     funcionarios.forEach(funcionario => {
-      contagem[funcionario.id] = {
-        nome: funcionario.nome,
-        count: 0
+      contagem[funcionario.id] = 0;
+      valorTotal[funcionario.id] = 0;
+      duracaoTotal[funcionario.id] = 0;
+      clientesUnicos[funcionario.id] = new Set();
+      contadorFuncionarios[funcionario.id] = {
+        nome: funcionario.nome
       };
     });
     
     agendamentos.forEach(agendamento => {
       if (contagem[agendamento.funcionarioId]) {
-        contagem[agendamento.funcionarioId].count++;
+        contagem[agendamento.funcionarioId]++;
+        valorTotal[agendamento.funcionarioId] += parseFloat(agendamento.preco || 0);
+        
+        // Calcular duração
+        const horaInicio = new Date(agendamento.horaInicio);
+        const horaFim = new Date(agendamento.horaFim);
+        const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
+        
+        duracaoTotal[agendamento.funcionarioId] += duracao;
+        
+        // Adicionar cliente único
+        clientesUnicos[agendamento.funcionarioId].add(agendamento.clienteNome);
       }
     });
     
-    const funcionariosOrdenados = Object.values(contagem)
-      .sort((a, b) => b.count - a.count);
+    // Preparar dados para ordenação
+    const funcionariosData = Object.keys(contagem).map(id => ({
+      id,
+      nome: `Profissional: ${contadorFuncionarios[id]?.nome || 'Desconhecido'}`,
+      quantidade: contagem[id],
+      valorTotal: valorTotal[id],
+      duracaoMedia: contagem[id] > 0 ? duracaoTotal[id] / contagem[id] : 0,
+      clientesUnicos: clientesUnicos[id].size
+    }));
     
-    return {
-      labels: funcionariosOrdenados.map(item => item.nome),
-      data: funcionariosOrdenados.map(item => item.count)
-    };
+    // Ordenar por quantidade (padrão)
+    funcionariosData.sort((a, b) => b.quantidade - a.quantidade);
+    
+    return funcionariosData;
   };
 
   const prepararDadosDiasSemana = () => {
-    if (!agendamentos.length) return { labels: [], data: [] };
+    if (!agendamentos.length) return [];
     
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const contagem = [0, 0, 0, 0, 0, 0, 0]; 
+    const contagem = [0, 0, 0, 0, 0, 0, 0];
+    const valorTotal = [0, 0, 0, 0, 0, 0, 0];
+    const duracaoTotal = [0, 0, 0, 0, 0, 0, 0];
+    const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
     
     agendamentos.forEach(agendamento => {
       const data = new Date(agendamento.horaInicio);
-      const diaSemana = data.getDay(); 
+      const diaSemana = data.getDay();
+      
       contagem[diaSemana]++;
+      valorTotal[diaSemana] += parseFloat(agendamento.preco || 0);
+      
+      // Calcular duração
+      const horaInicio = new Date(agendamento.horaInicio);
+      const horaFim = new Date(agendamento.horaFim);
+      const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
+      
+      duracaoTotal[diaSemana] += duracao;
+      
+      // Adicionar cliente único
+      clientesUnicos[diaSemana].add(agendamento.clienteNome);
     });
     
-    const pares = diasSemana.map((dia, index) => [dia, contagem[index]]);
+    // Preparar dados para ordenação
+    const diasSemanaData = diasSemana.map((dia, index) => ({
+      nome: `Dia: ${dia}`,
+      quantidade: contagem[index],
+      valorTotal: valorTotal[index],
+      duracaoMedia: contagem[index] > 0 ? duracaoTotal[index] / contagem[index] : 0,
+      clientesUnicos: clientesUnicos[index].size
+    }));
     
-    pares.sort((a, b) => b[1] - a[1]);
+    // Ordenar por quantidade (padrão)
+    diasSemanaData.sort((a, b) => b.quantidade - a.quantidade);
     
-    return {
-      labels: pares.map(par => par[0]),
-      data: pares.map(par => par[1])
-    };
+    return diasSemanaData;
   };
 
   const prepararDadosMeses = () => {
-    if (!agendamentos.length) return { labels: [], data: [] };
+    if (!agendamentos.length) return [];
     
     const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const valorTotal = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const duracaoTotal = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
     
     agendamentos.forEach(agendamento => {
       const data = new Date(agendamento.horaInicio);
       const mes = data.getMonth();
+      
       contagem[mes]++;
+      valorTotal[mes] += parseFloat(agendamento.preco || 0);
+      
+      // Calcular duração
+      const horaInicio = new Date(agendamento.horaInicio);
+      const horaFim = new Date(agendamento.horaFim);
+      const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
+      
+      duracaoTotal[mes] += duracao;
+      
+      // Adicionar cliente único
+      clientesUnicos[mes].add(agendamento.clienteNome);
     });
     
-    const pares = meses.map((mes, index) => [mes, contagem[index]]);
+    // Preparar dados para ordenação
+    const mesesData = meses.map((mes, index) => ({
+      nome: `Mês: ${mes}`,
+      quantidade: contagem[index],
+      valorTotal: valorTotal[index],
+      duracaoMedia: contagem[index] > 0 ? duracaoTotal[index] / contagem[index] : 0,
+      clientesUnicos: clientesUnicos[index].size
+    }));
     
-    pares.sort((a, b) => b[1] - a[1]);
+    // Ordenar por quantidade (padrão)
+    mesesData.sort((a, b) => b.quantidade - a.quantidade);
     
-    return {
-      labels: pares.map(par => par[0]),
-      data: pares.map(par => par[1])
-    };
+    return mesesData;
   };
 
-  // Preparar dados para os gráficos
+  // Preparar dados para o gráfico unificado
   const dadosServicos = prepararDadosServicos();
   const dadosFuncionarios = prepararDadosFuncionarios();
   const dadosDiasSemana = prepararDadosDiasSemana();
   const dadosMeses = prepararDadosMeses();
-  
-  // Configurar dados para os gráficos
-  const servicosChartData = {
-    labels: dadosServicos.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosServicos.data,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
+
+  // Combinar todos os dados em um único array
+  const dadosUnificados = [
+    ...dadosServicos,
+    ...dadosFuncionarios,
+    ...dadosDiasSemana,
+    ...dadosMeses
+  ];
+
+  // Obter valor de acordo com o filtro selecionado
+  const obterValorPorFiltro = (item) => {
+    switch (filtroSelecionado) {
+      case 'valorTotal':
+        return item.valorTotal;
+      case 'duracaoMedia':
+        return item.duracaoMedia;
+      case 'clientesUnicos':
+        return item.clientesUnicos;
+      case 'quantidade':
+      default:
+        return item.quantidade;
+    }
   };
-  
-  const funcionariosChartData = {
-    labels: dadosFuncionarios.labels,
+
+  // Ordenar dados pelo valor do filtro selecionado
+  dadosUnificados.sort((a, b) => obterValorPorFiltro(b) - obterValorPorFiltro(a));
+
+  // Limitar a quantidade de itens para melhorar a visualização
+  const dadosLimitados = dadosUnificados.slice(0, 20);
+
+  // Configurar dados para o gráfico unificado
+  const chartData = {
+    labels: dadosLimitados.map(item => item.nome),
     datasets: [
       {
-        label: 'Quantidade de Agendamentos',
-        data: dadosFuncionarios.data,
-        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  const diasSemanaChartData = {
-    labels: dadosDiasSemana.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosDiasSemana.data,
-        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-        borderColor: 'rgba(255, 159, 64, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  const mesesChartData = {
-    labels: dadosMeses.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosMeses.data,
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
+        label: filtroSelecionado === 'quantidade' ? 'Quantidade de Agendamentos' :
+               filtroSelecionado === 'valorTotal' ? 'Valor Total (R$)' :
+               filtroSelecionado === 'duracaoMedia' ? 'Duração Média (min)' :
+               'Clientes Únicos',
+        data: dadosLimitados.map(item => obterValorPorFiltro(item)),
+        backgroundColor: dadosLimitados.map(item => {
+          if (item.nome.startsWith('Serviço:')) return 'rgba(75, 192, 192, 0.6)';
+          if (item.nome.startsWith('Profissional:')) return 'rgba(153, 102, 255, 0.6)';
+          if (item.nome.startsWith('Dia:')) return 'rgba(255, 159, 64, 0.6)';
+          if (item.nome.startsWith('Mês:')) return 'rgba(255, 99, 132, 0.6)';
+          return 'rgba(54, 162, 235, 0.6)';
+        }),
+        borderColor: dadosLimitados.map(item => {
+          if (item.nome.startsWith('Serviço:')) return 'rgba(75, 192, 192, 1)';
+          if (item.nome.startsWith('Profissional:')) return 'rgba(153, 102, 255, 1)';
+          if (item.nome.startsWith('Dia:')) return 'rgba(255, 159, 64, 1)';
+          if (item.nome.startsWith('Mês:')) return 'rgba(255, 99, 132, 1)';
+          return 'rgba(54, 162, 235, 1)';
+        }),
         borderWidth: 1,
       },
     ],
   };
 
   const chartOptions = {
-    indexAxis: 'y', 
+    indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
     scales: {
       x: {
         beginAtZero: true,
         ticks: {
-          precision: 0
+          precision: filtroSelecionado === 'valorTotal' ? 2 : 0
         }
       },
       y: {
@@ -280,7 +378,8 @@ const EstatisticasPage = () => {
     },
     plugins: {
       legend: {
-        display: false,
+        display: true,
+        position: 'top',
       },
       title: {
         display: false,
@@ -288,11 +387,26 @@ const EstatisticasPage = () => {
       tooltip: {
         callbacks: {
           label: function(context) {
-            return `Quantidade: ${context.parsed.x}`;
+            const value = context.parsed.x;
+            
+            if (filtroSelecionado === 'valorTotal') {
+              return `Valor: R$ ${value.toFixed(2)}`;
+            } else if (filtroSelecionado === 'duracaoMedia') {
+              return `Duração: ${value.toFixed(0)} min`;
+            } else if (filtroSelecionado === 'clientesUnicos') {
+              return `Clientes: ${value}`;
+            } else {
+              return `Quantidade: ${value}`;
+            }
           }
         }
       }
     },
+  };
+
+  // Função para lidar com a mudança de filtro
+  const handleFiltroChange = (e) => {
+    setFiltroSelecionado(e.target.value);
   };
 
   return (
@@ -306,59 +420,35 @@ const EstatisticasPage = () => {
         ) : error ? (
           <ErrorMessage>{error}</ErrorMessage>
         ) : (
-          <StatisticsGrid>
-            <ChartContainer>
-              <ChartTitle>Serviços Mais Agendados</ChartTitle>
-              {dadosServicos.labels.length > 0 ? (
-                <Bar 
-                  data={servicosChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosServicos.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para serviços</p>
-              )}
-            </ChartContainer>
+          <>
+            <FilterContainer>
+              <FilterLabel>Visualizar por:</FilterLabel>
+              <FilterSelect value={filtroSelecionado} onChange={handleFiltroChange}>
+                <option value="quantidade">Quantidade de Agendamentos</option>
+                <option value="valorTotal">Valor Total (R$)</option>
+                <option value="duracaoMedia">Duração Média (minutos)</option>
+                <option value="clientesUnicos">Clientes Únicos</option>
+              </FilterSelect>
+            </FilterContainer>
             
             <ChartContainer>
-              <ChartTitle>Profissionais Mais Requisitados</ChartTitle>
-              {dadosFuncionarios.labels.length > 0 ? (
+              <ChartTitle>
+                {filtroSelecionado === 'quantidade' ? 'Estatísticas por Quantidade de Agendamentos' :
+                 filtroSelecionado === 'valorTotal' ? 'Estatísticas por Valor Total (R$)' :
+                 filtroSelecionado === 'duracaoMedia' ? 'Estatísticas por Duração Média (minutos)' :
+                 'Estatísticas por Número de Clientes Únicos'}
+              </ChartTitle>
+              {dadosLimitados.length > 0 ? (
                 <Bar 
-                  data={funcionariosChartData} 
+                  data={chartData} 
                   options={chartOptions} 
-                  height={Math.max(dadosFuncionarios.labels.length * 30, 200)} 
+                  height={Math.max(dadosLimitados.length * 30, 400)} 
                 />
               ) : (
-                <p>Nenhum dado disponível para profissionais</p>
+                <p>Nenhum dado disponível para exibição</p>
               )}
             </ChartContainer>
-            
-            <ChartContainer>
-              <ChartTitle>Dias da Semana Mais Agendados</ChartTitle>
-              {dadosDiasSemana.labels.length > 0 ? (
-                <Bar 
-                  data={diasSemanaChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosDiasSemana.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para dias da semana</p>
-              )}
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartTitle>Meses Mais Agendados</ChartTitle>
-              {dadosMeses.labels.length > 0 ? (
-                <Bar 
-                  data={mesesChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosMeses.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para meses</p>
-              )}
-            </ChartContainer>
-          </StatisticsGrid>
+          </>
         )}
       </StatisticsContent>
     </StatisticsContainer>
