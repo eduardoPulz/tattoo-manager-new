@@ -6,8 +6,7 @@
   "outputDirectory": ".next",
   "env": {
     "NODE_ENV": "production",
-    "VERCEL": "1",
-    "DATABASE_URL": "postgres://neondb_owner:npg_6vCzVnbTxj8S@ep-lively-wave-acwywndu-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require"
+    "VERCEL": "1"
   },
   "headers": [
     {
