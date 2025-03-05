@@ -1,5 +1,5 @@
 "use client";
-import { Header, LogoSection, BrushIcon, StudioName, AdminSection, PersonIcon, AdminText } from "./styles";
+import { Header, LogoSection, BrushIcon, StudioName, AdminSection, PersonIcon, AdminText, NavItem } from "./styles";
 import Link from "next/link";
 
 export const Navigation = () => {
@@ -16,6 +16,12 @@ export const Navigation = () => {
         <AdminText>
           <Link href="/admin">Admin</Link>
         </AdminText>
+        <Link href="/estatisticas">
+          <NavItem>Estatísticas</NavItem>
+        </Link>
+        <Link href="/acessibilidade">
+          <NavItem>Acessibilidade</NavItem>
+        </Link>
       </AdminSection>
     </Header>
   );
