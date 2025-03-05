@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 const DB_PATH = path.join(process.cwd(), 'db.json');
 
 let dbInMemory = null;
+let dbMemorySize = 0;
 
 const initialDb = {
   funcionarios: [],
