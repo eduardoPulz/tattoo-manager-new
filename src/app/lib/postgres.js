@@ -2,28 +2,38 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import 'dotenv/config';
 
-// Criar pool de conexões
-const pool = new Pool({
+// Configuração do pool de conexões
+const poolConfig = {
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+};
+
+// Adiciona SSL apenas em produção (Vercel)
+if (process.env.VERCEL === '1') {
+  poolConfig.ssl = {
     rejectUnauthorized: false
-  }
-});
+  };
+}
+
+// Criar pool de conexões
+const pool = new Pool(poolConfig);
 
 // Função para inicializar as tabelas do banco de dados
 export async function initDatabase() {
   const client = await pool.connect();
   
   try {
+    console.log('Iniciando criação das tabelas...');
+    
     // Criar tabela de funcionários
     await client.query(`
       CREATE TABLE IF NOT EXISTS funcionarios (
         id TEXT PRIMARY KEY,
         nome TEXT NOT NULL,
-        cargo TEXT NOT NULL,
-        email TEXT
+        especialidade TEXT NOT NULL,
+        telefone TEXT
       )
     `);
+    console.log('Tabela funcionarios criada ou já existente');
 
     // Criar tabela de serviços
     await client.query(`
@@ -35,6 +45,7 @@ export async function initDatabase() {
         duracao INTEGER NOT NULL
       )
     `);
+    console.log('Tabela servicos criada ou já existente');
 
     // Criar tabela de agendamentos
     await client.query(`
@@ -49,25 +60,29 @@ export async function initDatabase() {
         observacoes TEXT
       )
     `);
+    console.log('Tabela agendamentos criada ou já existente');
 
     // Verificar se existem funcionários, caso contrário, criar um padrão
     const funcionarios = await client.query('SELECT * FROM funcionarios');
     if (funcionarios.rowCount === 0) {
+      console.log('Inserindo funcionário padrão...');
       await client.query(`
-        INSERT INTO funcionarios (id, nome, cargo, email)
+        INSERT INTO funcionarios (id, nome, especialidade, telefone)
         VALUES ($1, $2, $3, $4)
-      `, [uuidv4(), 'Tatuador Teste', 'Tatuador', 'teste@exemplo.com']);
+      `, [uuidv4(), 'Tatuador Teste', 'Tatuador', '(11) 99999-9999']);
     }
 
     // Verificar se existem serviços, caso contrário, criar um padrão
     const servicos = await client.query('SELECT * FROM servicos');
     if (servicos.rowCount === 0) {
+      console.log('Inserindo serviço padrão...');
       await client.query(`
         INSERT INTO servicos (id, nome, descricao, preco, duracao)
         VALUES ($1, $2, $3, $4, $5)
       `, [uuidv4(), 'Tatuagem Simples', 'Tatuagem de tamanho pequeno', 150, 60]);
     }
 
+    console.log('Banco de dados inicializado com sucesso!');
     return { success: true };
   } catch (error) {
     console.error('Erro ao inicializar banco de dados:', error);
@@ -103,8 +118,8 @@ export const funcionariosDb = {
     try {
       const id = uuidv4();
       const result = await pool.query(
-        'INSERT INTO funcionarios (id, nome, cargo, email) VALUES ($1, $2, $3, $4) RETURNING *',
-        [id, funcionario.nome, funcionario.cargo || '', funcionario.email || '']
+        'INSERT INTO funcionarios (id, nome, especialidade, telefone) VALUES ($1, $2, $3, $4) RETURNING *',
+        [id, funcionario.nome, funcionario.especialidade || '', funcionario.telefone || '']
       );
       return result.rows[0];
     } catch (error) {
@@ -116,8 +131,8 @@ export const funcionariosDb = {
   update: async (id, dados) => {
     try {
       const result = await pool.query(
-        'UPDATE funcionarios SET nome = $1, cargo = $2, email = $3 WHERE id = $4 RETURNING *',
-        [dados.nome, dados.cargo || '', dados.email || '', id]
+        'UPDATE funcionarios SET nome = $1, especialidade = $2, telefone = $3 WHERE id = $4 RETURNING *',
+        [dados.nome, dados.especialidade || '', dados.telefone || '', id]
       );
       return result.rows[0] || null;
     } catch (error) {

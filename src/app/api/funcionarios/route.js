@@ -41,8 +41,8 @@ export async function POST(request) {
     if (body.id) {
       const funcionarioAtualizado = await funcionariosDb.update(body.id, {
         nome: body.nome,
-        cargo: body.cargo || '',
-        email: body.email || ''
+        especialidade: body.especialidade || '',
+        telefone: body.telefone || ''
       });
       
       if (!funcionarioAtualizado) {
@@ -60,8 +60,8 @@ export async function POST(request) {
     } else {
       const novoFuncionario = await funcionariosDb.create({
         nome: body.nome,
-        cargo: body.cargo || '',
-        email: body.email || ''
+        especialidade: body.especialidade || '',
+        telefone: body.telefone || ''
       });
       
       return NextResponse.json({
