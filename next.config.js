@@ -26,7 +26,34 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['@vercel/postgres'],
-  }
+    serverActions: true
+  },
+  images: {
+    domains: ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com', 'tattoo-manager-new.vercel.app', 'cdn.builder.io'],
+    unoptimized: true
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=31536000',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
+  },
 }
 
-module.exports = nextConfig;
+module.exports = nextConfig

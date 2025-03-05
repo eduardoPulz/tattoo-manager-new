@@ -20,7 +20,9 @@ import {
   StatisticsHeader, 
   LoadingMessage, 
   ErrorMessage,
-  StatisticsGrid
+  FilterContainer,
+  FilterLabel,
+  FilterSelect
 } from "./styles";
 
 ChartJS.register(
@@ -38,6 +40,7 @@ const EstatisticasPage = () => {
   const [funcionarios, setFuncionarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filtroSelecionado, setFiltroSelecionado] = useState('quantidade');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,214 +88,245 @@ const EstatisticasPage = () => {
   // Função para buscar dados de agendamentos
   async function fetchAgendamentos() {
     try {
+      console.log('Iniciando busca de agendamentos...');
       const response = await fetch('/api/agendamentos', {
         cache: 'no-store',
-        next: { revalidate: 0 }
+        next: { revalidate: 60 } // Revalidar a cada 60 segundos
       });
+      
+      if (!response.ok) {
+        console.error(`Erro ao buscar agendamentos: ${response.status} ${response.statusText}`);
+        throw new Error(`Erro ao buscar agendamentos: ${response.status} ${response.statusText}`);
+      }
+      
       const data = await response.json();
-      return data.success ? data.data : [];
+      console.log(`Agendamentos carregados com sucesso: ${data.length} registros`);
+      return data;
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
-      return [];
+      throw error;
     }
   }
 
-  const prepararDadosServicos = () => {
-    if (!agendamentos.length || !servicos.length) return { labels: [], data: [] };
-    
-    const contagem = {};
-    
-    servicos.forEach(servico => {
-      contagem[servico.id] = {
-        nome: servico.descricao,
-        count: 0
-      };
-    });
-    
-    agendamentos.forEach(agendamento => {
-      if (contagem[agendamento.servicoId]) {
-        contagem[agendamento.servicoId].count++;
-      }
-    });
-    
-    const servicosOrdenados = Object.values(contagem)
-      .sort((a, b) => b.count - a.count);
-    
-    return {
-      labels: servicosOrdenados.map(item => item.nome),
-      data: servicosOrdenados.map(item => item.count)
-    };
-  };
+  // Função para processar dados de serviços com tratamento de erros
+  function processarDadosServicos(agendamentos, filtro) {
+    if (!agendamentos || !Array.isArray(agendamentos) || agendamentos.length === 0) {
+      console.log('Nenhum agendamento para processar dados de serviços');
+      return { labels: [], data: [] };
+    }
 
-  const prepararDadosFuncionarios = () => {
-    if (!agendamentos.length || !funcionarios.length) return { labels: [], data: [] };
-    
-    const contagem = {};
-    
-    funcionarios.forEach(funcionario => {
-      contagem[funcionario.id] = {
-        nome: funcionario.nome,
-        count: 0
-      };
-    });
-    
-    agendamentos.forEach(agendamento => {
-      if (contagem[agendamento.funcionarioId]) {
-        contagem[agendamento.funcionarioId].count++;
-      }
-    });
-    
-    const funcionariosOrdenados = Object.values(contagem)
-      .sort((a, b) => b.count - a.count);
-    
-    return {
-      labels: funcionariosOrdenados.map(item => item.nome),
-      data: funcionariosOrdenados.map(item => item.count)
-    };
-  };
-
-  const prepararDadosDiasSemana = () => {
-    if (!agendamentos.length) return { labels: [], data: [] };
-    
-    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const contagem = [0, 0, 0, 0, 0, 0, 0]; 
-    
-    agendamentos.forEach(agendamento => {
-      const data = new Date(agendamento.horaInicio);
-      const diaSemana = data.getDay(); 
-      contagem[diaSemana]++;
-    });
-    
-    const pares = diasSemana.map((dia, index) => [dia, contagem[index]]);
-    
-    pares.sort((a, b) => b[1] - a[1]);
-    
-    return {
-      labels: pares.map(par => par[0]),
-      data: pares.map(par => par[1])
-    };
-  };
-
-  const prepararDadosMeses = () => {
-    if (!agendamentos.length) return { labels: [], data: [] };
-    
-    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-    const contagem = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    
-    agendamentos.forEach(agendamento => {
-      const data = new Date(agendamento.horaInicio);
-      const mes = data.getMonth();
-      contagem[mes]++;
-    });
-    
-    const pares = meses.map((mes, index) => [mes, contagem[index]]);
-    
-    pares.sort((a, b) => b[1] - a[1]);
-    
-    return {
-      labels: pares.map(par => par[0]),
-      data: pares.map(par => par[1])
-    };
-  };
-
-  // Preparar dados para os gráficos
-  const dadosServicos = prepararDadosServicos();
-  const dadosFuncionarios = prepararDadosFuncionarios();
-  const dadosDiasSemana = prepararDadosDiasSemana();
-  const dadosMeses = prepararDadosMeses();
-  
-  // Configurar dados para os gráficos
-  const servicosChartData = {
-    labels: dadosServicos.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosServicos.data,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  const funcionariosChartData = {
-    labels: dadosFuncionarios.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosFuncionarios.data,
-        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-        borderColor: 'rgba(153, 102, 255, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  const diasSemanaChartData = {
-    labels: dadosDiasSemana.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosDiasSemana.data,
-        backgroundColor: 'rgba(255, 159, 64, 0.6)',
-        borderColor: 'rgba(255, 159, 64, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-  
-  const mesesChartData = {
-    labels: dadosMeses.labels,
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: dadosMeses.data,
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    indexAxis: 'y', 
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        beginAtZero: true,
-        ticks: {
-          precision: 0
+    console.log(`Processando dados de serviços com filtro: ${filtro}`);
+    try {
+      // Agrupar por serviço
+      const servicosMap = new Map();
+      
+      agendamentos.forEach(agendamento => {
+        if (!agendamento || !agendamento.servicoId || !agendamento.servicoNome) {
+          console.warn('Agendamento com dados de serviço incompletos:', agendamento);
+          return;
         }
-      },
-      y: {
-        ticks: {
-          callback: function(value, index, values) {
-            const label = this.getLabelForValue(value);
-            const maxLength = window.innerWidth < 768 ? 15 : 25;
-            if (label && label.length > maxLength) {
-              return label.substr(0, maxLength) + '...';
+        
+        const servicoId = agendamento.servicoId;
+        if (!servicosMap.has(servicoId)) {
+          servicosMap.set(servicoId, {
+            nome: agendamento.servicoNome,
+            quantidade: 0,
+            valorTotal: 0,
+            duracaoTotal: 0,
+            clientesUnicos: new Set(),
+          });
+        }
+        
+        const servico = servicosMap.get(servicoId);
+        servico.quantidade += 1;
+        
+        // Valor total
+        if (agendamento.preco && !isNaN(parseFloat(agendamento.preco))) {
+          servico.valorTotal += parseFloat(agendamento.preco);
+        }
+        
+        // Duração
+        if (agendamento.horaInicio && agendamento.horaFim) {
+          const inicio = new Date(agendamento.horaInicio);
+          const fim = new Date(agendamento.horaFim);
+          if (inicio instanceof Date && !isNaN(inicio) && fim instanceof Date && !isNaN(fim)) {
+            const duracaoMinutos = Math.round((fim - inicio) / (1000 * 60));
+            servico.duracaoTotal += duracaoMinutos;
+          }
+        }
+        
+        // Clientes únicos
+        if (agendamento.clienteNome) {
+          servico.clientesUnicos.add(agendamento.clienteNome);
+        }
+      });
+      
+      // Converter para arrays e ordenar
+      const servicosArray = Array.from(servicosMap.values())
+        .map(servico => ({
+          ...servico,
+          clientesUnicos: servico.clientesUnicos.size,
+          duracaoMedia: servico.quantidade > 0 ? Math.round(servico.duracaoTotal / servico.quantidade) : 0
+        }));
+      
+      // Ordenar por quantidade (padrão)
+      let dadosOrdenados;
+      switch (filtro) {
+        case 'valor':
+          dadosOrdenados = servicosArray.sort((a, b) => b.valorTotal - a.valorTotal);
+          break;
+        case 'duracao':
+          dadosOrdenados = servicosArray.sort((a, b) => b.duracaoMedia - a.duracaoMedia);
+          break;
+        case 'clientes':
+          dadosOrdenados = servicosArray.sort((a, b) => b.clientesUnicos - a.clientesUnicos);
+          break;
+        default:
+          dadosOrdenados = servicosArray.sort((a, b) => b.quantidade - a.quantidade);
+      }
+      
+      // Limitar a 10 itens para melhor visualização
+      const dadosTop = dadosOrdenados.slice(0, 10);
+      
+      // Extrair labels e dados
+      const labels = dadosTop.map(servico => servico.nome);
+      
+      let data;
+      switch (filtro) {
+        case 'valor':
+          data = dadosTop.map(servico => servico.valorTotal);
+          break;
+        case 'duracao':
+          data = dadosTop.map(servico => servico.duracaoMedia);
+          break;
+        case 'clientes':
+          data = dadosTop.map(servico => servico.clientesUnicos);
+          break;
+        default:
+          data = dadosTop.map(servico => servico.quantidade);
+      }
+      
+      return { labels, data };
+    } catch (error) {
+      console.error('Erro ao processar dados de serviços:', error);
+      return { labels: [], data: [] };
+    }
+  }
+
+  const renderizarGrafico = () => {
+    if (isLoading) return <LoadingMessage>Carregando dados...</LoadingMessage>;
+    if (error) return <ErrorMessage>{error}</ErrorMessage>;
+    
+    try {
+      // Preparar dados com base no filtro selecionado
+      const dadosServicos = processarDadosServicos(agendamentos, filtroSelecionado);
+      
+      // Verificar se há dados para exibir
+      if (!dadosServicos.labels.length || !dadosServicos.data.length) {
+        return <ErrorMessage>Não há dados suficientes para gerar estatísticas.</ErrorMessage>;
+      }
+      
+      // Definir cores para cada categoria
+      const cores = {
+        'Serviço:': 'rgba(75, 192, 192, 0.8)',
+        'Profissional:': 'rgba(153, 102, 255, 0.8)',
+        'Dia:': 'rgba(255, 159, 64, 0.8)',
+        'Mês:': 'rgba(255, 99, 132, 0.8)'
+      };
+      
+      // Configuração do gráfico
+      const options = {
+        indexAxis: 'y',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                try {
+                  let valor = context.formattedValue;
+                  
+                  switch (filtroSelecionado) {
+                    case 'valor':
+                      return `Valor Total: R$ ${parseFloat(valor).toFixed(2)}`;
+                    case 'duracao':
+                      return `Duração Média: ${parseFloat(valor).toFixed(0)} min`;
+                    case 'clientes':
+                      return `Clientes Únicos: ${valor}`;
+                    default:
+                      return `Quantidade: ${valor}`;
+                  }
+                } catch (e) {
+                  console.error('Erro ao formatar tooltip:', e);
+                  return 'Valor: ' + context.formattedValue;
+                }
+              }
             }
-            return label;
+          }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                try {
+                  if (filtroSelecionado === 'valor') {
+                    return 'R$ ' + value.toLocaleString('pt-BR');
+                  } else if (filtroSelecionado === 'duracao') {
+                    return value + ' min';
+                  }
+                  return value;
+                } catch (e) {
+                  console.error('Erro ao formatar ticks do eixo X:', e);
+                  return value;
+                }
+              }
+            }
           }
         }
-      }
-    },
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `Quantidade: ${context.parsed.x}`;
-          }
-        }
-      }
-    },
+      };
+      
+      // Altura dinâmica com base na quantidade de itens
+      const altura = Math.max(400, dadosServicos.labels.length * 30);
+      
+      return (
+        <div>
+          <FilterContainer>
+            <FilterLabel>Visualizar por:</FilterLabel>
+            <FilterSelect 
+              value={filtroSelecionado}
+              onChange={(e) => setFiltroSelecionado(e.target.value)}
+            >
+              <option value="quantidade">Quantidade de Agendamentos</option>
+              <option value="valor">Valor Total (R$)</option>
+              <option value="duracao">Duração Média (minutos)</option>
+              <option value="clientes">Clientes Únicos</option>
+            </FilterSelect>
+          </FilterContainer>
+          
+          <ChartContainer style={{ height: altura + 'px' }}>
+            <Bar 
+              data={{
+                labels: dadosServicos.labels,
+                datasets: [{
+                  data: dadosServicos.data,
+                  backgroundColor: dadosServicos.labels.map(() => 'rgba(75, 192, 192, 0.8)'),
+                  borderColor: dadosServicos.labels.map(() => 'rgba(75, 192, 192, 1)'),
+                  borderWidth: 1
+                }]
+              }}
+              options={options}
+            />
+          </ChartContainer>
+        </div>
+      );
+    } catch (error) {
+      console.error('Erro ao renderizar gráfico:', error);
+      return <ErrorMessage>Erro ao renderizar gráfico: {error.message}</ErrorMessage>;
+    }
   };
 
   return (
@@ -300,66 +334,7 @@ const EstatisticasPage = () => {
       <Navigation />
       <StatisticsContent>
         <StatisticsHeader>Estatísticas de Agendamentos</StatisticsHeader>
-        
-        {isLoading ? (
-          <LoadingMessage>Carregando estatísticas...</LoadingMessage>
-        ) : error ? (
-          <ErrorMessage>{error}</ErrorMessage>
-        ) : (
-          <StatisticsGrid>
-            <ChartContainer>
-              <ChartTitle>Serviços Mais Agendados</ChartTitle>
-              {dadosServicos.labels.length > 0 ? (
-                <Bar 
-                  data={servicosChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosServicos.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para serviços</p>
-              )}
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartTitle>Profissionais Mais Requisitados</ChartTitle>
-              {dadosFuncionarios.labels.length > 0 ? (
-                <Bar 
-                  data={funcionariosChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosFuncionarios.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para profissionais</p>
-              )}
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartTitle>Dias da Semana Mais Agendados</ChartTitle>
-              {dadosDiasSemana.labels.length > 0 ? (
-                <Bar 
-                  data={diasSemanaChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosDiasSemana.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para dias da semana</p>
-              )}
-            </ChartContainer>
-            
-            <ChartContainer>
-              <ChartTitle>Meses Mais Agendados</ChartTitle>
-              {dadosMeses.labels.length > 0 ? (
-                <Bar 
-                  data={mesesChartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosMeses.labels.length * 30, 200)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para meses</p>
-              )}
-            </ChartContainer>
-          </StatisticsGrid>
-        )}
+        {renderizarGrafico()}
       </StatisticsContent>
     </StatisticsContainer>
   );

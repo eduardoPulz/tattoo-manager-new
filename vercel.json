@@ -1,7 +1,39 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
+  "buildCommand": "npm run vercel-build",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "NODE_ENV": "production",
+    "VERCEL": "1",
+    "DATABASE_URL": "postgres://neondb_owner:npg_6vCzVnbTxj8S@ep-lively-wave-acwywndu-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require",
+    "PGHOST": "ep-lively-wave-acwywndu-pooler.sa-east-1.aws.neon.tech",
+    "PGUSER": "neondb_owner",
+    "PGDATABASE": "neondb",
+    "PGPASSWORD": "npg_6vCzVnbTxj8S",
+    "PGSSLMODE": "require",
+    "DEBUG": "true"
+  },
+  "regions": ["sfo1", "gru1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
 }
