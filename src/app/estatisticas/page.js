@@ -101,7 +101,7 @@ const EstatisticasPage = () => {
   }
 
   const prepararDadosServicos = () => {
-    if (!agendamentos.length || !servicos.length) return { labels: [], data: [] };
+    if (!agendamentos.length || !servicos.length) return [];
     
     const contagem = {};
     const valorTotal = {};
@@ -110,44 +110,82 @@ const EstatisticasPage = () => {
     const contadorServicos = {};
     
     servicos.forEach(servico => {
+      if (!servico || !servico.id) return;
+      
       contagem[servico.id] = 0;
       valorTotal[servico.id] = 0;
       duracaoTotal[servico.id] = 0;
       clientesUnicos[servico.id] = new Set();
       contadorServicos[servico.id] = {
-        nome: servico.nome,
-        descricao: servico.descricao,
-        preco: servico.preco,
-        duracao: servico.duracao
+        nome: servico.nome || servico.descricao || 'Serviço',
+        descricao: servico.descricao || '',
+        preco: parseFloat(servico.preco || 0),
+        duracao: parseInt(servico.duracao || 0)
       };
     });
     
     agendamentos.forEach(agendamento => {
-      if (contagem[agendamento.servicoId]) {
-        contagem[agendamento.servicoId]++;
+      if (!agendamento || !agendamento.servicoId || !contagem[agendamento.servicoId]) return;
+      
+      contagem[agendamento.servicoId]++;
+      
+      // Adicionar valor total com validação
+      try {
         valorTotal[agendamento.servicoId] += parseFloat(agendamento.preco || 0);
-        
-        // Calcular duração
+      } catch (e) {
+        console.error('Erro ao processar preço:', e);
+      }
+      
+      // Calcular duração com validação
+      try {
         const servico = contadorServicos[agendamento.servicoId];
-        duracaoTotal[agendamento.servicoId] += parseInt(servico?.duracao || 0);
-        
-        // Adicionar cliente único
-        clientesUnicos[agendamento.servicoId].add(agendamento.clienteNome);
+        if (servico) {
+          duracaoTotal[agendamento.servicoId] += parseInt(servico.duracao || 0);
+        }
+      } catch (e) {
+        console.error('Erro ao processar duração:', e);
+      }
+      
+      // Adicionar cliente único com validação
+      try {
+        if (agendamento.clienteNome) {
+          clientesUnicos[agendamento.servicoId].add(agendamento.clienteNome);
+        }
+      } catch (e) {
+        console.error('Erro ao processar cliente:', e);
       }
     });
     
-    // Preparar dados para ordenação
-    const servicosData = Object.keys(contagem).map(id => ({
-      id,
-      nome: `Serviço: ${contadorServicos[id]?.nome || 'Desconhecido'}`,
-      quantidade: contagem[id],
-      valorTotal: valorTotal[id],
-      duracaoMedia: contagem[id] > 0 ? duracaoTotal[id] / contagem[id] : 0,
-      clientesUnicos: clientesUnicos[id].size
-    }));
+    // Preparar dados para ordenação com validação
+    const servicosData = Object.keys(contagem).map(id => {
+      try {
+        return {
+          id,
+          nome: `Serviço: ${contadorServicos[id]?.nome || 'Desconhecido'}`,
+          quantidade: contagem[id] || 0,
+          valorTotal: valorTotal[id] || 0,
+          duracaoMedia: contagem[id] > 0 ? (duracaoTotal[id] || 0) / contagem[id] : 0,
+          clientesUnicos: (clientesUnicos[id]?.size) || 0
+        };
+      } catch (e) {
+        console.error('Erro ao preparar dados de serviço:', e);
+        return {
+          id,
+          nome: `Serviço: Desconhecido`,
+          quantidade: 0,
+          valorTotal: 0,
+          duracaoMedia: 0,
+          clientesUnicos: 0
+        };
+      }
+    });
     
-    // Ordenar por quantidade (padrão)
-    servicosData.sort((a, b) => b.quantidade - a.quantidade);
+    // Ordenar por quantidade (padrão) com validação
+    try {
+      servicosData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
+    } catch (e) {
+      console.error('Erro ao ordenar serviços:', e);
+    }
     
     return servicosData;
   };
@@ -214,34 +252,85 @@ const EstatisticasPage = () => {
     const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
     
     agendamentos.forEach(agendamento => {
-      const data = new Date(agendamento.horaInicio);
-      const diaSemana = data.getDay();
+      if (!agendamento || !agendamento.horaInicio) return;
       
-      contagem[diaSemana]++;
-      valorTotal[diaSemana] += parseFloat(agendamento.preco || 0);
-      
-      // Calcular duração
-      const horaInicio = new Date(agendamento.horaInicio);
-      const horaFim = new Date(agendamento.horaFim);
-      const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
-      
-      duracaoTotal[diaSemana] += duracao;
-      
-      // Adicionar cliente único
-      clientesUnicos[diaSemana].add(agendamento.clienteNome);
+      try {
+        const data = new Date(agendamento.horaInicio);
+        
+        // Verificar se a data é válida
+        if (isNaN(data.getTime())) return;
+        
+        const diaSemana = data.getDay();
+        
+        // Verificar se o índice é válido
+        if (diaSemana < 0 || diaSemana > 6) return;
+        
+        contagem[diaSemana]++;
+        
+        // Adicionar valor total com validação
+        try {
+          valorTotal[diaSemana] += parseFloat(agendamento.preco || 0);
+        } catch (e) {
+          console.error('Erro ao processar preço para dia da semana:', e);
+        }
+        
+        // Calcular duração com validação
+        try {
+          if (agendamento.horaFim) {
+            const horaInicio = new Date(agendamento.horaInicio);
+            const horaFim = new Date(agendamento.horaFim);
+            
+            // Verificar se as datas são válidas
+            if (!isNaN(horaInicio.getTime()) && !isNaN(horaFim.getTime())) {
+              const duracao = Math.max(0, (horaFim - horaInicio) / (1000 * 60)); // em minutos, não permite valores negativos
+              duracaoTotal[diaSemana] += duracao;
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao processar duração para dia da semana:', e);
+        }
+        
+        // Adicionar cliente único com validação
+        try {
+          if (agendamento.clienteNome) {
+            clientesUnicos[diaSemana].add(agendamento.clienteNome);
+          }
+        } catch (e) {
+          console.error('Erro ao processar cliente para dia da semana:', e);
+        }
+      } catch (e) {
+        console.error('Erro ao processar agendamento para dia da semana:', e);
+      }
     });
     
-    // Preparar dados para ordenação
-    const diasSemanaData = diasSemana.map((dia, index) => ({
-      nome: `Dia: ${dia}`,
-      quantidade: contagem[index],
-      valorTotal: valorTotal[index],
-      duracaoMedia: contagem[index] > 0 ? duracaoTotal[index] / contagem[index] : 0,
-      clientesUnicos: clientesUnicos[index].size
-    }));
+    // Preparar dados para ordenação com validação
+    const diasSemanaData = diasSemana.map((dia, index) => {
+      try {
+        return {
+          nome: `Dia: ${dia}`,
+          quantidade: contagem[index] || 0,
+          valorTotal: valorTotal[index] || 0,
+          duracaoMedia: contagem[index] > 0 ? (duracaoTotal[index] || 0) / contagem[index] : 0,
+          clientesUnicos: (clientesUnicos[index]?.size) || 0
+        };
+      } catch (e) {
+        console.error('Erro ao preparar dados de dia da semana:', e);
+        return {
+          nome: `Dia: ${dia}`,
+          quantidade: 0,
+          valorTotal: 0,
+          duracaoMedia: 0,
+          clientesUnicos: 0
+        };
+      }
+    });
     
-    // Ordenar por quantidade (padrão)
-    diasSemanaData.sort((a, b) => b.quantidade - a.quantidade);
+    // Ordenar por quantidade (padrão) com validação
+    try {
+      diasSemanaData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
+    } catch (e) {
+      console.error('Erro ao ordenar dias da semana:', e);
+    }
     
     return diasSemanaData;
   };
@@ -256,157 +345,265 @@ const EstatisticasPage = () => {
     const clientesUnicos = [new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set(), new Set()];
     
     agendamentos.forEach(agendamento => {
-      const data = new Date(agendamento.horaInicio);
-      const mes = data.getMonth();
+      if (!agendamento || !agendamento.horaInicio) return;
       
-      contagem[mes]++;
-      valorTotal[mes] += parseFloat(agendamento.preco || 0);
-      
-      // Calcular duração
-      const horaInicio = new Date(agendamento.horaInicio);
-      const horaFim = new Date(agendamento.horaFim);
-      const duracao = (horaFim - horaInicio) / (1000 * 60); // em minutos
-      
-      duracaoTotal[mes] += duracao;
-      
-      // Adicionar cliente único
-      clientesUnicos[mes].add(agendamento.clienteNome);
+      try {
+        const data = new Date(agendamento.horaInicio);
+        
+        // Verificar se a data é válida
+        if (isNaN(data.getTime())) return;
+        
+        const mes = data.getMonth();
+        
+        // Verificar se o índice é válido
+        if (mes < 0 || mes > 11) return;
+        
+        contagem[mes]++;
+        
+        // Adicionar valor total com validação
+        try {
+          valorTotal[mes] += parseFloat(agendamento.preco || 0);
+        } catch (e) {
+          console.error('Erro ao processar preço para mês:', e);
+        }
+        
+        // Calcular duração com validação
+        try {
+          if (agendamento.horaFim) {
+            const horaInicio = new Date(agendamento.horaInicio);
+            const horaFim = new Date(agendamento.horaFim);
+            
+            // Verificar se as datas são válidas
+            if (!isNaN(horaInicio.getTime()) && !isNaN(horaFim.getTime())) {
+              const duracao = Math.max(0, (horaFim - horaInicio) / (1000 * 60)); // em minutos, não permite valores negativos
+              duracaoTotal[mes] += duracao;
+            }
+          }
+        } catch (e) {
+          console.error('Erro ao processar duração para mês:', e);
+        }
+        
+        // Adicionar cliente único com validação
+        try {
+          if (agendamento.clienteNome) {
+            clientesUnicos[mes].add(agendamento.clienteNome);
+          }
+        } catch (e) {
+          console.error('Erro ao processar cliente para mês:', e);
+        }
+      } catch (e) {
+        console.error('Erro ao processar agendamento para mês:', e);
+      }
     });
     
-    // Preparar dados para ordenação
-    const mesesData = meses.map((mes, index) => ({
-      nome: `Mês: ${mes}`,
-      quantidade: contagem[index],
-      valorTotal: valorTotal[index],
-      duracaoMedia: contagem[index] > 0 ? duracaoTotal[index] / contagem[index] : 0,
-      clientesUnicos: clientesUnicos[index].size
-    }));
+    // Preparar dados para ordenação com validação
+    const mesesData = meses.map((mes, index) => {
+      try {
+        return {
+          nome: `Mês: ${mes}`,
+          quantidade: contagem[index] || 0,
+          valorTotal: valorTotal[index] || 0,
+          duracaoMedia: contagem[index] > 0 ? (duracaoTotal[index] || 0) / contagem[index] : 0,
+          clientesUnicos: (clientesUnicos[index]?.size) || 0
+        };
+      } catch (e) {
+        console.error('Erro ao preparar dados de mês:', e);
+        return {
+          nome: `Mês: ${mes}`,
+          quantidade: 0,
+          valorTotal: 0,
+          duracaoMedia: 0,
+          clientesUnicos: 0
+        };
+      }
+    });
     
-    // Ordenar por quantidade (padrão)
-    mesesData.sort((a, b) => b.quantidade - a.quantidade);
+    // Ordenar por quantidade (padrão) com validação
+    try {
+      mesesData.sort((a, b) => (b.quantidade || 0) - (a.quantidade || 0));
+    } catch (e) {
+      console.error('Erro ao ordenar meses:', e);
+    }
     
     return mesesData;
   };
 
-  // Preparar dados para o gráfico unificado
-  const dadosServicos = prepararDadosServicos();
-  const dadosFuncionarios = prepararDadosFuncionarios();
-  const dadosDiasSemana = prepararDadosDiasSemana();
-  const dadosMeses = prepararDadosMeses();
-
-  // Combinar todos os dados em um único array
-  const dadosUnificados = [
-    ...dadosServicos,
-    ...dadosFuncionarios,
-    ...dadosDiasSemana,
-    ...dadosMeses
-  ];
-
-  // Obter valor de acordo com o filtro selecionado
-  const obterValorPorFiltro = (item) => {
-    switch (filtroSelecionado) {
-      case 'valorTotal':
-        return item.valorTotal;
-      case 'duracaoMedia':
-        return item.duracaoMedia;
-      case 'clientesUnicos':
-        return item.clientesUnicos;
-      case 'quantidade':
-      default:
-        return item.quantidade;
+  const renderizarGrafico = () => {
+    if (isLoading) return <LoadingMessage>Carregando dados...</LoadingMessage>;
+    if (error) return <ErrorMessage>{error}</ErrorMessage>;
+    
+    try {
+      // Preparar dados com base no filtro selecionado
+      const dadosServicos = prepararDadosServicos();
+      const dadosFuncionarios = prepararDadosFuncionarios();
+      const dadosDiasSemana = prepararDadosDiasSemana();
+      const dadosMeses = prepararDadosMeses();
+      
+      // Verificar se há dados para exibir
+      if (!dadosServicos.length && !dadosFuncionarios.length && !dadosDiasSemana.length && !dadosMeses.length) {
+        return <ErrorMessage>Não há dados suficientes para gerar estatísticas.</ErrorMessage>;
+      }
+      
+      // Combinar todos os dados em um único array
+      const todosDados = [
+        ...(dadosServicos || []), 
+        ...(dadosFuncionarios || []), 
+        ...(dadosDiasSemana || []), 
+        ...(dadosMeses || [])
+      ];
+      
+      // Verificar se há dados combinados
+      if (!todosDados.length) {
+        return <ErrorMessage>Não há dados suficientes para gerar estatísticas.</ErrorMessage>;
+      }
+      
+      // Definir cores para cada categoria
+      const cores = {
+        'Serviço:': 'rgba(75, 192, 192, 0.8)',
+        'Profissional:': 'rgba(153, 102, 255, 0.8)',
+        'Dia:': 'rgba(255, 159, 64, 0.8)',
+        'Mês:': 'rgba(255, 99, 132, 0.8)'
+      };
+      
+      // Obter valor com base no filtro selecionado
+      const obterValor = (item) => {
+        try {
+          switch (filtroSelecionado) {
+            case 'quantidade':
+              return item.quantidade || 0;
+            case 'valor':
+              return item.valorTotal || 0;
+            case 'duracao':
+              return item.duracaoMedia || 0;
+            case 'clientes':
+              return item.clientesUnicos || 0;
+            default:
+              return item.quantidade || 0;
+          }
+        } catch (e) {
+          console.error('Erro ao obter valor para o gráfico:', e);
+          return 0;
+        }
+      };
+      
+      // Ordenar todos os dados com base no filtro selecionado
+      try {
+        todosDados.sort((a, b) => obterValor(b) - obterValor(a));
+      } catch (e) {
+        console.error('Erro ao ordenar dados para o gráfico:', e);
+      }
+      
+      // Preparar dados para o gráfico
+      const labels = todosDados.map(item => item.nome || 'Desconhecido');
+      const data = todosDados.map(obterValor);
+      
+      // Determinar cores com base no prefixo do label
+      const backgroundColor = todosDados.map(item => {
+        try {
+          const prefixo = item.nome?.split(':')[0] + ':';
+          return cores[prefixo] || 'rgba(201, 203, 207, 0.8)';
+        } catch (e) {
+          console.error('Erro ao determinar cor para o gráfico:', e);
+          return 'rgba(201, 203, 207, 0.8)';
+        }
+      });
+      
+      // Configuração do gráfico
+      const options = {
+        indexAxis: 'y',
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                try {
+                  const item = todosDados[context.dataIndex];
+                  let valor = context.formattedValue;
+                  
+                  switch (filtroSelecionado) {
+                    case 'quantidade':
+                      return `Quantidade: ${valor}`;
+                    case 'valor':
+                      return `Valor Total: R$ ${parseFloat(valor).toFixed(2)}`;
+                    case 'duracao':
+                      return `Duração Média: ${parseFloat(valor).toFixed(0)} min`;
+                    case 'clientes':
+                      return `Clientes Únicos: ${valor}`;
+                    default:
+                      return `Quantidade: ${valor}`;
+                  }
+                } catch (e) {
+                  console.error('Erro ao formatar tooltip:', e);
+                  return 'Valor: ' + context.formattedValue;
+                }
+              }
+            }
+          }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                try {
+                  if (filtroSelecionado === 'valor') {
+                    return 'R$ ' + value.toLocaleString('pt-BR');
+                  } else if (filtroSelecionado === 'duracao') {
+                    return value + ' min';
+                  }
+                  return value;
+                } catch (e) {
+                  console.error('Erro ao formatar ticks do eixo X:', e);
+                  return value;
+                }
+              }
+            }
+          }
+        }
+      };
+      
+      // Altura dinâmica com base na quantidade de itens
+      const altura = Math.max(400, todosDados.length * 30);
+      
+      return (
+        <div>
+          <FilterContainer>
+            <FilterLabel>Visualizar por:</FilterLabel>
+            <FilterSelect 
+              value={filtroSelecionado}
+              onChange={(e) => setFiltroSelecionado(e.target.value)}
+            >
+              <option value="quantidade">Quantidade de Agendamentos</option>
+              <option value="valor">Valor Total (R$)</option>
+              <option value="duracao">Duração Média (minutos)</option>
+              <option value="clientes">Clientes Únicos</option>
+            </FilterSelect>
+          </FilterContainer>
+          
+          <ChartContainer style={{ height: altura + 'px' }}>
+            <Bar 
+              data={{
+                labels,
+                datasets: [{
+                  data,
+                  backgroundColor,
+                  borderColor: backgroundColor.map(cor => cor.replace('0.8', '1')),
+                  borderWidth: 1
+                }]
+              }}
+              options={options}
+            />
+          </ChartContainer>
+        </div>
+      );
+    } catch (error) {
+      console.error('Erro ao renderizar gráfico:', error);
+      return <ErrorMessage>Erro ao renderizar gráfico: {error.message}</ErrorMessage>;
     }
-  };
-
-  // Ordenar dados pelo valor do filtro selecionado
-  dadosUnificados.sort((a, b) => obterValorPorFiltro(b) - obterValorPorFiltro(a));
-
-  // Limitar a quantidade de itens para melhorar a visualização
-  const dadosLimitados = dadosUnificados.slice(0, 20);
-
-  // Configurar dados para o gráfico unificado
-  const chartData = {
-    labels: dadosLimitados.map(item => item.nome),
-    datasets: [
-      {
-        label: filtroSelecionado === 'quantidade' ? 'Quantidade de Agendamentos' :
-               filtroSelecionado === 'valorTotal' ? 'Valor Total (R$)' :
-               filtroSelecionado === 'duracaoMedia' ? 'Duração Média (min)' :
-               'Clientes Únicos',
-        data: dadosLimitados.map(item => obterValorPorFiltro(item)),
-        backgroundColor: dadosLimitados.map(item => {
-          if (item.nome.startsWith('Serviço:')) return 'rgba(75, 192, 192, 0.6)';
-          if (item.nome.startsWith('Profissional:')) return 'rgba(153, 102, 255, 0.6)';
-          if (item.nome.startsWith('Dia:')) return 'rgba(255, 159, 64, 0.6)';
-          if (item.nome.startsWith('Mês:')) return 'rgba(255, 99, 132, 0.6)';
-          return 'rgba(54, 162, 235, 0.6)';
-        }),
-        borderColor: dadosLimitados.map(item => {
-          if (item.nome.startsWith('Serviço:')) return 'rgba(75, 192, 192, 1)';
-          if (item.nome.startsWith('Profissional:')) return 'rgba(153, 102, 255, 1)';
-          if (item.nome.startsWith('Dia:')) return 'rgba(255, 159, 64, 1)';
-          if (item.nome.startsWith('Mês:')) return 'rgba(255, 99, 132, 1)';
-          return 'rgba(54, 162, 235, 1)';
-        }),
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        beginAtZero: true,
-        ticks: {
-          precision: filtroSelecionado === 'valorTotal' ? 2 : 0
-        }
-      },
-      y: {
-        ticks: {
-          callback: function(value, index, values) {
-            const label = this.getLabelForValue(value);
-            const maxLength = window.innerWidth < 768 ? 15 : 25;
-            if (label && label.length > maxLength) {
-              return label.substr(0, maxLength) + '...';
-            }
-            return label;
-          }
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top',
-      },
-      title: {
-        display: false,
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const value = context.parsed.x;
-            
-            if (filtroSelecionado === 'valorTotal') {
-              return `Valor: R$ ${value.toFixed(2)}`;
-            } else if (filtroSelecionado === 'duracaoMedia') {
-              return `Duração: ${value.toFixed(0)} min`;
-            } else if (filtroSelecionado === 'clientesUnicos') {
-              return `Clientes: ${value}`;
-            } else {
-              return `Quantidade: ${value}`;
-            }
-          }
-        }
-      }
-    },
-  };
-
-  // Função para lidar com a mudança de filtro
-  const handleFiltroChange = (e) => {
-    setFiltroSelecionado(e.target.value);
   };
 
   return (
@@ -414,42 +611,7 @@ const EstatisticasPage = () => {
       <Navigation />
       <StatisticsContent>
         <StatisticsHeader>Estatísticas de Agendamentos</StatisticsHeader>
-        
-        {isLoading ? (
-          <LoadingMessage>Carregando estatísticas...</LoadingMessage>
-        ) : error ? (
-          <ErrorMessage>{error}</ErrorMessage>
-        ) : (
-          <>
-            <FilterContainer>
-              <FilterLabel>Visualizar por:</FilterLabel>
-              <FilterSelect value={filtroSelecionado} onChange={handleFiltroChange}>
-                <option value="quantidade">Quantidade de Agendamentos</option>
-                <option value="valorTotal">Valor Total (R$)</option>
-                <option value="duracaoMedia">Duração Média (minutos)</option>
-                <option value="clientesUnicos">Clientes Únicos</option>
-              </FilterSelect>
-            </FilterContainer>
-            
-            <ChartContainer>
-              <ChartTitle>
-                {filtroSelecionado === 'quantidade' ? 'Estatísticas por Quantidade de Agendamentos' :
-                 filtroSelecionado === 'valorTotal' ? 'Estatísticas por Valor Total (R$)' :
-                 filtroSelecionado === 'duracaoMedia' ? 'Estatísticas por Duração Média (minutos)' :
-                 'Estatísticas por Número de Clientes Únicos'}
-              </ChartTitle>
-              {dadosLimitados.length > 0 ? (
-                <Bar 
-                  data={chartData} 
-                  options={chartOptions} 
-                  height={Math.max(dadosLimitados.length * 30, 400)} 
-                />
-              ) : (
-                <p>Nenhum dado disponível para exibição</p>
-              )}
-            </ChartContainer>
-          </>
-        )}
+        {renderizarGrafico()}
       </StatisticsContent>
     </StatisticsContainer>
   );
