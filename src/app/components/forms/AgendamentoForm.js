@@ -14,8 +14,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     funcionarioId: initialData.funcionarioId || '',
     servicoId: initialData.servicoId || '',
     horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
-    horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
-    observacoes: initialData.observacoes || ''
+    horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
   });
   
   const [errors, setErrors] = useState({});
@@ -192,8 +191,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
         horaInicio: horaInicio.toISOString(),
-        horaFim: horaFim.toISOString(),
-        observacoes: formData.observacoes.trim()
+        horaFim: horaFim.toISOString()
       };
       
       await onSubmit(dataToSubmit);
@@ -206,8 +204,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           funcionarioId: '',
           servicoId: '',
           horaInicio: '',
-          horaFim: '',
-          observacoes: ''
+          horaFim: ''
         });
       }
     } catch (error) {
@@ -320,19 +317,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         {formData.servicoId && (
           <small>Calculado automaticamente com base na duração do serviço</small>
         )}
-      </FormGroup>
-      
-      <FormGroup>
-        <Label htmlFor="observacoes">Observações</Label>
-        <Input
-          as="textarea"
-          id="observacoes"
-          name="observacoes"
-          value={formData.observacoes}
-          onChange={handleChange}
-          placeholder="Observações adicionais"
-          rows={3}
-        />
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}

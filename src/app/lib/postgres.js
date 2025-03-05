@@ -139,13 +139,12 @@ const agendamentosDb = {
     const id = generateId();
     const novoAgendamento = {
       id,
-      clienteNome: agendamento.clienteNome,
+      nomeCliente: agendamento.nomeCliente,
       clienteTelefone: agendamento.clienteTelefone || '',
       funcionarioId: agendamento.funcionarioId,
       servicoId: agendamento.servicoId,
       horaInicio: agendamento.horaInicio,
-      horaFim: agendamento.horaFim,
-      observacoes: agendamento.observacoes || ''
+      horaFim: agendamento.horaFim
     };
     
     agendamentos.push(novoAgendamento);
@@ -158,13 +157,12 @@ const agendamentosDb = {
     
     agendamentos[index] = {
       ...agendamentos[index],
-      clienteNome: dados.clienteNome,
+      nomeCliente: dados.nomeCliente,
       clienteTelefone: dados.clienteTelefone || '',
       funcionarioId: dados.funcionarioId,
       servicoId: dados.servicoId,
       horaInicio: dados.horaInicio,
-      horaFim: dados.horaFim,
-      observacoes: dados.observacoes || ''
+      horaFim: dados.horaFim
     };
     
     return agendamentos[index];

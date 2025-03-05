@@ -36,11 +36,11 @@ export async function POST(request) {
     console.log('POST /api/agendamentos - Corpo da requisição:', body);
     
     // Validar campos obrigatórios
-    if (!body.nomeCliente || !body.clienteTelefone || !body.funcionarioId || !body.servicoId || !body.horaInicio) {
+    if (!body.nomeCliente || !body.clienteTelefone || !body.funcionarioId || !body.servicoId || !body.horaInicio || !body.horaFim) {
       console.log('POST /api/agendamentos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
-        message: 'Nome do cliente, telefone, funcionário, serviço e horário de início são obrigatórios'
+        message: 'Todos os campos são obrigatórios'
       }, { status: 400 });
     }
     
@@ -74,13 +74,12 @@ export async function POST(request) {
     
     // Mapear os campos do formulário para os campos da tabela (clienteNome vs nomeCliente)
     const agendamentoData = {
-      clienteNome: body.nomeCliente,
+      nomeCliente: body.nomeCliente,
       clienteTelefone: body.clienteTelefone,
       funcionarioId: body.funcionarioId,
       servicoId: body.servicoId,
       horaInicio: horaInicio.toISOString(),
-      horaFim: horaFim.toISOString(),
-      observacoes: body.observacoes
+      horaFim: horaFim.toISOString()
     };
     
     console.log('POST /api/agendamentos - Criando agendamento:', agendamentoData);
