@@ -5,7 +5,7 @@ const agendamentosRepository = {
   async getAll() {
     try {
       const result = await db.query(
-        'SELECT * FROM agendamentos ORDER BY "horaInicio" DESC'
+        'SELECT * FROM agendamentos ORDER BY horaInicio DESC'
       );
       return result.rows;
     } catch (error) {
@@ -32,7 +32,7 @@ const agendamentosRepository = {
       const id = uuidv4();
       const result = await db.query(
         `INSERT INTO agendamentos 
-         (id, "nomeCliente", "clienteTelefone", "funcionarioId", "servicoId", "horaInicio", "horaFim") 
+         (id, nomeCliente, clienteTelefone, funcionarioId, servicoId, horaInicio, horaFim) 
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
          RETURNING *`,
         [
@@ -56,12 +56,12 @@ const agendamentosRepository = {
     try {
       const result = await db.query(
         `UPDATE agendamentos 
-         SET "nomeCliente" = $1, 
-             "clienteTelefone" = $2, 
-             "funcionarioId" = $3, 
-             "servicoId" = $4, 
-             "horaInicio" = $5, 
-             "horaFim" = $6 
+         SET nomeCliente = $1, 
+             clienteTelefone = $2, 
+             funcionarioId = $3, 
+             servicoId = $4, 
+             horaInicio = $5, 
+             horaFim = $6 
          WHERE id = $7 
          RETURNING *`,
         [

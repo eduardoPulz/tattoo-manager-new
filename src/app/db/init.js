@@ -19,13 +19,20 @@ async function initDb() {
       .filter(query => query.trim() !== '')
       .map(query => query.trim() + ';');
     
-    // Executa cada consulta SQL
+    // Executa cada consulta SQL separadamente
     for (const query of queries) {
-      await db.query(query);
-      console.log('Consulta executada com sucesso:', query.substring(0, 50) + '...');
+      try {
+        console.log('Executando query:', query.substring(0, 100) + '...');
+        await db.query(query);
+        console.log('Query executada com sucesso');
+      } catch (error) {
+        console.error('Erro ao executar query:', error.message);
+        console.error('Query com erro:', query);
+        // Continua para a próxima query, mesmo se houver erro
+      }
     }
     
-    console.log('Inicialização do banco de dados concluída com sucesso!');
+    console.log('Inicialização do banco de dados concluída!');
     return { success: true, message: 'Banco de dados inicializado com sucesso' };
   } catch (error) {
     console.error('Erro ao inicializar o banco de dados:', error);

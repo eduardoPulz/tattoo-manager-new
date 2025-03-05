@@ -20,12 +20,12 @@ CREATE TABLE IF NOT EXISTS servicos (
 -- Criação da tabela de agendamentos
 CREATE TABLE IF NOT EXISTS agendamentos (
     id UUID PRIMARY KEY,
-    "nomeCliente" VARCHAR(255) NOT NULL,
-    "clienteTelefone" VARCHAR(20),
-    "funcionarioId" UUID NOT NULL,
-    "servicoId" UUID NOT NULL,
-    "horaInicio" TIMESTAMP NOT NULL,
-    "horaFim" TIMESTAMP NOT NULL,
-    FOREIGN KEY ("funcionarioId") REFERENCES funcionarios(id) ON DELETE CASCADE,
-    FOREIGN KEY ("servicoId") REFERENCES servicos(id) ON DELETE CASCADE
+    nomeCliente VARCHAR(255) NOT NULL,
+    clienteTelefone VARCHAR(20),
+    funcionarioId UUID NOT NULL,
+    servicoId UUID NOT NULL,
+    horaInicio TIMESTAMP NOT NULL,
+    horaFim TIMESTAMP NOT NULL,
+    FOREIGN KEY (funcionarioId) REFERENCES funcionarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (servicoId) REFERENCES servicos(id) ON DELETE CASCADE
 );
