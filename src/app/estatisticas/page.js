@@ -49,27 +49,30 @@ const EstatisticasPage = () => {
       
       try {
         const [agendamentosRes, servicosRes, funcionariosRes] = await Promise.all([
-          fetchAgendamentos(),
+          fetch('/api/agendamentos').then(res => res.json()),
           fetch('/api/servicos').then(res => res.json()),
           fetch('/api/funcionarios').then(res => res.json())
         ]);
         
-        if (agendamentosRes) {
-          setAgendamentos(agendamentosRes);
+        if (agendamentosRes && agendamentosRes.success && Array.isArray(agendamentosRes.data)) {
+          setAgendamentos(agendamentosRes.data);
+          console.log('Agendamentos carregados:', agendamentosRes.data.length);
         } else {
           console.error('Resposta inválida de agendamentos:', agendamentosRes);
           setAgendamentos([]);
         }
         
-        if (servicosRes.success && Array.isArray(servicosRes.data)) {
+        if (servicosRes && servicosRes.success && Array.isArray(servicosRes.data)) {
           setServicos(servicosRes.data);
+          console.log('Serviços carregados:', servicosRes.data.length);
         } else {
           console.error('Resposta inválida de serviços:', servicosRes);
           setServicos([]);
         }
         
-        if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
+        if (funcionariosRes && funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
           setFuncionarios(funcionariosRes.data);
+          console.log('Funcionários carregados:', funcionariosRes.data.length);
         } else {
           console.error('Resposta inválida de funcionários:', funcionariosRes);
           setFuncionarios([]);
@@ -100,8 +103,13 @@ const EstatisticasPage = () => {
       }
       
       const data = await response.json();
-      console.log(`Agendamentos carregados com sucesso: ${data.length} registros`);
-      return data;
+      if (data && data.success && Array.isArray(data.data)) {
+        console.log(`Agendamentos carregados com sucesso: ${data.data.length} registros`);
+        return data.data;
+      } else {
+        console.error('Resposta inválida de agendamentos:', data);
+        throw new Error('Resposta inválida de agendamentos');
+      }
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
       throw error;
@@ -121,15 +129,17 @@ const EstatisticasPage = () => {
       const servicosMap = new Map();
       
       agendamentos.forEach(agendamento => {
-        if (!agendamento || !agendamento.servicoId || !agendamento.servicoNome) {
+        if (!agendamento || !agendamento.servicoId) {
           console.warn('Agendamento com dados de serviço incompletos:', agendamento);
           return;
         }
         
         const servicoId = agendamento.servicoId;
+        const servicoNome = agendamento.servicoNome || 'Serviço desconhecido';
+        
         if (!servicosMap.has(servicoId)) {
           servicosMap.set(servicoId, {
-            nome: agendamento.servicoNome,
+            nome: servicoNome,
             quantidade: 0,
             valorTotal: 0,
             duracaoTotal: 0,
