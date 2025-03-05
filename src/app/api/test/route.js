@@ -1,66 +1,60 @@
 const { NextResponse } = require('next/server');
-const funcionariosDb = require('../../lib/db').funcionariosDb;
-const servicosDb = require('../../lib/db').servicosDb;
-const agendamentosDb = require('../../lib/db').agendamentosDb;
-const fs = require('fs');
-const path = require('path');
+const { funcionariosDb, servicosDb, agendamentosDb } = require('../../lib/postgres');
 
-async function GET() {
+export async function GET() {
   try {
-    const dbPath = path.join(process.cwd(), 'db.json');
-    const dbExists = fs.existsSync(dbPath);
+    console.log('Testando conexão com o banco de dados PostgreSQL...');
     
-    if (dbExists) {
-      const funcionarios = funcionariosDb.getAll();
-      if (funcionarios.length === 0) {
-        funcionariosDb.create({
-          nome: 'Teste API',
-          cargo: 'Tatuador',
-          email: 'teste@api.com'
-        });
-      }
-      
-      const servicos = servicosDb.getAll();
-      if (servicos.length === 0) {
-        servicosDb.create({
-          nome: 'Serviço Teste',
-          preco: 100.0,
-          duracao: 60
-        });
-      }
+    // Verificar conexão com o banco de dados
+    const funcionarios = await funcionariosDb.getAll();
+    const servicos = await servicosDb.getAll();
+    const agendamentos = await agendamentosDb.getAll();
+    
+    // Criar dados de teste se necessário
+    if (funcionarios.length === 0) {
+      await funcionariosDb.create({
+        nome: 'Teste API',
+        especialidade: 'Tatuador',
+        telefone: '(11) 99999-9999'
+      });
     }
     
-    const funcionariosCount = funcionariosDb.getAll().length;
-    const servicosCount = servicosDb.getAll().length;
-    const agendamentosCount = agendamentosDb.getAll().length;
+    if (servicos.length === 0) {
+      await servicosDb.create({
+        nome: 'Tatuagem Pequena',
+        descricao: 'Tatuagem de até 5cm',
+        preco: 150.00,
+        duracao: 60
+      });
+    }
     
-    return NextResponse.json({ 
-      status: 'success',
-      message: 'Sistema funcionando corretamente',
-      timestamp: new Date().toISOString(),
-      banco: {
-        arquivoExiste: dbExists,
-        caminho: dbPath
+    return NextResponse.json({
+      success: true,
+      message: 'Conexão com o banco de dados PostgreSQL estabelecida com sucesso',
+      data: {
+        funcionarios: funcionarios.length,
+        servicos: servicos.length,
+        agendamentos: agendamentos.length
       },
-      contagem: {
-        funcionarios: funcionariosCount,
-        servicos: servicosCount,
-        agendamentos: agendamentosCount
-      },
-      ambiente: {
-        node_env: process.env.NODE_ENV || 'development'
+      env: {
+        DATABASE_URL: process.env.DATABASE_URL ? 'Configurado' : 'Não configurado',
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        VERCEL: process.env.VERCEL || 'local'
       }
     });
   } catch (error) {
-    console.error('Erro na API de teste:', error);
+    console.error('Erro ao testar conexão com o banco de dados:', error);
     
     return NextResponse.json({
-      status: 'error',
-      message: 'Erro ao testar a aplicação',
+      success: false,
+      message: 'Erro ao conectar ao banco de dados PostgreSQL',
       error: error.message,
-      timestamp: new Date().toISOString()
+      stack: process.env.NODE_ENV === 'development' ? error.stack : null,
+      env: {
+        DATABASE_URL: process.env.DATABASE_URL ? 'Configurado' : 'Não configurado',
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        VERCEL: process.env.VERCEL || 'local'
+      }
     }, { status: 500 });
   }
 }
-
-module.exports = { GET };

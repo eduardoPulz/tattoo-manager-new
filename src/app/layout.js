@@ -27,12 +27,10 @@ export default function RootLayout({ children }) {
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"
-          crossOrigin="anonymous"
         />
         <link
           href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap"
           rel="stylesheet"
-          crossOrigin="anonymous"
         />
       </head>
       <body className={`${inter.variable} ${robotoMono.variable}`}>
