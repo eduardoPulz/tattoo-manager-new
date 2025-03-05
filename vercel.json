@@ -12,8 +12,11 @@
     "PGUSER": "neondb_owner",
     "PGDATABASE": "neondb",
     "PGPASSWORD": "npg_6vCzVnbTxj8S",
+    "PGPORT": "5432",
     "PGSSLMODE": "require",
-    "DEBUG": "true"
+    "PGSSLROOTCERT": "true",
+    "DEBUG": "true",
+    "LOG_LEVEL": "info"
   },
   "headers": [
     {

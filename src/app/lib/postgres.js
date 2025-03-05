@@ -10,23 +10,60 @@ const createPool = () => {
   
   // Configuração do pool de conexões
   const poolConfig = {
-    connectionString: process.env.DATABASE_URL,
     max: 5, // Limitar o número máximo de conexões
     idleTimeoutMillis: 30000, // Tempo limite para conexões ociosas
     connectionTimeoutMillis: 10000, // Tempo limite para tentar conexão
   };
 
-  // Adiciona SSL em produção
+  // Verificar se estamos em produção (Vercel)
   if (process.env.NODE_ENV === 'production' || process.env.VERCEL === '1') {
-    console.log('Ambiente de produção detectado, configurando SSL');
+    console.log('Ambiente de produção detectado, usando configurações da Vercel');
+    
+    // Usar variáveis de ambiente específicas do Neon
+    poolConfig.host = process.env.PGHOST;
+    poolConfig.database = process.env.PGDATABASE;
+    poolConfig.user = process.env.PGUSER;
+    poolConfig.password = process.env.PGPASSWORD;
+    poolConfig.port = 5432;
+    
+    // Configurar SSL para o Neon
     poolConfig.ssl = {
       rejectUnauthorized: false
     };
+    
+    console.log('Configuração do pool para produção:', JSON.stringify({
+      ...poolConfig,
+      host: poolConfig.host || 'não configurado',
+      database: poolConfig.database || 'não configurado',
+      user: poolConfig.user ? 'configurado' : 'não configurado',
+      password: poolConfig.password ? 'configurado' : 'não configurado',
+      ssl: poolConfig.ssl ? 'configurado' : 'não configurado'
+    }, null, 2));
+  } else {
+    // Ambiente de desenvolvimento
+    console.log('Ambiente de desenvolvimento detectado');
+    
+    // Usar DATABASE_URL se disponível, caso contrário usar variáveis individuais
+    if (process.env.DATABASE_URL) {
+      poolConfig.connectionString = process.env.DATABASE_URL;
+      console.log('Usando DATABASE_URL para conexão');
+    } else {
+      poolConfig.host = process.env.PGHOST || 'localhost';
+      poolConfig.database = process.env.PGDATABASE || 'postgres';
+      poolConfig.user = process.env.PGUSER || 'postgres';
+      poolConfig.password = process.env.PGPASSWORD || '';
+      poolConfig.port = parseInt(process.env.PGPORT || '5432');
+      console.log('Usando variáveis individuais para conexão');
+    }
   }
-
-  console.log('Configuração do pool:', JSON.stringify({
+  
+  console.log('Configuração final do pool:', JSON.stringify({
     ...poolConfig,
-    connectionString: poolConfig.connectionString ? 'CONFIGURADO' : 'NÃO CONFIGURADO'
+    connectionString: poolConfig.connectionString ? 'CONFIGURADO' : 'NÃO CONFIGURADO',
+    host: poolConfig.host || 'não configurado',
+    database: poolConfig.database || 'não configurado',
+    user: poolConfig.user ? 'configurado' : 'não configurado',
+    password: poolConfig.password ? 'configurado' : 'não configurado'
   }, null, 2));
   
   try {
