@@ -1,6 +1,6 @@
-import { Pool } from 'pg';
-import { v4 as uuidv4 } from 'uuid';
-import 'dotenv/config';
+const pg = require('pg');
+const { v4: uuidv4 } = require('uuid');
+require('dotenv/config');
 
 // Função para criar o pool de conexões
 const createPool = () => {
@@ -30,7 +30,7 @@ const createPool = () => {
   }, null, 2));
   
   try {
-    const pool = new Pool(poolConfig);
+    const pool = new pg.Pool(poolConfig);
     
     // Testar a conexão
     pool.on('error', (err) => {
@@ -89,7 +89,7 @@ try {
 }
 
 // Função para inicializar as tabelas do banco de dados
-export async function initDatabase() {
+async function initDatabase() {
   let client;
   
   try {
@@ -164,7 +164,7 @@ async function executeQuery(queryFn) {
 }
 
 // Operações para funcionários
-export const funcionariosDb = {
+const funcionariosDb = {
   getAll: async () => {
     return executeQuery(async (client) => {
       const result = await client.query('SELECT * FROM funcionarios ORDER BY nome');
@@ -219,7 +219,7 @@ export const funcionariosDb = {
 };
 
 // Operações para serviços
-export const servicosDb = {
+const servicosDb = {
   getAll: async () => {
     return executeQuery(async (client) => {
       const result = await client.query('SELECT * FROM servicos ORDER BY nome');
@@ -274,7 +274,7 @@ export const servicosDb = {
 };
 
 // Operações para agendamentos
-export const agendamentosDb = {
+const agendamentosDb = {
   getAll: async () => {
     return executeQuery(async (client) => {
       const result = await client.query(`
@@ -372,9 +372,9 @@ export const agendamentosDb = {
   }
 };
 
-export default {
-  init: initDatabase,
-  funcionarios: funcionariosDb,
-  servicos: servicosDb,
-  agendamentos: agendamentosDb
+module.exports = {
+  initDatabase,
+  funcionariosDb,
+  servicosDb,
+  agendamentosDb
 };

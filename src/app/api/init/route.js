@@ -1,74 +1,25 @@
-import { NextResponse } from 'next/server';
-import { funcionariosDb, servicosDb, agendamentosDb } from '../../lib/db';
-import fs from 'fs';
-import path from 'path';
+const { NextResponse } = require('next/server');
+const { initDatabase } = require('../../lib/postgres');
 
-export async function GET() {
+async function GET() {
   try {
-    let dbInitialized = false;
-    
-    // Lógica adaptada para funcionar na Vercel
-    if (process.env.VERCEL === '1') {
-      // Em ambiente Vercel, não precisamos criar arquivo físico
-      dbInitialized = true;
-    } else {
-      // Em ambiente local, verificamos o arquivo físico
-      const dbPath = path.join(process.cwd(), 'db.json');
-      let dbExists = fs.existsSync(dbPath);
-      
-      if (!dbExists) {
-        const initialDb = {
-          funcionarios: [],
-          servicos: [],
-          agendamentos: []
-        };
-        
-        fs.writeFileSync(dbPath, JSON.stringify(initialDb, null, 2));
-        dbInitialized = true;
-      } else {
-        dbInitialized = true;
-      }
-    }
-    
-    // Inicialização de dados de exemplo
-    const funcionarios = funcionariosDb.getAll();
-    const servicos = servicosDb.getAll();
-    
-    if (funcionarios.length === 0) {
-      funcionariosDb.create({
-        nome: 'Tatuador Padrão',
-        cargo: 'Tatuador',
-        email: 'tatuador@exemplo.com'
-      });
-    }
-    
-    if (servicos.length === 0) {
-      servicosDb.create({
-        nome: 'Tatuagem Pequena',
-        preco: 150,
-        duracao: 60
-      });
-    }
-    
-    const dadosAtualizados = {
-      funcionarios: funcionariosDb.getAll(),
-      servicos: servicosDb.getAll(),
-      agendamentos: agendamentosDb.getAll()
-    };
+    console.log('GET /api/init - Iniciando inicialização do banco de dados');
+    await initDatabase();
+    console.log('GET /api/init - Banco de dados inicializado com sucesso');
     
     return NextResponse.json({
       success: true,
-      message: 'Sistema inicializado com sucesso',
-      ambiente: process.env.VERCEL === '1' ? 'vercel' : 'local',
-      data: dadosAtualizados
+      message: 'Banco de dados inicializado com sucesso'
     });
   } catch (error) {
-    console.error('Erro ao inicializar sistema:', error);
+    console.error('GET /api/init - Erro ao inicializar banco de dados:', error);
     
     return NextResponse.json({
       success: false,
-      message: 'Erro ao inicializar sistema',
+      message: 'Erro ao inicializar banco de dados',
       error: error.message
     }, { status: 500 });
   }
 }
+
+module.exports = { GET };

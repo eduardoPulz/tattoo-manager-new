@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
-import { funcionariosDb, servicosDb, agendamentosDb } from '../../lib/db';
-import fs from 'fs';
-import path from 'path';
+const { NextResponse } = require('next/server');
+const funcionariosDb = require('../../lib/db').funcionariosDb;
+const servicosDb = require('../../lib/db').servicosDb;
+const agendamentosDb = require('../../lib/db').agendamentosDb;
+const fs = require('fs');
+const path = require('path');
 
-export async function GET() {
+async function GET() {
   try {
     const dbPath = path.join(process.cwd(), 'db.json');
     const dbExists = fs.existsSync(dbPath);
@@ -60,3 +62,5 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+
+module.exports = { GET };

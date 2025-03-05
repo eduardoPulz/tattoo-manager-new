@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
-import { initDatabase } from './app/lib/postgres';
+const { NextResponse } = require('next/server');
+const { initDatabase } = require('./app/lib/postgres');
 
 // Variável para controlar a inicialização do banco de dados
 let databaseInitialized = false;
 let initializationInProgress = false;
 let initializationError = null;
 
-export async function middleware(request) {
+async function middleware(request) {
   // Não inicializar o banco de dados para requisições de assets estáticos
   if (
     request.nextUrl.pathname.startsWith('/_next') || 
@@ -89,9 +89,11 @@ export async function middleware(request) {
 }
 
 // Configurar o middleware para ser executado apenas em produção e apenas uma vez
-export const config = {
+const config = {
   matcher: [
     // Aplicar a todas as rotas exceto assets estáticos
     '/((?!_next/static|_next/image|favicon.ico).*)'
   ],
 };
+
+module.exports = { middleware, config };

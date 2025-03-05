@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { initializeDatabase } from '../../lib/init-db';
+const { NextResponse } = require('next/server');
+const { initializeDatabase } = require('../../lib/init-db');
 
 // Esta rota será chamada durante o build na Vercel
-export async function GET() {
+async function GET() {
   try {
     const result = await initializeDatabase();
     
@@ -27,3 +27,5 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+
+module.exports = { GET };
