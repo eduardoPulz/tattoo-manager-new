@@ -1,297 +1,209 @@
-const pg = require('pg');
-const { v4: uuidv4 } = require('uuid');
-require('dotenv/config');
+// Este arquivo só deve ser importado em arquivos com runtime: 'nodejs'
 
-// Criar pool de conexões
-let pool;
-
-try {
-  // Configuração avançada do pool para ambiente de produção
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  const poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    // Em produção, garantir que SSL esteja habilitado corretamente
-    ssl: isProduction ? {
-      rejectUnauthorized: false
-    } : false,
-    // Configurações recomendadas para Vercel + Neon
-    max: 10, // Limitar o número máximo de conexões
-    idleTimeoutMillis: 30000, // Tempo em ms antes de uma conexão ociosa ser fechada
-    connectionTimeoutMillis: 10000, // Tempo em ms para obter uma conexão
-  };
-  
-  console.log('Conectando ao banco de dados com as configurações:', 
-    JSON.stringify({
-      ...poolConfig,
-      connectionString: '[REDACTED]' // Por segurança, não mostrar a string completa
-    })
-  );
-  
-  pool = new pg.Pool(poolConfig);
-  console.log('Conexão com o banco de dados estabelecida');
-  
-  // Adicionar ouvintes para log e depuração
-  pool.on('connect', () => {
-    console.log('Nova conexão com o banco de dados estabelecida');
-  });
-  
-  pool.on('error', (err) => {
-    console.error('Erro inesperado no pool de conexões:', err);
-  });
-  
-} catch (error) {
-  console.error('Erro ao conectar ao banco de dados:', error);
-  throw error;
+// Função para gerar IDs únicos sem depender do módulo crypto
+function generateId() {
+  // Gera um ID baseado em timestamp + números aleatórios (20 caracteres)
+  const timestamp = Date.now().toString(36);
+  const randomStr = Math.random().toString(36).substring(2, 10);
+  return `${timestamp}-${randomStr}`;
 }
 
-// Função para inicializar as tabelas do banco de dados
-async function initDatabase() {
-  let client;
-  
-  try {
-    console.log('Iniciando criação das tabelas...');
-    client = await pool.connect();
-    
-    // Criar tabela de funcionários
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS funcionarios (
-        id TEXT PRIMARY KEY,
-        nome TEXT NOT NULL,
-        especialidade TEXT NOT NULL,
-        telefone TEXT
-      )
-    `);
-
-    // Criar tabela de serviços
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS servicos (
-        id TEXT PRIMARY KEY,
-        nome TEXT NOT NULL,
-        descricao TEXT,
-        preco DECIMAL(10, 2) NOT NULL,
-        duracao INTEGER NOT NULL
-      )
-    `);
-
-    // Criar tabela de agendamentos
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS agendamentos (
-        id TEXT PRIMARY KEY,
-        clienteNome TEXT NOT NULL,
-        clienteTelefone TEXT NOT NULL,
-        funcionarioId TEXT NOT NULL,
-        servicoId TEXT NOT NULL,
-        horaInicio TIMESTAMP NOT NULL,
-        horaFim TIMESTAMP NOT NULL,
-        observacoes TEXT
-      )
-    `);
-    
-    console.log('Tabelas criadas com sucesso');
-    return true;
-  } catch (error) {
-    console.error('Erro durante a inicialização do banco de dados:', error);
-    throw error;
-  } finally {
-    if (client) client.release();
-  }
-}
-
-// Função auxiliar para executar consultas com tratamento de erro melhorado
-async function executeQuery(queryFn) {
-  let client;
-  try {
-    client = await pool.connect();
-    return await queryFn(client);
-  } catch (error) {
-    console.error('Erro ao executar consulta:', error);
-    // Melhorar a mensagem de erro para identificar problemas de conexão
-    if (error.code === 'ECONNREFUSED') {
-      console.error('Falha ao conectar ao banco de dados. Verifique a URL de conexão e as configurações de rede.');
-    }
-    throw error;
-  } finally {
-    if (client) client.release();
-  }
-}
+// Variáveis para armazenar dados em memória durante o desenvolvimento
+let funcionarios = [];
+let servicos = [];
+let agendamentos = [];
 
 // Operações para funcionários
 const funcionariosDb = {
   getAll: async () => {
-    return executeQuery(async (client) => {
-      const result = await client.query('SELECT * FROM funcionarios ORDER BY nome');
-      return result.rows;
-    });
+    return funcionarios;
   },
   
   getById: async (id) => {
-    return executeQuery(async (client) => {
-      const result = await client.query('SELECT * FROM funcionarios WHERE id = $1', [id]);
-      return result.rows[0] || null;
-    });
+    return funcionarios.find(f => f.id === id) || null;
   },
   
   create: async (funcionario) => {
-    return executeQuery(async (client) => {
-      const id = uuidv4();
-      const result = await client.query(
-        'INSERT INTO funcionarios (id, nome, especialidade, telefone) VALUES ($1, $2, $3, $4) RETURNING *',
-        [id, funcionario.nome, funcionario.especialidade || '', funcionario.telefone || '']
-      );
-      return result.rows[0];
-    });
+    const id = generateId();
+    const novoFuncionario = { 
+      id, 
+      nome: funcionario.nome, 
+      especialidade: funcionario.especialidade || '', 
+      telefone: funcionario.telefone || '' 
+    };
+    funcionarios.push(novoFuncionario);
+    return novoFuncionario;
   },
   
   update: async (id, dados) => {
-    return executeQuery(async (client) => {
-      const result = await client.query(
-        'UPDATE funcionarios SET nome = $1, especialidade = $2, telefone = $3 WHERE id = $4 RETURNING *',
-        [dados.nome, dados.especialidade || '', dados.telefone || '', id]
-      );
-      return result.rows[0];
-    });
+    const index = funcionarios.findIndex(f => f.id === id);
+    if (index === -1) return null;
+    
+    funcionarios[index] = { 
+      ...funcionarios[index], 
+      nome: dados.nome, 
+      especialidade: dados.especialidade, 
+      telefone: dados.telefone || '' 
+    };
+    
+    return funcionarios[index];
   },
   
   delete: async (id) => {
-    return executeQuery(async (client) => {
-      await client.query('DELETE FROM funcionarios WHERE id = $1', [id]);
-      return { success: true };
-    });
+    const index = funcionarios.findIndex(f => f.id === id);
+    if (index !== -1) {
+      funcionarios.splice(index, 1);
+    }
+    return { success: true };
   }
 };
 
 // Operações para serviços
 const servicosDb = {
   getAll: async () => {
-    return executeQuery(async (client) => {
-      const result = await client.query('SELECT * FROM servicos ORDER BY nome');
-      return result.rows;
-    });
+    return servicos;
   },
   
   getById: async (id) => {
-    return executeQuery(async (client) => {
-      const result = await client.query('SELECT * FROM servicos WHERE id = $1', [id]);
-      return result.rows[0] || null;
-    });
+    return servicos.find(s => s.id === id) || null;
   },
   
   create: async (servico) => {
-    return executeQuery(async (client) => {
-      const id = uuidv4();
-      const result = await client.query(
-        'INSERT INTO servicos (id, nome, descricao, preco, duracao) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [id, servico.nome, servico.descricao || '', parseFloat(servico.preco), parseInt(servico.duracao)]
-      );
-      return result.rows[0];
-    });
+    const id = generateId();
+    const novoServico = { 
+      id, 
+      nome: servico.nome, 
+      descricao: servico.descricao || '', 
+      preco: parseFloat(servico.preco), 
+      duracao: parseInt(servico.duracao) 
+    };
+    servicos.push(novoServico);
+    return novoServico;
   },
   
   update: async (id, dados) => {
-    return executeQuery(async (client) => {
-      const result = await client.query(
-        'UPDATE servicos SET nome = $1, descricao = $2, preco = $3, duracao = $4 WHERE id = $5 RETURNING *',
-        [dados.nome, dados.descricao || '', parseFloat(dados.preco), parseInt(dados.duracao), id]
-      );
-      return result.rows[0];
-    });
+    const index = servicos.findIndex(s => s.id === id);
+    if (index === -1) return null;
+    
+    servicos[index] = { 
+      ...servicos[index], 
+      nome: dados.nome, 
+      descricao: dados.descricao || '', 
+      preco: parseFloat(dados.preco), 
+      duracao: parseInt(dados.duracao) 
+    };
+    
+    return servicos[index];
   },
   
   delete: async (id) => {
-    return executeQuery(async (client) => {
-      await client.query('DELETE FROM servicos WHERE id = $1', [id]);
-      return { success: true };
-    });
+    const index = servicos.findIndex(s => s.id === id);
+    if (index !== -1) {
+      servicos.splice(index, 1);
+    }
+    return { success: true };
   }
 };
 
 // Operações para agendamentos
 const agendamentosDb = {
   getAll: async () => {
-    return executeQuery(async (client) => {
-      const result = await client.query(`
-        SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
-        FROM agendamentos a
-        JOIN funcionarios f ON a.funcionarioId = f.id
-        JOIN servicos s ON a.servicoId = s.id
-        ORDER BY a.horaInicio DESC
-      `);
-      return result.rows;
+    return agendamentos.map(a => {
+      const funcionario = funcionariosDb.getById(a.funcionarioId);
+      const servico = servicosDb.getById(a.servicoId);
+      return {
+        ...a,
+        funcionarioNome: funcionario ? funcionario.nome : 'Desconhecido',
+        servicoNome: servico ? servico.nome : 'Desconhecido',
+        preco: servico ? servico.preco : 0
+      };
     });
   },
   
   getById: async (id) => {
-    return executeQuery(async (client) => {
-      const result = await client.query(`
-        SELECT a.*, f.nome as funcionarioNome, s.nome as servicoNome, s.preco
-        FROM agendamentos a
-        JOIN funcionarios f ON a.funcionarioId = f.id
-        JOIN servicos s ON a.servicoId = s.id
-        WHERE a.id = $1
-      `, [id]);
-      return result.rows[0] || null;
-    });
+    const agendamento = agendamentos.find(a => a.id === id);
+    if (!agendamento) return null;
+    
+    const funcionario = funcionariosDb.getById(agendamento.funcionarioId);
+    const servico = servicosDb.getById(agendamento.servicoId);
+    
+    return {
+      ...agendamento,
+      funcionarioNome: funcionario ? funcionario.nome : 'Desconhecido',
+      servicoNome: servico ? servico.nome : 'Desconhecido',
+      preco: servico ? servico.preco : 0
+    };
   },
   
   create: async (agendamento) => {
-    return executeQuery(async (client) => {
-      const id = uuidv4();
-      const result = await client.query(
-        `INSERT INTO agendamentos 
-         (id, clienteNome, clienteTelefone, funcionarioId, servicoId, horaInicio, horaFim, observacoes) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-         RETURNING *`,
-        [
-          id, 
-          agendamento.clienteNome, 
-          agendamento.clienteTelefone || '', 
-          agendamento.funcionarioId,
-          agendamento.servicoId,
-          agendamento.horaInicio,
-          agendamento.horaFim,
-          agendamento.observacoes || ''
-        ]
-      );
-      return result.rows[0];
-    });
+    const id = generateId();
+    const novoAgendamento = {
+      id,
+      clienteNome: agendamento.clienteNome,
+      clienteTelefone: agendamento.clienteTelefone || '',
+      funcionarioId: agendamento.funcionarioId,
+      servicoId: agendamento.servicoId,
+      horaInicio: agendamento.horaInicio,
+      horaFim: agendamento.horaFim,
+      observacoes: agendamento.observacoes || ''
+    };
+    
+    agendamentos.push(novoAgendamento);
+    return novoAgendamento;
   },
   
   update: async (id, dados) => {
-    return executeQuery(async (client) => {
-      const result = await client.query(
-        `UPDATE agendamentos 
-         SET clienteNome = $1, clienteTelefone = $2, funcionarioId = $3, 
-             servicoId = $4, horaInicio = $5, horaFim = $6, observacoes = $7
-         WHERE id = $8 
-         RETURNING *`,
-        [
-          dados.clienteNome, 
-          dados.clienteTelefone || '', 
-          dados.funcionarioId,
-          dados.servicoId,
-          dados.horaInicio,
-          dados.horaFim,
-          dados.observacoes || '',
-          id
-        ]
-      );
-      return result.rows[0];
-    });
+    const index = agendamentos.findIndex(a => a.id === id);
+    if (index === -1) return null;
+    
+    agendamentos[index] = {
+      ...agendamentos[index],
+      clienteNome: dados.clienteNome,
+      clienteTelefone: dados.clienteTelefone || '',
+      funcionarioId: dados.funcionarioId,
+      servicoId: dados.servicoId,
+      horaInicio: dados.horaInicio,
+      horaFim: dados.horaFim,
+      observacoes: dados.observacoes || ''
+    };
+    
+    return agendamentos[index];
   },
   
   delete: async (id) => {
-    return executeQuery(async (client) => {
-      await client.query('DELETE FROM agendamentos WHERE id = $1', [id]);
-      return { success: true };
-    });
+    const index = agendamentos.findIndex(a => a.id === id);
+    if (index !== -1) {
+      agendamentos.splice(index, 1);
+    }
+    return { success: true };
   }
 };
 
-module.exports = {
+// Função para inicializar o banco de dados com dados de exemplo
+async function initDatabase() {
+  // Adicionar alguns funcionários de exemplo se não existirem
+  if (funcionarios.length === 0) {
+    await funcionariosDb.create({ nome: 'João Silva', especialidade: 'Tatuador', telefone: '(11) 98765-4321' });
+    await funcionariosDb.create({ nome: 'Maria Oliveira', especialidade: 'Piercer', telefone: '(11) 91234-5678' });
+  }
+  
+  // Adicionar alguns serviços de exemplo se não existirem
+  if (servicos.length === 0) {
+    await servicosDb.create({ nome: 'Tatuagem Pequena', descricao: 'Até 10cm', preco: 150, duracao: 60 });
+    await servicosDb.create({ nome: 'Tatuagem Média', descricao: '10-20cm', preco: 300, duracao: 120 });
+    await servicosDb.create({ nome: 'Piercing Básico', descricao: 'Orelha, nariz, etc', preco: 80, duracao: 30 });
+  }
+  
+  console.log('Banco de dados inicializado com dados de exemplo');
+  return true;
+}
+
+// Inicializar o banco de dados automaticamente
+initDatabase().catch(console.error);
+
+export {
   initDatabase,
   funcionariosDb,
   servicosDb,
-  agendamentosDb,
-  pool
+  agendamentosDb
 };

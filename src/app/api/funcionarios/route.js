@@ -1,5 +1,8 @@
-const { NextResponse } = require('next/server');
-const { funcionariosDb } = require('../../lib/postgres');
+import { NextResponse } from 'next/server';
+import { funcionariosDb } from '../../lib/postgres';
+
+// Definir que esta rota não usa o Edge Runtime
+export const runtime = 'nodejs';
 
 function handleError(error) {
   console.error('Erro na API de funcionários:', error);
@@ -10,7 +13,7 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-async function GET() {
+export async function GET() {
   try {
     console.log('GET /api/funcionarios - Iniciando busca de funcionários');
     const funcionarios = await funcionariosDb.getAll();
@@ -25,7 +28,7 @@ async function GET() {
   }
 }
 
-async function POST(request) {
+export async function POST(request) {
   try {
     console.log('POST /api/funcionarios - Iniciando processamento');
     const body = await request.json();
@@ -81,7 +84,7 @@ async function POST(request) {
   }
 }
 
-async function DELETE(request) {
+export async function DELETE(request) {
   try {
     console.log('DELETE /api/funcionarios - Iniciando processamento');
     const { searchParams } = new URL(request.url);
@@ -116,9 +119,3 @@ async function DELETE(request) {
     return handleError(error);
   }
 }
-
-module.exports = {
-  GET,
-  POST,
-  DELETE
-};

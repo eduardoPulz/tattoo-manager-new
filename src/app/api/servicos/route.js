@@ -1,5 +1,8 @@
-const { NextResponse } = require('next/server');
-const { servicosDb } = require('../../lib/postgres');
+import { NextResponse } from 'next/server';
+import { servicosDb } from '../../lib/postgres';
+
+// Definir que esta rota não usa o Edge Runtime
+export const runtime = 'nodejs';
 
 function handleError(error) {
   console.error('Erro na API de serviços:', error);
@@ -10,7 +13,7 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-async function GET() {
+export async function GET() {
   try {
     console.log('GET /api/servicos - Iniciando busca de serviços');
     const servicos = await servicosDb.getAll();
@@ -25,7 +28,7 @@ async function GET() {
   }
 }
 
-async function POST(request) {
+export async function POST(request) {
   try {
     console.log('POST /api/servicos - Iniciando processamento');
     const body = await request.json();
@@ -33,30 +36,31 @@ async function POST(request) {
     console.log('POST /api/servicos - Corpo da requisição:', body);
     
     // Validar campos obrigatórios
-    if (!body.descricao || !body.preco || !body.duracao) {
+    if (!body.nome || !body.preco || !body.duracao) {
       console.log('POST /api/servicos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
-        message: 'Descrição, preço e duração são obrigatórios'
+        message: 'Nome, preço e duração são obrigatórios'
       }, { status: 400 });
     }
     
-    // Validar tipos de dados
+    // Validar valores numéricos
     if (isNaN(parseFloat(body.preco)) || isNaN(parseInt(body.duracao))) {
-      console.log('POST /api/servicos - Tipos de dados inválidos');
+      console.log('POST /api/servicos - Valores numéricos inválidos');
       return NextResponse.json({
         success: false,
-        message: 'Preço e duração devem ser números'
+        message: 'Preço e duração devem ser valores numéricos'
       }, { status: 400 });
     }
     
+    // Atualizar ou criar serviço
     if (body.id) {
       console.log(`POST /api/servicos - Atualizando serviço ID: ${body.id}`);
       const servicoAtualizado = await servicosDb.update(body.id, {
-        nome: body.descricao, // Usar 'descricao' como 'nome'
+        nome: body.nome,
         descricao: body.descricao || '',
-        preco: body.preco,
-        duracao: body.duracao
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
       });
       
       if (!servicoAtualizado) {
@@ -76,10 +80,10 @@ async function POST(request) {
     } else {
       console.log('POST /api/servicos - Criando novo serviço');
       const novoServico = await servicosDb.create({
-        nome: body.descricao, // Usar 'descricao' como 'nome'
+        nome: body.nome,
         descricao: body.descricao || '',
-        preco: body.preco,
-        duracao: body.duracao
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
       });
       
       console.log(`POST /api/servicos - Novo serviço criado com ID: ${novoServico.id}`);
@@ -95,7 +99,7 @@ async function POST(request) {
   }
 }
 
-async function DELETE(request) {
+export async function DELETE(request) {
   try {
     console.log('DELETE /api/servicos - Iniciando processamento');
     const { searchParams } = new URL(request.url);
@@ -130,9 +134,3 @@ async function DELETE(request) {
     return handleError(error);
   }
 }
-
-module.exports = {
-  GET,
-  POST,
-  DELETE
-};

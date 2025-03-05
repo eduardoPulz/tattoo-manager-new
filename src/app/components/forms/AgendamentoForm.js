@@ -9,11 +9,13 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   
   const [formData, setFormData] = useState({
     id: initialData.id || null,
-    nomeCliente: initialData.nomeCliente || '',
+    nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+    clienteTelefone: initialData.clienteTelefone || '',
     funcionarioId: initialData.funcionarioId || '',
     servicoId: initialData.servicoId || '',
     horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
     horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
+    observacoes: initialData.observacoes || ''
   });
   
   const [errors, setErrors] = useState({});
@@ -116,6 +118,13 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       newErrors.nomeCliente = 'Nome do cliente é obrigatório';
     }
     
+    if (!formData.clienteTelefone.trim()) {
+      newErrors.clienteTelefone = 'Telefone do cliente é obrigatório';
+    } else if (!/^\(\d{2}\) \d{5}-\d{4}$/.test(formData.clienteTelefone) && 
+               !/^\d{10,11}$/.test(formData.clienteTelefone.replace(/\D/g, ''))) {
+      newErrors.clienteTelefone = 'Formato de telefone inválido';
+    }
+    
     if (!formData.funcionarioId) {
       newErrors.funcionarioId = 'Selecione um funcionário';
     }
@@ -135,6 +144,24 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     }
     
     return newErrors;
+  };
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.length <= 11) {
+      if (value.length > 2) {
+        value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+      }
+      if (value.length > 10) {
+        value = `${value.substring(0, 10)}-${value.substring(10)}`;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        clienteTelefone: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -161,10 +188,12 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       const dataToSubmit = {
         id: formData.id,
         nomeCliente: formData.nomeCliente.trim(),
+        clienteTelefone: formData.clienteTelefone.trim(),
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
         horaInicio: horaInicio.toISOString(),
-        horaFim: horaFim.toISOString()
+        horaFim: horaFim.toISOString(),
+        observacoes: formData.observacoes.trim()
       };
       
       await onSubmit(dataToSubmit);
@@ -173,10 +202,12 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         setFormData({
           id: null,
           nomeCliente: '',
+          clienteTelefone: '',
           funcionarioId: '',
           servicoId: '',
           horaInicio: '',
           horaFim: '',
+          observacoes: ''
         });
       }
     } catch (error) {
@@ -207,6 +238,20 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           data-error={!!errors.nomeCliente}
         />
         {errors.nomeCliente && <ErrorMessage>{errors.nomeCliente}</ErrorMessage>}
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="clienteTelefone">Telefone do Cliente</Label>
+        <Input
+          type="text"
+          id="clienteTelefone"
+          name="clienteTelefone"
+          value={formData.clienteTelefone}
+          onChange={handlePhoneChange}
+          placeholder="(XX) XXXXX-XXXX"
+          data-error={!!errors.clienteTelefone}
+        />
+        {errors.clienteTelefone && <ErrorMessage>{errors.clienteTelefone}</ErrorMessage>}
       </FormGroup>
       
       <FormGroup>
@@ -275,6 +320,19 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         {formData.servicoId && (
           <small>Calculado automaticamente com base na duração do serviço</small>
         )}
+      </FormGroup>
+      
+      <FormGroup>
+        <Label htmlFor="observacoes">Observações</Label>
+        <Input
+          as="textarea"
+          id="observacoes"
+          name="observacoes"
+          value={formData.observacoes}
+          onChange={handleChange}
+          placeholder="Observações adicionais"
+          rows={3}
+        />
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}
