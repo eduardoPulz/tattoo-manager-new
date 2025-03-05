@@ -36,11 +36,11 @@ export async function POST(request) {
     console.log('POST /api/servicos - Corpo da requisição:', body);
     
     // Validar campos obrigatórios
-    if (!body.nome || !body.preco || !body.duracao) {
+    if (!body.descricao || !body.preco || !body.duracao) {
       console.log('POST /api/servicos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
-        message: 'Nome, preço e duração são obrigatórios'
+        message: 'Descrição, preço e duração são obrigatórios'
       }, { status: 400 });
     }
     
@@ -57,8 +57,7 @@ export async function POST(request) {
     if (body.id) {
       console.log(`POST /api/servicos - Atualizando serviço ID: ${body.id}`);
       const servicoAtualizado = await servicosRepository.update(body.id, {
-        nome: body.nome,
-        descricao: body.descricao || '',
+        descricao: body.descricao,
         preco: parseFloat(body.preco),
         duracao: parseInt(body.duracao)
       });
@@ -80,8 +79,7 @@ export async function POST(request) {
     } else {
       console.log('POST /api/servicos - Criando novo serviço');
       const novoServico = await servicosRepository.create({
-        nome: body.nome,
-        descricao: body.descricao || '',
+        descricao: body.descricao,
         preco: parseFloat(body.preco),
         duracao: parseInt(body.duracao)
       });

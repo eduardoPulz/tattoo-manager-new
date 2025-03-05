@@ -22,10 +22,10 @@ async function initDb() {
     -- Criação da tabela de serviços
     CREATE TABLE IF NOT EXISTS servicos (
         id UUID PRIMARY KEY,
-        nome VARCHAR(255) NOT NULL,
+        nome VARCHAR(255),
         preco DECIMAL(10, 2) NOT NULL,
         duracao INTEGER NOT NULL,
-        descricao TEXT
+        descricao TEXT NOT NULL
     );
 
     -- Criação da tabela de agendamentos

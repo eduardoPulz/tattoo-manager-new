@@ -5,7 +5,7 @@ const servicosRepository = {
   async getAll() {
     try {
       const result = await db.query(
-        'SELECT * FROM servicos ORDER BY nome'
+        'SELECT * FROM servicos ORDER BY descricao'
       );
       return result.rows;
     } catch (error) {
@@ -30,8 +30,8 @@ const servicosRepository = {
   async create(servico) {
     try {
       // Validação de campos obrigatórios
-      if (!servico.nome) {
-        throw new Error('Nome do serviço é obrigatório');
+      if (!servico.descricao) {
+        throw new Error('Descrição do serviço é obrigatória');
       }
       
       if (isNaN(parseFloat(servico.preco)) || parseFloat(servico.preco) < 0) {
@@ -50,10 +50,10 @@ const servicosRepository = {
          RETURNING *`,
         [
           id,
-          servico.nome,
+          servico.nome || '',
           parseFloat(servico.preco),
           parseInt(servico.duracao),
-          servico.descricao || ''
+          servico.descricao
         ]
       );
       return result.rows[0];
@@ -66,8 +66,8 @@ const servicosRepository = {
   async update(id, servico) {
     try {
       // Validação de campos obrigatórios
-      if (!servico.nome) {
-        throw new Error('Nome do serviço é obrigatório');
+      if (!servico.descricao) {
+        throw new Error('Descrição do serviço é obrigatória');
       }
       
       if (isNaN(parseFloat(servico.preco)) || parseFloat(servico.preco) < 0) {
@@ -87,10 +87,10 @@ const servicosRepository = {
          WHERE id = $5 
          RETURNING *`,
         [
-          servico.nome,
+          servico.nome || '',
           parseFloat(servico.preco),
           parseInt(servico.duracao),
-          servico.descricao || '',
+          servico.descricao,
           id
         ]
       );
