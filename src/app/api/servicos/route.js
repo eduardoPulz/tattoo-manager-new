@@ -31,6 +31,7 @@ export async function POST(request) {
     
     if (body.id) {
       const servicoAtualizado = servicosDb.update(body.id, {
+        nome: body.descricao,
         descricao: body.descricao,
         duracao: body.duracao || 60,
         preco: body.preco || 0
@@ -51,6 +52,7 @@ export async function POST(request) {
     }
     
     const novoServico = servicosDb.create({
+      nome: body.descricao,
       descricao: body.descricao,
       duracao: body.duracao || 60,
       preco: body.preco || 0
@@ -99,8 +101,6 @@ export async function DELETE(request) {
         message: resultado.message
       }, { status: 409 });
     }
-    
-    console.log('Serviço removido com sucesso. ID:', id);
     
     return NextResponse.json({
       success: true,

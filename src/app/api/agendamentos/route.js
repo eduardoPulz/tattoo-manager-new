@@ -108,8 +108,6 @@ export async function POST(request) {
       horaFim: body.horaFim,
     });
     
-    console.log('Agendamento criado com sucesso:', novoAgendamento);
-    
     return NextResponse.json({
       success: true,
       message: 'Agendamento criado com sucesso',
@@ -152,8 +150,6 @@ export async function DELETE(request) {
         message: resultado.message
       }, { status: 409 });
     }
-    
-    console.log('Agendamento removido com sucesso. ID:', id);
     
     return NextResponse.json({
       success: true,

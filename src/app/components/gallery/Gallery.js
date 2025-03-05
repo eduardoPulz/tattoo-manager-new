@@ -1,6 +1,7 @@
 "use client";
 
-import { GalleryGrid, GalleryImage } from "./styles";
+import { useState } from "react";
+import { GalleryGrid, GalleryImage, ImagePopup, CloseButton, PopupImage } from "./styles";
 
 const GALLERY_IMAGES = [
   {
@@ -38,17 +39,43 @@ const GALLERY_IMAGES = [
 ];
 
 export const Gallery = () => {
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const openPopup = (image) => {
+    setSelectedImage(image);
+  };
+
+  const closePopup = () => {
+    setSelectedImage(null);
+  };
+
   return (
-    <GalleryGrid>
-      {GALLERY_IMAGES.map((image, index) => (
-        <GalleryImage
-          key={index}
-          src={image.src}
-          alt={image.alt}
-          loading="lazy"
-        />
-      ))}
-    </GalleryGrid>
+    <>
+
+      {/* Grid de imagens */}
+      <GalleryGrid>
+        {GALLERY_IMAGES.map((image, index) => (
+          <GalleryImage
+            key={index}
+            src={image.src}
+            alt={image.alt}
+            loading="lazy"
+            onClick={() => openPopup(image)}
+          />
+        ))}
+      </GalleryGrid>
+
+      {/* Popup de imagem */}
+      {selectedImage && (
+        <ImagePopup onClick={closePopup}>
+          <CloseButton onClick={closePopup}>×</CloseButton>
+          <PopupImage 
+            src={selectedImage.src} 
+            alt={selectedImage.alt} 
+            onClick={(e) => e.stopPropagation()}
+          />
+        </ImagePopup>
+      )}
+    </>
   );
 };
-

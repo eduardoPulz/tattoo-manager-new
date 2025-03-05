@@ -54,18 +54,35 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
   }, []);
 
   useEffect(() => {
-    if (formData.servicoId && formData.horaInicio) {
-      const servicoSelecionado = servicos.find(s => s.id === formData.servicoId);
-      if (servicoSelecionado) {
-        const horaInicio = new Date(formData.horaInicio);
-        const horaFim = new Date(horaInicio.getTime() + servicoSelecionado.duracao * 60000);
-        setFormData(prev => ({
-          ...prev,
-          horaFim: horaFim.toISOString().slice(0, 16)
-        }));
+    if (formData.horaInicio) {
+      try {
+        const horaInicioStr = formData.horaInicio;
+        
+        const [dataStr, horaStr] = horaInicioStr.split('T');
+        const [hora, minuto] = horaStr.split(':').map(Number);
+        
+        let novaHora = hora + 1;
+        
+        if (novaHora >= 24) {
+          novaHora = 23;
+          const novoMinuto = 59;
+          const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${novoMinuto.toString().padStart(2, '0')}`;
+          setFormData(prev => ({
+            ...prev,
+            horaFim: horaFimStr
+          }));
+        } else {
+          const horaFimStr = `${dataStr}T${novaHora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
+          setFormData(prev => ({
+            ...prev,
+            horaFim: horaFimStr
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao calcular hora de fim:', error);
       }
     }
-  }, [formData.servicoId, formData.horaInicio, servicos]);
+  }, [formData.horaInicio]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -122,14 +139,22 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     setIsSubmitting(true);
     
     try {
+      // Garantir que as datas sejam formatadas corretamente
+      const horaInicio = new Date(formData.horaInicio);
+      const horaFim = new Date(formData.horaFim);
+      
+      // Verificar se as datas são válidas antes de enviar
+      if (isNaN(horaInicio.getTime()) || isNaN(horaFim.getTime())) {
+        throw new Error('Datas inválidas. Verifique o formato.');
+      }
+      
       const dataToSubmit = {
         id: formData.id,
-        nomeCliente: formData.nomeCliente,
+        nomeCliente: formData.nomeCliente.trim(),
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
-        horaInicio: new Date(formData.horaInicio).toISOString(),
-        horaFim: new Date(formData.horaFim).toISOString(),
-        status: formData.status
+        horaInicio: horaInicio.toISOString(),
+        horaFim: horaFim.toISOString()
       };
       
       await onSubmit(dataToSubmit);
@@ -146,7 +171,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      setErrors({ submit: 'Erro ao salvar. Por favor, tente novamente.' });
+      setErrors({ submit: `Erro ao salvar: ${error.message}` });
     } finally {
       setIsSubmitting(false);
     }
@@ -234,12 +259,10 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           value={formData.horaFim}
           onChange={handleChange}
           data-error={!!errors.horaFim}
-          readOnly={!!formData.servicoId}
+          readOnly={true}
         />
         {errors.horaFim && <ErrorMessage>{errors.horaFim}</ErrorMessage>}
-        {formData.servicoId && (
-          <small>Calculado automaticamente com base na duração do serviço</small>
-        )}
+        <small>Calculado automaticamente para 1 hora após o início</small>
       </FormGroup>
       
       {errors.submit && <ErrorMessage>{errors.submit}</ErrorMessage>}

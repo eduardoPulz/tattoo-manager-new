@@ -7,6 +7,7 @@ export const MainHeading = styled.h2`
   font-weight: normal;
   text-align: center;
   margin: 35px 0 18px 0;
+  width: 100%;
 
   @media (max-width: 640px) {
     font-size: 32px;
@@ -15,19 +16,52 @@ export const MainHeading = styled.h2`
 
 export const HeroSection = styled.div`
   position: relative;
-  width: 100%;
-  max-width: 1280px;
+  width: 1280px;
+  max-width: 100%;
   height: 650px;
+  margin: 0 auto;
+  overflow: hidden;
 
   @media (max-width: 640px) {
     height: 400px;
+    width: 100%;
+  }
+`;
+
+export const SlideContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  transition: transform 0.8s ease-in-out;
+  transform: translateX(${props => props.$offset}px);
+`;
+
+export const Slide = styled.div`
+  min-width: 100%;
+  width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(0,0,0,0.5) 100%);
+    pointer-events: none;
   }
 `;
 
 export const HeroImage = styled.img`
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 `;
 
 export const OverlayContent = styled.div`

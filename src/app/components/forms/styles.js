@@ -47,6 +47,19 @@ export const Input = styled.input`
 
 export const DateTimeInput = styled.input`
   ${inputStyles}
+  
+  /* Fix para o botão de calendário */
+  &::-webkit-calendar-picker-indicator {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-right: 2px;
+  }
+  
+  &::-webkit-calendar-picker-indicator:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
 `;
 
 export const Select = styled.select`

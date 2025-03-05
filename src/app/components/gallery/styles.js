@@ -23,8 +23,42 @@ export const GalleryImage = styled.img`
   object-fit: cover;
   border-radius: 4px;
   transition: transform 0.2s ease;
+  cursor: pointer;
 
   &:hover {
     transform: scale(1.02);
   }
+`;
+
+// Estilos do Popup
+export const ImagePopup = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+export const CloseButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+  z-index: 1001;
+`;
+
+export const PopupImage = styled.img`
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 4px;
 `;

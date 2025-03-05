@@ -1,11 +1,31 @@
 "use client";
+import { useState, useEffect } from "react";
 import { DotsContainer, Dot } from "./styles";
 
-export const ImageSlider = ({ totalDots, activeDot }) => {
+export const ImageSlider = ({ totalDots, onDotClick, activeDot = 0 }) => {
+  const [internalActiveDot, setInternalActiveDot] = useState(activeDot);
+  
+  // Atualizar o estado interno quando a prop activeDot mudar
+  useEffect(() => {
+    setInternalActiveDot(activeDot);
+  }, [activeDot]);
+
+  const handleDotClick = (index) => {
+    console.log("Dot clicked:", index);
+    setInternalActiveDot(index);
+    if (onDotClick) {
+      onDotClick(index);
+    }
+  };
+
   return (
     <DotsContainer>
       {Array.from({ length: totalDots }).map((_, index) => (
-        <Dot key={index} $active={index === activeDot} />
+        <Dot 
+          key={index} 
+          $active={index === internalActiveDot} 
+          onClick={() => handleDotClick(index)}
+        />
       ))}
     </DotsContainer>
   );

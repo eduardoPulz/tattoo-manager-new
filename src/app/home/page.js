@@ -7,12 +7,19 @@ import { Gallery } from "../components/gallery/Gallery";
 const MainContainer = styled.div`
   min-height: 100vh;
   background-color: rgba(245, 245, 245, 1);
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden;
 `;
 
 const ContentContainer = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
 `;
 
 export default function Home() {

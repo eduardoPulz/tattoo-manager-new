@@ -2,11 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-// Definição do caminho para o banco de dados
 const DB_PATH = path.join(process.cwd(), 'db.json');
 
-// Estado em memória para ambiente de produção na Vercel
 let dbInMemory = null;
+let dbMemorySize = 0;
 
 const initialDb = {
   funcionarios: [],
@@ -15,7 +14,6 @@ const initialDb = {
 };
 
 function readDb() {
-  // Em produção na Vercel, usamos o estado em memória
   if (process.env.VERCEL === '1') {
     if (!dbInMemory) {
       dbInMemory = initialDb;
@@ -23,7 +21,6 @@ function readDb() {
     return dbInMemory;
   }
 
-  // Em desenvolvimento ou outros ambientes, usamos o arquivo
   try {
     if (!fs.existsSync(DB_PATH)) {
       fs.writeFileSync(DB_PATH, JSON.stringify(initialDb, null, 2));
@@ -39,13 +36,12 @@ function readDb() {
 }
 
 function writeDb(data) {
-  // Em produção na Vercel, salvamos apenas em memória
   if (process.env.VERCEL === '1') {
     dbInMemory = data;
+    dbMemorySize = JSON.stringify(data).length;
     return true;
   }
 
-  // Em desenvolvimento ou outros ambientes, salvamos no arquivo
   try {
     fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
     return true;
@@ -57,16 +53,15 @@ function writeDb(data) {
 
 function initDb() {
   try {
-    // Em produção na Vercel, inicializamos apenas a memória
     if (process.env.VERCEL === '1') {
       if (!dbInMemory) {
         dbInMemory = initialDb;
+        dbMemorySize = JSON.stringify(initialDb).length;
         console.log('Banco de dados em memória inicializado.');
       }
       return true;
     }
 
-    // Em desenvolvimento ou outros ambientes, checamos o arquivo
     if (!fs.existsSync(DB_PATH)) {
       fs.writeFileSync(DB_PATH, JSON.stringify(initialDb, null, 2));
       console.log('Arquivo de banco de dados criado com sucesso.');
@@ -75,7 +70,7 @@ function initDb() {
 
     try {
       const data = fs.readFileSync(DB_PATH, 'utf8');
-      JSON.parse(data); // Tentativa de parse para validar o JSON
+      JSON.parse(data);
       return true;
     } catch (error) {
       console.error('Arquivo de banco de dados inválido, recriando...');
