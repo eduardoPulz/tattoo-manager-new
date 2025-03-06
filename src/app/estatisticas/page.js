@@ -1,9 +1,17 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement } from 'chart.js';
-import { Bar, Pie, Line } from 'react-chartjs-2';
+import { 
+  Chart as ChartJS, 
+  CategoryScale, 
+  LinearScale, 
+  BarElement, 
+  Title, 
+  Tooltip, 
+  Legend, 
+  ArcElement
+} from 'chart.js';
+import { Bar, Pie } from 'react-chartjs-2';
 import { 
   StatisticsContainer, 
   StatisticsContent, 
@@ -26,8 +34,6 @@ ChartJS.register(
   LinearScale,
   BarElement,
   ArcElement,
-  PointElement,
-  LineElement,
   Title,
   Tooltip,
   Legend
@@ -294,18 +300,22 @@ export default function Estatisticas() {
         data: estatisticas.meses.faturamento,
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
-        type: 'bar'
-      },
+        borderWidth: 1
+      }
+    ],
+  } : null;
+
+  // Dados para o gráfico de agendamentos por mês
+  const dadosGraficoAgendamentosMeses = estatisticas ? {
+    labels: estatisticas.meses.labels,
+    datasets: [
       {
         label: 'Agendamentos',
         data: estatisticas.meses.agendamentos,
         borderColor: 'rgba(54, 162, 235, 1)',
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderWidth: 2,
-        type: 'line',
-        tension: 0.1,
-        yAxisID: 'y1',
+        tension: 0.1
       }
     ],
   } : null;
@@ -331,34 +341,6 @@ export default function Estatisticas() {
     plugins: {
       legend: {
         position: 'top',
-      },
-    },
-  };
-
-  // Opções específicas para o gráfico de meses (com dois eixos Y)
-  const opcoesGraficoMeses = {
-    ...opcoesGraficos,
-    scales: {
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: {
-          display: true,
-          text: 'Faturamento (R$)'
-        }
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        title: {
-          display: true,
-          text: 'Quantidade'
-        },
-        grid: {
-          drawOnChartArea: false,
-        },
       },
     },
   };
@@ -466,8 +448,13 @@ export default function Estatisticas() {
                 </ChartContainer>
 
                 <ChartContainer>
-                  <ChartTitle>Análise Mensal - Faturamento e Agendamentos</ChartTitle>
-                  {dadosGraficoMeses && <Bar data={dadosGraficoMeses} options={opcoesGraficoMeses} />}
+                  <ChartTitle>Faturamento por Mês</ChartTitle>
+                  {dadosGraficoMeses && <Bar data={dadosGraficoMeses} options={opcoesGraficos} />}
+                </ChartContainer>
+
+                <ChartContainer>
+                  <ChartTitle>Agendamentos por Mês</ChartTitle>
+                  {dadosGraficoAgendamentosMeses && <Bar data={dadosGraficoAgendamentosMeses} options={opcoesGraficos} />}
                 </ChartContainer>
 
                 <ChartContainer>
