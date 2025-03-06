@@ -19,15 +19,19 @@ export const StatisticsContent = styled.div`
   }
 `;
 
-export const StatisticsHeader = styled.h1`
-  font-size: 2rem;
-  color: #333;
-  margin-bottom: 30px;
+export const StatisticsHeader = styled.header`
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px;
   text-align: center;
   
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
+  h1 {
+    font-size: 2rem;
+    margin: 0;
+    
+    @media (max-width: 768px) {
+      font-size: 1.5rem;
+    }
   }
 `;
 
