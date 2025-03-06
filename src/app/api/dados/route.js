@@ -5,16 +5,9 @@ export async function GET(request) {
     // Buscar agendamentos com informações completas
     const agendamentosResult = await db.query(`
       SELECT 
-        a.*,
-        f.nome AS "funcionarioNome",
-        f.id AS "funcionarioId",
-        s.nome AS "servicoNome",
-        s.id AS "servicoId",
-        s.preco
+        a.*
       FROM 
         agendamentos a
-        LEFT JOIN funcionarios f ON a.funcionarioid = f.id
-        LEFT JOIN servicos s ON a.servicoid = s.id
       ORDER BY 
         a."horaInicio" DESC
     `);

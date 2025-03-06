@@ -99,37 +99,64 @@ export default function Estatisticas() {
     
     // Estatísticas gerais
     const totalAgendamentos = agendamentosFiltrados.length;
-    const totalFaturamento = agendamentosFiltrados.reduce((acc, a) => acc + (a.preco || 0), 0);
+    
+    // Calcular o faturamento total buscando o preço do serviço para cada agendamento
+    const totalFaturamento = agendamentosFiltrados.reduce((acc, a) => {
+      // Buscar o serviço correspondente para obter o preço
+      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const preco = servico ? Number(servico.preco) : 0;
+      return acc + preco;
+    }, 0);
+    
     const mediaFaturamento = totalAgendamentos > 0 ? totalFaturamento / totalAgendamentos : 0;
     
     // Estatísticas por serviço
     const servicosMap = new Map();
     agendamentosFiltrados.forEach(a => {
-      if (!servicosMap.has(a.servicoId)) {
-        servicosMap.set(a.servicoId, {
-          nome: a.servicoNome,
+      if (!a.servicoid) return;
+      
+      if (!servicosMap.has(a.servicoid)) {
+        // Buscar o serviço correspondente para obter o preço
+        const servico = dados.servicos.find(s => s.id === a.servicoid);
+        if (!servico) return;
+        
+        servicosMap.set(a.servicoid, {
+          nome: servico.nome || servico.descricao || 'Serviço sem nome',
           quantidade: 0,
-          faturamento: 0
+          faturamento: 0,
+          preco: Number(servico.preco) || 0
         });
       }
-      const servico = servicosMap.get(a.servicoId);
-      servico.quantidade += 1;
-      servico.faturamento += (a.preco || 0);
+      
+      const servicoStat = servicosMap.get(a.servicoid);
+      servicoStat.quantidade += 1;
+      servicoStat.faturamento += servicoStat.preco;
     });
     
     // Estatísticas por profissional
     const profissionaisMap = new Map();
     agendamentosFiltrados.forEach(a => {
-      if (!profissionaisMap.has(a.funcionarioId)) {
-        profissionaisMap.set(a.funcionarioId, {
-          nome: a.funcionarioNome,
+      if (!a.funcionarioid) return;
+      
+      if (!profissionaisMap.has(a.funcionarioid)) {
+        const funcionario = dados.funcionarios.find(f => f.id === a.funcionarioid);
+        if (!funcionario) return;
+        
+        profissionaisMap.set(a.funcionarioid, {
+          nome: funcionario.nome || 'Profissional sem nome',
           quantidade: 0,
           faturamento: 0
         });
       }
-      const profissional = profissionaisMap.get(a.funcionarioId);
-      profissional.quantidade += 1;
-      profissional.faturamento += (a.preco || 0);
+      
+      const profissionalStat = profissionaisMap.get(a.funcionarioid);
+      profissionalStat.quantidade += 1;
+      
+      // Obter o preço do serviço
+      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const preco = servico ? Number(servico.preco) : 0;
+      
+      profissionalStat.faturamento += preco;
     });
     
     // Estatísticas por dia da semana
@@ -141,7 +168,12 @@ export default function Estatisticas() {
       const data = new Date(a.horaInicio);
       const diaSemana = data.getDay();
       agendamentosPorDia[diaSemana] += 1;
-      faturamentoPorDia[diaSemana] += (a.preco || 0);
+      
+      // Obter o preço do serviço
+      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const preco = servico ? Number(servico.preco) : 0;
+      
+      faturamentoPorDia[diaSemana] += preco;
     });
     
     // Estatísticas por mês
@@ -153,7 +185,12 @@ export default function Estatisticas() {
       const data = new Date(a.horaInicio);
       const mes = data.getMonth();
       agendamentosPorMes[mes] += 1;
-      faturamentoPorMes[mes] += (a.preco || 0);
+      
+      // Obter o preço do serviço
+      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const preco = servico ? Number(servico.preco) : 0;
+      
+      faturamentoPorMes[mes] += preco;
     });
     
     // Estatísticas por hora do dia
@@ -326,6 +363,32 @@ export default function Estatisticas() {
     },
   };
 
+  // Renderizar cards de estatísticas gerais
+  const renderEstatisticasGerais = () => {
+    if (!estatisticas) return null;
+    
+    const formatarValor = (valor) => `R$ ${valor.toFixed(2).replace('.', ',')}`;
+    
+    return (
+      <StatisticsGrid>
+        <StatisticsCard>
+          <StatisticsCardTitle>Total de Agendamentos</StatisticsCardTitle>
+          <div>{estatisticas.geral.totalAgendamentos}</div>
+        </StatisticsCard>
+        
+        <StatisticsCard>
+          <StatisticsCardTitle>Valor Total</StatisticsCardTitle>
+          <div>{formatarValor(estatisticas.geral.totalFaturamento)}</div>
+        </StatisticsCard>
+        
+        <StatisticsCard>
+          <StatisticsCardTitle>Valor Médio</StatisticsCardTitle>
+          <div>{formatarValor(estatisticas.geral.mediaFaturamento)}</div>
+        </StatisticsCard>
+      </StatisticsGrid>
+    );
+  };
+
   if (loading) {
     return (
       <StatisticsContainer>
@@ -379,24 +442,7 @@ export default function Estatisticas() {
 
         {estatisticas && (
           <>
-            <StatisticsGrid>
-              <StatisticsCard>
-                <StatisticsCardTitle>Total de Agendamentos</StatisticsCardTitle>
-                <div>{estatisticas.geral.totalAgendamentos}</div>
-              </StatisticsCard>
-              <StatisticsCard>
-                <StatisticsCardTitle>Faturamento Total</StatisticsCardTitle>
-                <div>R$ {estatisticas.geral.totalFaturamento.toFixed(2)}</div>
-              </StatisticsCard>
-              <StatisticsCard>
-                <StatisticsCardTitle>Ticket Médio</StatisticsCardTitle>
-                <div>R$ {estatisticas.geral.ticketMedio.toFixed(2)}</div>
-              </StatisticsCard>
-              <StatisticsCard>
-                <StatisticsCardTitle>Serviços Disponíveis</StatisticsCardTitle>
-                <div>{dados.servicos.length}</div>
-              </StatisticsCard>
-            </StatisticsGrid>
+            {renderEstatisticasGerais()}
 
             {(categoriaFiltro === 'todos' || categoriaFiltro === 'servicos') && (
               <ChartContainer>
