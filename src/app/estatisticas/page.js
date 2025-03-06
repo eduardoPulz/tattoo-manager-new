@@ -11,6 +11,7 @@ import {
   Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { Navigation } from '../components/navigation/Navigation';
 import { 
   StatisticsContainer, 
   StatisticsContent, 
@@ -273,6 +274,7 @@ export default function Estatisticas() {
   if (loading) {
     return (
       <StatisticsContainer>
+        <Navigation />
         <StatisticsHeader>
           <h1>Estatísticas</h1>
         </StatisticsHeader>
@@ -286,6 +288,7 @@ export default function Estatisticas() {
   if (error) {
     return (
       <StatisticsContainer>
+        <Navigation />
         <StatisticsHeader>
           <h1>Estatísticas</h1>
         </StatisticsHeader>
@@ -298,6 +301,7 @@ export default function Estatisticas() {
 
   return (
     <StatisticsContainer>
+      <Navigation />
       <StatisticsHeader>
         <h1>Estatísticas</h1>
       </StatisticsHeader>
