@@ -275,9 +275,6 @@ export default function Estatisticas() {
     return (
       <StatisticsContainer>
         <Navigation />
-        <StatisticsHeader>
-          <h1>Estatísticas</h1>
-        </StatisticsHeader>
         <StatisticsContent>
           <LoadingMessage>Carregando estatísticas...</LoadingMessage>
         </StatisticsContent>
@@ -289,9 +286,6 @@ export default function Estatisticas() {
     return (
       <StatisticsContainer>
         <Navigation />
-        <StatisticsHeader>
-          <h1>Estatísticas</h1>
-        </StatisticsHeader>
         <StatisticsContent>
           <ErrorMessage>{error}</ErrorMessage>
         </StatisticsContent>
@@ -302,9 +296,6 @@ export default function Estatisticas() {
   return (
     <StatisticsContainer>
       <Navigation />
-      <StatisticsHeader>
-        <h1>Estatísticas</h1>
-      </StatisticsHeader>
       
       <StatisticsContent>
         <FilterContainer>
