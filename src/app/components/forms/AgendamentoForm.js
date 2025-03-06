@@ -23,14 +23,12 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {}, sharedSt
   // Usar o estado compartilhado se disponível
   useEffect(() => {
     if (sharedState) {
-      console.log('Usando estado compartilhado:', sharedState);
       setFuncionarios(sharedState.funcionarios || []);
       setServicos(sharedState.servicos || []);
       setLoading(false);
       
       // Atualizar formData com os dados iniciais
       if (initialData && initialData.id) {
-        console.log('Carregando dados iniciais:', initialData);
         setFormData({
           id: initialData.id || null,
           nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
@@ -66,7 +64,6 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {}, sharedSt
 
           // Atualizar formData com os dados iniciais após carregar os dados
           if (initialData && initialData.id) {
-            console.log('Carregando dados iniciais:', initialData);
             setFormData({
               id: initialData.id || null,
               nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',

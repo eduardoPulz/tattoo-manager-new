@@ -117,7 +117,7 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       
       setIsLoading(true);
       
-      const agendamentosRelacionados = agendamentos.filter(a => a.funcionarioId === id);
+      const agendamentosRelacionados = agendamentos.filter(a => a.funcionarioid === id);
       if (agendamentosRelacionados.length > 0) {
         alert('Não é possível excluir este funcionário pois existem agendamentos associados a ele');
         return;
@@ -263,12 +263,16 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       });
     };
     
+    // Buscar o nome do serviço e do funcionário
+    const servico = servicos.find(s => s.id === agendamento.servicoid);
+    const funcionario = funcionarios.find(f => f.id === agendamento.funcionarioid);
+    
     return [
       agendamento.nomeCliente,
       formatDate(agendamento.horaInicio),
       formatDate(agendamento.horaFim),
-      agendamento.servicoNome,
-      agendamento.funcionarioNome
+      servico ? (servico.nome || servico.descricao) : 'Desconhecido',
+      funcionario ? funcionario.nome : 'Desconhecido'
     ];
   };
 
@@ -283,7 +287,18 @@ export const TabsSection = ({ initialTab = "employees" }) => {
   };
 
   const handleEditAgendamento = (agendamento) => {
-    setCurrentAgendamento(agendamento);
+    // Buscar o serviço e funcionário completos para o agendamento
+    const servico = servicos.find(s => s.id === agendamento.servicoid);
+    const funcionario = funcionarios.find(f => f.id === agendamento.funcionarioid);
+    
+    // Preparar os dados completos para o formulário
+    const agendamentoCompleto = {
+      ...agendamento,
+      servicoNome: servico ? servico.nome : '',
+      funcionarioNome: funcionario ? funcionario.nome : ''
+    };
+    
+    setCurrentAgendamento(agendamentoCompleto);
     setShowAgendamentoForm(true);
   };
 
@@ -300,7 +315,15 @@ export const TabsSection = ({ initialTab = "employees" }) => {
     try {
       setIsLoading(true);
       
-      await handleFetch(`/api/servicos?id=${id}`, 'DELETE');
+      const agendamentosRelacionados = agendamentos.filter(a => a.servicoid === id);
+      if (agendamentosRelacionados.length > 0) {
+        alert('Não é possível excluir este serviço pois existem agendamentos associados a ele');
+        return;
+      }
+      
+      const servicoId = typeof id === 'object' ? id.id : id;
+      
+      await handleFetch(`/api/servicos?id=${servicoId}`, 'DELETE');
       
       setServicos(servicos.filter(s => s.id !== id));
       
