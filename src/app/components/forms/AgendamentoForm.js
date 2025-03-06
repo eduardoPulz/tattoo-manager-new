@@ -2,56 +2,91 @@
 import React, { useState, useEffect } from 'react';
 import { FormContainer, FormGroup, Label, Input, Select, ErrorMessage, Button, ButtonGroup, DateTimeInput } from './styles';
 
-export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
+export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {}, sharedState }) => {
   const [funcionarios, setFuncionarios] = useState([]);
   const [servicos, setServicos] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     id: initialData.id || null,
-    nomeCliente: initialData.nomeCliente || '',
+    nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+    clienteTelefone: initialData.clienteTelefone || '',
     funcionarioId: initialData.funcionarioId || '',
     servicoId: initialData.servicoId || '',
     horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
-    horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : '',
+    horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
   });
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Usar o estado compartilhado se disponível
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [funcionariosRes, servicosRes] = await Promise.all([
-          fetch('/api/funcionarios').then(res => res.json()),
-          fetch('/api/servicos').then(res => res.json())
-        ]);
-        
-        if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
-          setFuncionarios(funcionariosRes.data);
-        } else {
-          console.error('Resposta inválida de funcionários:', funcionariosRes);
-          setFuncionarios([]);
-        }
-        
-        if (servicosRes.success && Array.isArray(servicosRes.data)) {
-          setServicos(servicosRes.data);
-        } else {
-          console.error('Resposta inválida de serviços:', servicosRes);
-          setServicos([]);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
-        setFuncionarios([]);
-        setServicos([]);
-      } finally {
-        setLoading(false);
+    if (sharedState) {
+      setFuncionarios(sharedState.funcionarios || []);
+      setServicos(sharedState.servicos || []);
+      setLoading(false);
+      
+      // Atualizar formData com os dados iniciais
+      if (initialData && initialData.id) {
+        setFormData({
+          id: initialData.id || null,
+          nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+          clienteTelefone: initialData.clienteTelefone || '',
+          funcionarioId: initialData.funcionarioId || '',
+          servicoId: initialData.servicoId || '',
+          horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+          horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
+        });
       }
-    };
-    
-    fetchData();
-  }, []);
+    } else {
+      // Carregar dados da API apenas se não houver estado compartilhado
+      const fetchData = async () => {
+        try {
+          const [funcionariosRes, servicosRes] = await Promise.all([
+            fetch('/api/funcionarios').then(res => res.json()),
+            fetch('/api/servicos').then(res => res.json())
+          ]);
+          
+          if (funcionariosRes.success && Array.isArray(funcionariosRes.data)) {
+            setFuncionarios(funcionariosRes.data);
+          } else {
+            console.error('Resposta inválida de funcionários:', funcionariosRes);
+            setFuncionarios([]);
+          }
+          
+          if (servicosRes.success && Array.isArray(servicosRes.data)) {
+            setServicos(servicosRes.data);
+          } else {
+            console.error('Resposta inválida de serviços:', servicosRes);
+            setServicos([]);
+          }
+
+          // Atualizar formData com os dados iniciais após carregar os dados
+          if (initialData && initialData.id) {
+            setFormData({
+              id: initialData.id || null,
+              nomeCliente: initialData.nomeCliente || initialData.clienteNome || '',
+              clienteTelefone: initialData.clienteTelefone || '',
+              funcionarioId: initialData.funcionarioId || '',
+              servicoId: initialData.servicoId || '',
+              horaInicio: initialData.horaInicio ? new Date(initialData.horaInicio).toISOString().slice(0, 16) : '',
+              horaFim: initialData.horaFim ? new Date(initialData.horaFim).toISOString().slice(0, 16) : ''
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados:', error);
+          setErrors({ fetch: 'Erro ao carregar dados. Por favor, recarregue a página.' });
+          setFuncionarios([]);
+          setServicos([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchData();
+    }
+  }, [initialData, sharedState]);
 
   useEffect(() => {
     if (formData.horaInicio && formData.servicoId) {
@@ -116,6 +151,13 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       newErrors.nomeCliente = 'Nome do cliente é obrigatório';
     }
     
+    if (!formData.clienteTelefone.trim()) {
+      newErrors.clienteTelefone = 'Telefone do cliente é obrigatório';
+    } else if (!/^\(\d{2}\) \d{5}-\d{4}$/.test(formData.clienteTelefone) && 
+               !/^\d{10,11}$/.test(formData.clienteTelefone.replace(/\D/g, ''))) {
+      newErrors.clienteTelefone = 'Formato de telefone inválido';
+    }
+    
     if (!formData.funcionarioId) {
       newErrors.funcionarioId = 'Selecione um funcionário';
     }
@@ -135,6 +177,24 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
     }
     
     return newErrors;
+  };
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.length <= 11) {
+      if (value.length > 2) {
+        value = `(${value.substring(0, 2)}) ${value.substring(2)}`;
+      }
+      if (value.length > 10) {
+        value = `${value.substring(0, 10)}-${value.substring(10)}`;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        clienteTelefone: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -161,6 +221,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       const dataToSubmit = {
         id: formData.id,
         nomeCliente: formData.nomeCliente.trim(),
+        clienteTelefone: formData.clienteTelefone.trim(),
         funcionarioId: formData.funcionarioId,
         servicoId: formData.servicoId,
         horaInicio: horaInicio.toISOString(),
@@ -173,10 +234,11 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
         setFormData({
           id: null,
           nomeCliente: '',
+          clienteTelefone: '',
           funcionarioId: '',
           servicoId: '',
           horaInicio: '',
-          horaFim: '',
+          horaFim: ''
         });
       }
     } catch (error) {
@@ -210,6 +272,20 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
       </FormGroup>
       
       <FormGroup>
+        <Label htmlFor="clienteTelefone">Telefone do Cliente</Label>
+        <Input
+          type="text"
+          id="clienteTelefone"
+          name="clienteTelefone"
+          value={formData.clienteTelefone}
+          onChange={handlePhoneChange}
+          placeholder="(XX) XXXXX-XXXX"
+          data-error={!!errors.clienteTelefone}
+        />
+        {errors.clienteTelefone && <ErrorMessage>{errors.clienteTelefone}</ErrorMessage>}
+      </FormGroup>
+      
+      <FormGroup>
         <Label htmlFor="funcionarioId">Profissional</Label>
         <Select
           id="funcionarioId"
@@ -240,7 +316,7 @@ export const AgendamentoForm = ({ onSubmit, onCancel, initialData = {} }) => {
           <option value="">Selecione um serviço</option>
           {servicos.map(servico => (
             <option key={servico.id} value={servico.id}>
-              {servico.descricao} - {servico.duracao} min - R$ {servico.preco.toFixed(2)}
+              {servico.descricao} - {servico.duracao} min - R$ {servico.preco}
             </option>
           ))}
         </Select>

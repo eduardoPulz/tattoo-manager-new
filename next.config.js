@@ -25,8 +25,7 @@ const nextConfig = {
     ];
   },
   experimental: {
-    serverComponentsExternalPackages: ['@vercel/postgres'],
-    serverActions: true
+    serverComponentsExternalPackages: ['@vercel/postgres']
   },
   images: {
     domains: ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com', 'tattoo-manager-new.vercel.app', 'cdn.builder.io'],

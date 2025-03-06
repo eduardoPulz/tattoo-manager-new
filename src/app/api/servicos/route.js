@@ -1,5 +1,8 @@
-const { NextResponse } = require('next/server');
-const { servicosDb } = require('../../lib/postgres');
+import { NextResponse } from 'next/server';
+import servicosRepository from '../../repositories/servicosRepository';
+
+// Definir que esta rota não usa o Edge Runtime
+export const runtime = 'nodejs';
 
 function handleError(error) {
   console.error('Erro na API de serviços:', error);
@@ -10,10 +13,10 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-async function GET() {
+export async function GET() {
   try {
     console.log('GET /api/servicos - Iniciando busca de serviços');
-    const servicos = await servicosDb.getAll();
+    const servicos = await servicosRepository.getAll();
     console.log(`GET /api/servicos - Serviços encontrados: ${servicos.length}`);
     return NextResponse.json({
       success: true,
@@ -25,7 +28,7 @@ async function GET() {
   }
 }
 
-async function POST(request) {
+export async function POST(request) {
   try {
     console.log('POST /api/servicos - Iniciando processamento');
     const body = await request.json();
@@ -41,22 +44,22 @@ async function POST(request) {
       }, { status: 400 });
     }
     
-    // Validar tipos de dados
+    // Validar valores numéricos
     if (isNaN(parseFloat(body.preco)) || isNaN(parseInt(body.duracao))) {
-      console.log('POST /api/servicos - Tipos de dados inválidos');
+      console.log('POST /api/servicos - Valores numéricos inválidos');
       return NextResponse.json({
         success: false,
-        message: 'Preço e duração devem ser números'
+        message: 'Preço e duração devem ser valores numéricos'
       }, { status: 400 });
     }
     
+    // Atualizar ou criar serviço
     if (body.id) {
       console.log(`POST /api/servicos - Atualizando serviço ID: ${body.id}`);
-      const servicoAtualizado = await servicosDb.update(body.id, {
-        nome: body.descricao, // Usar 'descricao' como 'nome'
-        descricao: body.descricao || '',
-        preco: body.preco,
-        duracao: body.duracao
+      const servicoAtualizado = await servicosRepository.update(body.id, {
+        descricao: body.descricao,
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
       });
       
       if (!servicoAtualizado) {
@@ -75,11 +78,10 @@ async function POST(request) {
       });
     } else {
       console.log('POST /api/servicos - Criando novo serviço');
-      const novoServico = await servicosDb.create({
-        nome: body.descricao, // Usar 'descricao' como 'nome'
-        descricao: body.descricao || '',
-        preco: body.preco,
-        duracao: body.duracao
+      const novoServico = await servicosRepository.create({
+        descricao: body.descricao,
+        preco: parseFloat(body.preco),
+        duracao: parseInt(body.duracao)
       });
       
       console.log(`POST /api/servicos - Novo serviço criado com ID: ${novoServico.id}`);
@@ -95,7 +97,7 @@ async function POST(request) {
   }
 }
 
-async function DELETE(request) {
+export async function DELETE(request) {
   try {
     console.log('DELETE /api/servicos - Iniciando processamento');
     const { searchParams } = new URL(request.url);
@@ -110,15 +112,7 @@ async function DELETE(request) {
     }
     
     console.log(`DELETE /api/servicos - Excluindo serviço ID: ${id}`);
-    const result = await servicosDb.delete(id);
-    
-    if (!result.success) {
-      console.log(`DELETE /api/servicos - Erro ao excluir serviço ID: ${id} - ${result.message}`);
-      return NextResponse.json({
-        success: false,
-        message: result.message || 'Erro ao excluir serviço'
-      }, { status: 400 });
-    }
+    await servicosRepository.delete(id);
     
     console.log(`DELETE /api/servicos - Serviço ID: ${id} excluído com sucesso`);
     return NextResponse.json({
@@ -130,9 +124,3 @@ async function DELETE(request) {
     return handleError(error);
   }
 }
-
-module.exports = {
-  GET,
-  POST,
-  DELETE
-};

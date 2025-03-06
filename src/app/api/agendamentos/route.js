@@ -1,5 +1,8 @@
-const { NextResponse } = require('next/server');
-const { agendamentosDb } = require('../../lib/postgres');
+import { NextResponse } from 'next/server';
+import agendamentosRepository from '../../repositories/agendamentosRepository';
+
+// Definir que esta rota não usa o Edge Runtime
+export const runtime = 'nodejs';
 
 function handleError(error) {
   console.error('Erro na API de agendamentos:', error);
@@ -10,10 +13,11 @@ function handleError(error) {
   }, { status: 500 });
 }
 
-async function GET() {
+export async function GET() {
   try {
     console.log('GET /api/agendamentos - Iniciando busca de agendamentos');
-    const agendamentos = await agendamentosDb.getAll();
+    const agendamentos = await agendamentosRepository.getAll();
+    
     console.log(`GET /api/agendamentos - Agendamentos encontrados: ${agendamentos.length}`);
     return NextResponse.json({
       success: true,
@@ -25,16 +29,19 @@ async function GET() {
   }
 }
 
-async function POST(request) {
+export async function POST(request) {
   try {
     console.log('POST /api/agendamentos - Iniciando processamento');
     const body = await request.json();
     
-    if (!body.clienteNome || !body.clienteTelefone || !body.funcionarioId || !body.servicoId || !body.horaInicio) {
+    console.log('POST /api/agendamentos - Corpo da requisição:', body);
+    
+    // Validar campos obrigatórios
+    if (!body.nomeCliente || !body.funcionarioId || !body.servicoId || !body.horaInicio || !body.horaFim) {
       console.log('POST /api/agendamentos - Campos obrigatórios não fornecidos');
       return NextResponse.json({
         success: false,
-        message: 'Todos os campos obrigatórios devem ser preenchidos'
+        message: 'Nome do cliente, funcionário, serviço, e horários são obrigatórios'
       }, { status: 400 });
     }
     
@@ -49,81 +56,64 @@ async function POST(request) {
         throw new Error('Data de início inválida');
       }
       
-      if (body.horaFim) {
-        console.log(`POST /api/agendamentos - Processando data de fim: ${body.horaFim}`);
-        horaFim = new Date(body.horaFim);
-        if (isNaN(horaFim.getTime())) {
-          throw new Error('Data de fim inválida');
-        }
-      } else if (body.duracao) {
-        console.log(`POST /api/agendamentos - Calculando data de fim com duração: ${body.duracao} minutos`);
-        horaFim = new Date(horaInicio.getTime() + parseInt(body.duracao) * 60000);
-      } else {
-        // Se não tiver hora fim nem duração, assume 1 hora
-        console.log('POST /api/agendamentos - Duração não fornecida, assumindo 60 minutos');
-        horaFim = new Date(horaInicio.getTime() + 60 * 60000);
+      console.log(`POST /api/agendamentos - Processando data de fim: ${body.horaFim}`);
+      horaFim = new Date(body.horaFim);
+      if (isNaN(horaFim.getTime())) {
+        throw new Error('Data de fim inválida');
+      }
+      
+      if (horaFim <= horaInicio) {
+        throw new Error('Data de fim deve ser posterior à data de início');
       }
     } catch (error) {
-      console.error('POST /api/agendamentos - Erro ao processar datas:', error);
+      console.log('POST /api/agendamentos - Erro ao processar datas:', error.message);
       return NextResponse.json({
         success: false,
         message: error.message
       }, { status: 400 });
     }
     
-    // Atualizar ou criar agendamento
+    // Mapear os campos do formulário para os campos da tabela
+    const agendamentoData = {
+      nomeCliente: body.nomeCliente,
+      clienteTelefone: body.clienteTelefone || '',
+      funcionarioId: body.funcionarioId,
+      servicoId: body.servicoId,
+      horaInicio: horaInicio.toISOString(),
+      horaFim: horaFim.toISOString()
+    };
+    
+    let result;
+    
+    // Verificar se é uma atualização ou criação baseado na existência de ID
     if (body.id) {
-      console.log(`POST /api/agendamentos - Atualizando agendamento ID: ${body.id}`);
-      const agendamentoAtualizado = await agendamentosDb.update(body.id, {
-        clienteNome: body.clienteNome,
-        clienteTelefone: body.clienteTelefone,
-        funcionarioId: body.funcionarioId,
-        servicoId: body.servicoId,
-        horaInicio: horaInicio,
-        horaFim: horaFim,
-        observacoes: body.observacoes
-      });
+      console.log(`POST /api/agendamentos - Atualizando agendamento ID: ${body.id}`, agendamentoData);
+      result = await agendamentosRepository.update(body.id, agendamentoData);
       
-      if (!agendamentoAtualizado) {
-        console.log(`POST /api/agendamentos - Agendamento ID: ${body.id} não encontrado`);
-        return NextResponse.json({
-          success: false,
-          message: 'Agendamento não encontrado'
-        }, { status: 404 });
-      }
-      
-      console.log(`POST /api/agendamentos - Agendamento ID: ${body.id} atualizado com sucesso`);
+      console.log('POST /api/agendamentos - Agendamento atualizado com sucesso:', result);
       return NextResponse.json({
         success: true,
-        data: agendamentoAtualizado,
+        data: result,
         message: 'Agendamento atualizado com sucesso'
       });
     } else {
-      console.log('POST /api/agendamentos - Criando novo agendamento');
-      const novoAgendamento = await agendamentosDb.create({
-        clienteNome: body.clienteNome,
-        clienteTelefone: body.clienteTelefone,
-        funcionarioId: body.funcionarioId,
-        servicoId: body.servicoId,
-        horaInicio: horaInicio,
-        horaFim: horaFim,
-        observacoes: body.observacoes
-      });
+      console.log('POST /api/agendamentos - Criando novo agendamento:', agendamentoData);
+      result = await agendamentosRepository.create(agendamentoData);
       
-      console.log(`POST /api/agendamentos - Novo agendamento criado com ID: ${novoAgendamento.id}`);
+      console.log('POST /api/agendamentos - Agendamento criado com sucesso:', result);
       return NextResponse.json({
         success: true,
-        data: novoAgendamento,
+        data: result,
         message: 'Agendamento criado com sucesso'
-      }, { status: 201 });
+      });
     }
   } catch (error) {
-    console.error('POST /api/agendamentos - Erro:', error);
+    console.error('POST /api/agendamentos - Erro ao processar agendamento:', error);
     return handleError(error);
   }
 }
 
-async function DELETE(request) {
+export async function DELETE(request) {
   try {
     console.log('DELETE /api/agendamentos - Iniciando processamento');
     const { searchParams } = new URL(request.url);
@@ -138,15 +128,7 @@ async function DELETE(request) {
     }
     
     console.log(`DELETE /api/agendamentos - Excluindo agendamento ID: ${id}`);
-    const result = await agendamentosDb.delete(id);
-    
-    if (!result.success) {
-      console.log(`DELETE /api/agendamentos - Erro ao excluir agendamento ID: ${id} - ${result.message}`);
-      return NextResponse.json({
-        success: false,
-        message: result.message || 'Erro ao excluir agendamento'
-      }, { status: 400 });
-    }
+    await agendamentosRepository.delete(id);
     
     console.log(`DELETE /api/agendamentos - Agendamento ID: ${id} excluído com sucesso`);
     return NextResponse.json({
@@ -158,9 +140,3 @@ async function DELETE(request) {
     return handleError(error);
   }
 }
-
-module.exports = {
-  GET,
-  POST,
-  DELETE
-};

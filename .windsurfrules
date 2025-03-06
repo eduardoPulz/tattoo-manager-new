@@ -4,6 +4,7 @@
 - NUNCA adicione comentários no meio do arquivo alterado.
 - Sempre use Markdown para documentação e arquivos README.md.  
 - Mantenha a estrutura existente do arquivo README.md.  
+- Simplifique o código, evitando coisas desnecessárias.
 
 ---
 
