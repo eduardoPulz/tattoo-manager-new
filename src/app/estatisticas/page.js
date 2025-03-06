@@ -8,10 +8,9 @@ import {
   BarElement, 
   Title, 
   Tooltip, 
-  Legend, 
-  ArcElement
+  Legend
 } from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { 
   StatisticsContainer, 
   StatisticsContent, 
@@ -33,7 +32,6 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -43,60 +41,68 @@ export default function Estatisticas() {
   const [dados, setDados] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [periodoFiltro, setPeriodoFiltro] = useState('todos');
-  const [categoriaFiltro, setCategoriaFiltro] = useState('todos');
+  const [periodoFiltro, setPeriodoFiltro] = useState('mes');
+  const [categoriaFiltro, setCategoriaFiltro] = useState('servicos');
+  const [estatisticas, setEstatisticas] = useState(null);
 
-  // Buscar dados em tempo real
   useEffect(() => {
     const fetchDados = async () => {
       try {
         setLoading(true);
         const response = await fetch('/api/dados');
-        if (!response.ok) {
-          throw new Error('Falha ao buscar dados');
-        }
         const result = await response.json();
-        setDados(result.data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Erro ao buscar dados:', err);
-        setError(err.message);
+        
+        if (result.status === 'success') {
+          setDados(result.data);
+        } else {
+          throw new Error(result.message || 'Erro ao buscar dados');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        setError('Não foi possível carregar os dados. Por favor, tente novamente mais tarde.');
+      } finally {
         setLoading(false);
       }
     };
-
+    
     fetchDados();
-
-    // Atualizar dados a cada 30 segundos para manter em tempo real
-    const intervalId = setInterval(fetchDados, 30000);
-    return () => clearInterval(intervalId);
   }, []);
-
+  
+  useEffect(() => {
+    if (dados) {
+      const estatisticasCalculadas = calcularEstatisticas();
+      setEstatisticas(estatisticasCalculadas);
+    }
+  }, [dados, periodoFiltro]);
+  
   // Função para filtrar agendamentos por período
   const filtrarPorPeriodo = (agendamentos) => {
-    if (!agendamentos || periodoFiltro === 'todos') return agendamentos;
+    if (!agendamentos) return [];
     
     const hoje = new Date();
     const inicioSemana = new Date(hoje);
-    inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+    inicioSemana.setDate(hoje.getDate() - hoje.getDay()); // Domingo
     inicioSemana.setHours(0, 0, 0, 0);
     
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    
     const inicioAno = new Date(hoje.getFullYear(), 0, 1);
     
-    switch (periodoFiltro) {
-      case 'semana':
-        return agendamentos.filter(a => new Date(a.horaInicio) >= inicioSemana);
-      case 'mes':
-        return agendamentos.filter(a => new Date(a.horaInicio) >= inicioMes);
-      case 'ano':
-        return agendamentos.filter(a => new Date(a.horaInicio) >= inicioAno);
-      default:
-        return agendamentos;
-    }
+    return agendamentos.filter(a => {
+      const dataAgendamento = new Date(a.horaInicio);
+      
+      switch (periodoFiltro) {
+        case 'semana':
+          return dataAgendamento >= inicioSemana;
+        case 'mes':
+          return dataAgendamento >= inicioMes;
+        case 'ano':
+          return dataAgendamento >= inicioAno;
+        default:
+          return true;
+      }
+    });
   };
-
+  
   // Função para calcular estatísticas
   const calcularEstatisticas = () => {
     if (!dados) return null;
@@ -165,188 +171,81 @@ export default function Estatisticas() {
       profissionalStat.faturamento += preco;
     });
     
-    // Estatísticas por dia da semana
-    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-    const agendamentosPorDia = new Array(7).fill(0);
-    const faturamentoPorDia = new Array(7).fill(0);
-    
-    agendamentosFiltrados.forEach(a => {
-      const data = new Date(a.horaInicio);
-      const diaSemana = data.getDay();
-      agendamentosPorDia[diaSemana] += 1;
-      
-      // Obter o preço do serviço
-      const servico = dados.servicos.find(s => s.id === a.servicoid);
-      const preco = servico ? Number(servico.preco) : 0;
-      
-      faturamentoPorDia[diaSemana] += preco;
-    });
-    
-    // Estatísticas por mês
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const agendamentosPorMes = new Array(12).fill(0);
-    const faturamentoPorMes = new Array(12).fill(0);
-    
-    agendamentosFiltrados.forEach(a => {
-      const data = new Date(a.horaInicio);
-      const mes = data.getMonth();
-      agendamentosPorMes[mes] += 1;
-      
-      // Obter o preço do serviço
-      const servico = dados.servicos.find(s => s.id === a.servicoid);
-      const preco = servico ? Number(servico.preco) : 0;
-      
-      faturamentoPorMes[mes] += preco;
-    });
-    
-    // Estatísticas por hora do dia
-    const horasDia = Array.from({ length: 12 }, (_, i) => `${i + 8}h`); // 8h às 19h
-    const agendamentosPorHora = new Array(12).fill(0);
-    
-    agendamentosFiltrados.forEach(a => {
-      const data = new Date(a.horaInicio);
-      const hora = data.getHours();
-      if (hora >= 8 && hora < 20) {
-        agendamentosPorHora[hora - 8] += 1;
-      }
-    });
-
     return {
       geral: {
         totalAgendamentos,
         totalFaturamento,
-        mediaFaturamento,
-        ticketMedio: totalAgendamentos > 0 ? totalFaturamento / totalAgendamentos : 0
+        mediaFaturamento
       },
-      servicos: Array.from(servicosMap.values()),
-      profissionais: Array.from(profissionaisMap.values()),
-      diasSemana: {
-        labels: diasSemana,
-        agendamentos: agendamentosPorDia,
-        faturamento: faturamentoPorDia
-      },
-      meses: {
-        labels: meses,
-        agendamentos: agendamentosPorMes,
-        faturamento: faturamentoPorMes
-      },
-      horas: {
-        labels: horasDia,
-        agendamentos: agendamentosPorHora
-      }
+      servicos: Array.from(servicosMap.values()).sort((a, b) => b.quantidade - a.quantidade),
+      profissionais: Array.from(profissionaisMap.values()).sort((a, b) => b.quantidade - a.quantidade)
     };
   };
 
-  const estatisticas = dados ? calcularEstatisticas() : null;
-
-  // Dados para o gráfico de serviços
-  const dadosGraficoServicos = estatisticas ? {
-    labels: estatisticas.servicos.map(s => s.nome),
-    datasets: [
-      {
-        label: 'Quantidade de Agendamentos',
-        data: estatisticas.servicos.map(s => s.quantidade),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-        ],
-        borderWidth: 1,
+  // Função para renderizar o gráfico dinâmico
+  const renderizarGraficoDinamico = () => {
+    if (!estatisticas) return null;
+    
+    let dados = [];
+    let labels = [];
+    let titulo = '';
+    
+    // Definir dados com base na categoria selecionada
+    if (categoriaFiltro === 'servicos') {
+      dados = estatisticas.servicos.map(s => s.faturamento);
+      labels = estatisticas.servicos.map(s => s.nome);
+      titulo = 'Faturamento por Serviço';
+    } else if (categoriaFiltro === 'profissionais') {
+      dados = estatisticas.profissionais.map(p => p.faturamento);
+      labels = estatisticas.profissionais.map(p => p.nome);
+      titulo = 'Faturamento por Profissional';
+    }
+    
+    // Configuração do gráfico
+    const dadosGrafico = {
+      labels,
+      datasets: [
+        {
+          label: 'Faturamento (R$)',
+          data: dados,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 206, 86, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+          ],
+          borderWidth: 1,
+        },
+      ],
+    };
+    
+    // Opções do gráfico
+    const opcoesGrafico = {
+      indexAxis: 'y', // Para barras horizontais
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: titulo,
+        },
       },
-    ],
-  } : null;
-
-  // Dados para o gráfico de profissionais
-  const dadosGraficoProfissionais = estatisticas ? {
-    labels: estatisticas.profissionais.map(p => p.nome),
-    datasets: [
-      {
-        label: 'Faturamento (R$)',
-        data: estatisticas.profissionais.map(p => p.faturamento),
-        backgroundColor: [
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-          'rgba(75, 192, 192, 0.6)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  } : null;
-
-  // Dados para o gráfico de dias da semana
-  const dadosGraficoDiasSemana = estatisticas ? {
-    labels: estatisticas.diasSemana.labels,
-    datasets: [
-      {
-        label: 'Agendamentos',
-        data: estatisticas.diasSemana.agendamentos,
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-      },
-    ],
-  } : null;
-
-  // Dados para o gráfico de meses
-  const dadosGraficoMeses = estatisticas ? {
-    labels: estatisticas.meses.labels,
-    datasets: [
-      {
-        label: 'Faturamento (R$)',
-        data: estatisticas.meses.faturamento,
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1
-      }
-    ],
-  } : null;
-
-  // Dados para o gráfico de agendamentos por mês
-  const dadosGraficoAgendamentosMeses = estatisticas ? {
-    labels: estatisticas.meses.labels,
-    datasets: [
-      {
-        label: 'Agendamentos',
-        data: estatisticas.meses.agendamentos,
-        borderColor: 'rgba(54, 162, 235, 1)',
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderWidth: 2,
-        tension: 0.1
-      }
-    ],
-  } : null;
-
-  // Dados para o gráfico de horas
-  const dadosGraficoHoras = estatisticas ? {
-    labels: estatisticas.horas.labels,
-    datasets: [
-      {
-        label: 'Agendamentos por Hora',
-        data: estatisticas.horas.agendamentos,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
-  } : null;
-
-  // Opções para os gráficos
-  const opcoesGraficos = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-    },
+    };
+    
+    return (
+      <ChartContainer>
+        <Bar data={dadosGrafico} options={opcoesGrafico} height={400} />
+      </ChartContainer>
+    );
   };
 
   // Renderizar cards de estatísticas gerais
-  const renderEstatisticasGerais = () => {
+  const renderizarEstatisticasGerais = () => {
     if (!estatisticas) return null;
     
     const formatarValor = (valor) => `R$ ${valor.toFixed(2).replace('.', ',')}`;
@@ -374,9 +273,11 @@ export default function Estatisticas() {
   if (loading) {
     return (
       <StatisticsContainer>
+        <StatisticsHeader>
+          <h1>Estatísticas</h1>
+        </StatisticsHeader>
         <StatisticsContent>
-          <StatisticsHeader>Estatísticas</StatisticsHeader>
-          <LoadingMessage>Carregando dados...</LoadingMessage>
+          <LoadingMessage>Carregando estatísticas...</LoadingMessage>
         </StatisticsContent>
       </StatisticsContainer>
     );
@@ -385,9 +286,11 @@ export default function Estatisticas() {
   if (error) {
     return (
       <StatisticsContainer>
+        <StatisticsHeader>
+          <h1>Estatísticas</h1>
+        </StatisticsHeader>
         <StatisticsContent>
-          <StatisticsHeader>Estatísticas</StatisticsHeader>
-          <ErrorMessage>Erro ao carregar dados: {error}</ErrorMessage>
+          <ErrorMessage>{error}</ErrorMessage>
         </StatisticsContent>
       </StatisticsContainer>
     );
@@ -395,74 +298,40 @@ export default function Estatisticas() {
 
   return (
     <StatisticsContainer>
+      <StatisticsHeader>
+        <h1>Estatísticas</h1>
+      </StatisticsHeader>
+      
       <StatisticsContent>
-        <StatisticsHeader>Estatísticas Analíticas</StatisticsHeader>
-        
         <FilterContainer>
-          <FilterLabel>Período:</FilterLabel>
-          <FilterSelect 
-            value={periodoFiltro} 
-            onChange={(e) => setPeriodoFiltro(e.target.value)}
-          >
-            <option value="todos">Todos os períodos</option>
-            <option value="semana">Última semana</option>
-            <option value="mes">Último mês</option>
-            <option value="ano">Último ano</option>
-          </FilterSelect>
+          <div>
+            <FilterLabel>Período:</FilterLabel>
+            <FilterSelect 
+              value={periodoFiltro} 
+              onChange={(e) => setPeriodoFiltro(e.target.value)}
+            >
+              <option value="semana">Última Semana</option>
+              <option value="mes">Último Mês</option>
+              <option value="ano">Último Ano</option>
+            </FilterSelect>
+          </div>
           
-          <FilterLabel style={{ marginLeft: '20px' }}>Categoria:</FilterLabel>
-          <FilterSelect 
-            value={categoriaFiltro} 
-            onChange={(e) => setCategoriaFiltro(e.target.value)}
-          >
-            <option value="todos">Todas as categorias</option>
-            <option value="servicos">Serviços</option>
-            <option value="profissionais">Profissionais</option>
-            <option value="tempo">Análise Temporal</option>
-          </FilterSelect>
+          <div>
+            <FilterLabel>Categoria:</FilterLabel>
+            <FilterSelect 
+              value={categoriaFiltro} 
+              onChange={(e) => setCategoriaFiltro(e.target.value)}
+            >
+              <option value="servicos">Serviços</option>
+              <option value="profissionais">Profissionais</option>
+            </FilterSelect>
+          </div>
         </FilterContainer>
 
         {estatisticas && (
           <>
-            {renderEstatisticasGerais()}
-
-            {(categoriaFiltro === 'todos' || categoriaFiltro === 'servicos') && (
-              <ChartContainer>
-                <ChartTitle>Distribuição de Agendamentos por Serviço</ChartTitle>
-                {dadosGraficoServicos && <Pie data={dadosGraficoServicos} options={opcoesGraficos} />}
-              </ChartContainer>
-            )}
-
-            {(categoriaFiltro === 'todos' || categoriaFiltro === 'profissionais') && (
-              <ChartContainer>
-                <ChartTitle>Faturamento por Profissional</ChartTitle>
-                {dadosGraficoProfissionais && <Bar data={dadosGraficoProfissionais} options={opcoesGraficos} />}
-              </ChartContainer>
-            )}
-
-            {(categoriaFiltro === 'todos' || categoriaFiltro === 'tempo') && (
-              <>
-                <ChartContainer>
-                  <ChartTitle>Agendamentos por Dia da Semana</ChartTitle>
-                  {dadosGraficoDiasSemana && <Bar data={dadosGraficoDiasSemana} options={opcoesGraficos} />}
-                </ChartContainer>
-
-                <ChartContainer>
-                  <ChartTitle>Faturamento por Mês</ChartTitle>
-                  {dadosGraficoMeses && <Bar data={dadosGraficoMeses} options={opcoesGraficos} />}
-                </ChartContainer>
-
-                <ChartContainer>
-                  <ChartTitle>Agendamentos por Mês</ChartTitle>
-                  {dadosGraficoAgendamentosMeses && <Bar data={dadosGraficoAgendamentosMeses} options={opcoesGraficos} />}
-                </ChartContainer>
-
-                <ChartContainer>
-                  <ChartTitle>Distribuição de Agendamentos por Hora</ChartTitle>
-                  {dadosGraficoHoras && <Bar data={dadosGraficoHoras} options={opcoesGraficos} />}
-                </ChartContainer>
-              </>
-            )}
+            {renderizarEstatisticasGerais()}
+            {renderizarGraficoDinamico()}
           </>
         )}
       </StatisticsContent>
