@@ -196,12 +196,14 @@ export default function Home() {
             <h2 className="text-xl font-semibold mb-4">Agendamentos ({dados.data.agendamentos.length})</h2>
             {dados.data.agendamentos.length > 0 ? (
               <ul>
+                {console.log(dados)}
                 {dados.data.agendamentos.map(a => (
+                  
                   <li key={a.id} className="mb-2 pb-2 border-b">
                     <strong>{a.nomeCliente}</strong><br />
-                    Data: {new Date(a.data).toLocaleString()}<br />
-                    ID Funcionário: {a.funcionarioId}<br />
-                    ID Serviço: {a.servicoId}
+                    Data: {new Date(a.horaInicio).toLocaleString()}<br />
+                    Profissional: {a.funcionarioNome || "N/A"}<br />
+                    Serviço: {a.servicoNome || "N/A"}
                   </li>
                 ))}
               </ul>

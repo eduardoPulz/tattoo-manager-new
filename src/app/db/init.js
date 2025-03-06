@@ -11,16 +11,24 @@ async function initDb() {
     
     // Define o conteúdo do schema SQL diretamente no código para evitar problemas de caminho
     const schemaSql = `
+    -- Primeiro, desativar verificação de chaves estrangeiras para poder dropar as tabelas na ordem correta
+    BEGIN;
+    
+    -- Drop de tabelas na ordem inversa de dependência
+    DROP TABLE IF EXISTS agendamentos;
+    DROP TABLE IF EXISTS servicos;
+    DROP TABLE IF EXISTS funcionarios;
+    
     -- Criação da tabela de funcionários
-    CREATE TABLE IF NOT EXISTS funcionarios (
+    CREATE TABLE funcionarios (
         id UUID PRIMARY KEY,
         nome VARCHAR(255) NOT NULL,
         especialidade VARCHAR(100) NOT NULL,
         telefone VARCHAR(20)
     );
-
+    
     -- Criação da tabela de serviços
-    CREATE TABLE IF NOT EXISTS servicos (
+    CREATE TABLE servicos (
         id UUID PRIMARY KEY,
         nome VARCHAR(255),
         preco DECIMAL(10, 2) NOT NULL,
@@ -29,37 +37,21 @@ async function initDb() {
     );
 
     -- Criação da tabela de agendamentos
-    CREATE TABLE IF NOT EXISTS agendamentos (
+    CREATE TABLE agendamentos (
         id UUID PRIMARY KEY,
-        nomeCliente VARCHAR(255) NOT NULL,
-        clienteTelefone VARCHAR(20),
-        funcionarioId UUID NOT NULL,
-        servicoId UUID NOT NULL,
-        horaInicio TIMESTAMP NOT NULL,
-        horaFim TIMESTAMP NOT NULL,
-        FOREIGN KEY (funcionarioId) REFERENCES funcionarios(id) ON DELETE CASCADE,
-        FOREIGN KEY (servicoId) REFERENCES servicos(id) ON DELETE CASCADE
+        "nomeCliente" VARCHAR(255) NOT NULL,
+        "clienteTelefone" VARCHAR(20),
+        funcionarioid UUID NOT NULL,
+        servicoid UUID NOT NULL,
+        "horaInicio" TIMESTAMP NOT NULL,
+        "horaFim" TIMESTAMP NOT NULL,
+        FOREIGN KEY (funcionarioid) REFERENCES funcionarios(id) ON DELETE CASCADE,
+        FOREIGN KEY (servicoid) REFERENCES servicos(id) ON DELETE CASCADE
     );
     `;
     
-    // Divide as consultas SQL por ponto e vírgula
-    const queries = schemaSql
-      .split(';')
-      .filter(query => query.trim() !== '')
-      .map(query => query.trim() + ';');
-    
-    // Executa cada consulta SQL separadamente
-    for (const query of queries) {
-      try {
-        console.log('Executando query:', query.substring(0, 100) + '...');
-        await db.query(query);
-        console.log('Query executada com sucesso');
-      } catch (error) {
-        console.error('Erro ao executar query:', error.message);
-        console.error('Query com erro:', query);
-        // Continua para a próxima query, mesmo se houver erro
-      }
-    }
+    // Executa o script SQL completo como uma única transação
+    await db.query(schemaSql);
     
     console.log('Inicialização do banco de dados concluída!');
     return { success: true, message: 'Banco de dados inicializado com sucesso' };

@@ -215,21 +215,12 @@ export const TabsSection = ({ initialTab = "employees" }) => {
       
       const agendamentoSalvo = response.data;
       
-      const funcionario = funcionarios.find(f => f.id === agendamentoSalvo.funcionarioId);
-      const servico = servicos.find(s => s.id === agendamentoSalvo.servicoId);
-      
-      const agendamentoCompleto = {
-        ...agendamentoSalvo,
-        funcionarioNome: funcionario ? funcionario.nome : 'Desconhecido',
-        servicoNome: servico ? servico.descricao : 'Desconhecido'
-      };
-      
       if (data.id) {
         setAgendamentos(prev => prev.map(a => 
-          a.id === agendamentoCompleto.id ? agendamentoCompleto : a
+          a.id === agendamentoSalvo.id ? agendamentoSalvo : a
         ));
       } else {
-        setAgendamentos(prev => [...prev, agendamentoCompleto]);
+        setAgendamentos(prev => [...prev, agendamentoSalvo]);
       }
       
       setShowAgendamentoForm(false);
