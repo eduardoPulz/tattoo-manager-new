@@ -39,7 +39,9 @@ ChartJS.register(
 );
 
 export default function Estatisticas() {
-  const [dados, setDados] = useState(null);
+  const [agendamentos, setAgendamentos] = useState([]);
+  const [servicos, setServicos] = useState([]);
+  const [funcionarios, setFuncionarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [periodoFiltro, setPeriodoFiltro] = useState('mes');
@@ -50,14 +52,32 @@ export default function Estatisticas() {
     const fetchDados = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/dados');
-        const result = await response.json();
         
-        if (result.status === 'success') {
-          setDados(result.data);
-        } else {
-          throw new Error(result.message || 'Erro ao buscar dados');
+        // Buscar agendamentos
+        const agendamentosResponse = await fetch('/api/agendamentos');
+        if (!agendamentosResponse.ok) {
+          throw new Error('Erro ao buscar agendamentos');
         }
+        const agendamentosData = await agendamentosResponse.json();
+        
+        // Buscar serviços
+        const servicosResponse = await fetch('/api/servicos');
+        if (!servicosResponse.ok) {
+          throw new Error('Erro ao buscar serviços');
+        }
+        const servicosData = await servicosResponse.json();
+        
+        // Buscar funcionários
+        const funcionariosResponse = await fetch('/api/funcionarios');
+        if (!funcionariosResponse.ok) {
+          throw new Error('Erro ao buscar funcionários');
+        }
+        const funcionariosData = await funcionariosResponse.json();
+        
+        setAgendamentos(agendamentosData.data || []);
+        setServicos(servicosData.data || []);
+        setFuncionarios(funcionariosData.data || []);
+        
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
         setError('Não foi possível carregar os dados. Por favor, tente novamente mais tarde.');
@@ -70,15 +90,15 @@ export default function Estatisticas() {
   }, []);
   
   useEffect(() => {
-    if (dados) {
+    if (agendamentos.length > 0 && servicos.length > 0 && funcionarios.length > 0) {
       const estatisticasCalculadas = calcularEstatisticas();
       setEstatisticas(estatisticasCalculadas);
     }
-  }, [dados, periodoFiltro]);
+  }, [agendamentos, servicos, funcionarios, periodoFiltro]);
   
   // Função para filtrar agendamentos por período
   const filtrarPorPeriodo = (agendamentos) => {
-    if (!agendamentos) return [];
+    if (!agendamentos || agendamentos.length === 0) return [];
     
     const hoje = new Date();
     const inicioSemana = new Date(hoje);
@@ -106,9 +126,9 @@ export default function Estatisticas() {
   
   // Função para calcular estatísticas
   const calcularEstatisticas = () => {
-    if (!dados) return null;
+    if (!agendamentos || !servicos || !funcionarios) return null;
 
-    const agendamentosFiltrados = filtrarPorPeriodo(dados.agendamentos);
+    const agendamentosFiltrados = filtrarPorPeriodo(agendamentos);
     
     // Estatísticas gerais
     const totalAgendamentos = agendamentosFiltrados.length;
@@ -116,7 +136,7 @@ export default function Estatisticas() {
     // Calcular o faturamento total buscando o preço do serviço para cada agendamento
     const totalFaturamento = agendamentosFiltrados.reduce((acc, a) => {
       // Buscar o serviço correspondente para obter o preço
-      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const servico = servicos.find(s => s.id === a.servicoId);
       const preco = servico ? Number(servico.preco) : 0;
       return acc + preco;
     }, 0);
@@ -126,14 +146,14 @@ export default function Estatisticas() {
     // Estatísticas por serviço
     const servicosMap = new Map();
     agendamentosFiltrados.forEach(a => {
-      if (!a.servicoid) return;
+      if (!a.servicoId) return;
       
-      if (!servicosMap.has(a.servicoid)) {
+      if (!servicosMap.has(a.servicoId)) {
         // Buscar o serviço correspondente para obter o preço
-        const servico = dados.servicos.find(s => s.id === a.servicoid);
+        const servico = servicos.find(s => s.id === a.servicoId);
         if (!servico) return;
         
-        servicosMap.set(a.servicoid, {
+        servicosMap.set(a.servicoId, {
           nome: servico.nome || servico.descricao || 'Serviço sem nome',
           quantidade: 0,
           faturamento: 0,
@@ -141,7 +161,7 @@ export default function Estatisticas() {
         });
       }
       
-      const servicoStat = servicosMap.get(a.servicoid);
+      const servicoStat = servicosMap.get(a.servicoId);
       servicoStat.quantidade += 1;
       servicoStat.faturamento += servicoStat.preco;
     });
@@ -149,24 +169,24 @@ export default function Estatisticas() {
     // Estatísticas por profissional
     const profissionaisMap = new Map();
     agendamentosFiltrados.forEach(a => {
-      if (!a.funcionarioid) return;
+      if (!a.funcionarioId) return;
       
-      if (!profissionaisMap.has(a.funcionarioid)) {
-        const funcionario = dados.funcionarios.find(f => f.id === a.funcionarioid);
+      if (!profissionaisMap.has(a.funcionarioId)) {
+        const funcionario = funcionarios.find(f => f.id === a.funcionarioId);
         if (!funcionario) return;
         
-        profissionaisMap.set(a.funcionarioid, {
+        profissionaisMap.set(a.funcionarioId, {
           nome: funcionario.nome || 'Profissional sem nome',
           quantidade: 0,
           faturamento: 0
         });
       }
       
-      const profissionalStat = profissionaisMap.get(a.funcionarioid);
+      const profissionalStat = profissionaisMap.get(a.funcionarioId);
       profissionalStat.quantidade += 1;
       
       // Obter o preço do serviço
-      const servico = dados.servicos.find(s => s.id === a.servicoid);
+      const servico = servicos.find(s => s.id === a.servicoId);
       const preco = servico ? Number(servico.preco) : 0;
       
       profissionalStat.faturamento += preco;
