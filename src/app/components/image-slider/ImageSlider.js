@@ -5,7 +5,6 @@ import { DotsContainer, Dot } from "./styles";
 export const ImageSlider = ({ totalDots, onDotClick, activeDot = 0 }) => {
   const [internalActiveDot, setInternalActiveDot] = useState(activeDot);
   
-  // Atualizar o estado interno quando a prop activeDot mudar
   useEffect(() => {
     setInternalActiveDot(activeDot);
   }, [activeDot]);
