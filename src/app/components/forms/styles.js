@@ -6,6 +6,7 @@ export const FormContainer = styled.form`
   flex-direction: column;
   gap: 20px;
   width: 100%;
+  font-family: var(--font-poppins), 'Segoe UI', sans-serif;
 `;
 
 export const FormGroup = styled.div`
@@ -16,24 +17,26 @@ export const FormGroup = styled.div`
 
 export const Label = styled.label`
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
+  margin-bottom: 4px;
 `;
 
 const inputStyles = css`
   background-color: white;
-  padding: 10px 12px;
+  padding: 12px 14px;
   color: #333;
   border-radius: 6px;
   border: 1px solid ${props => props['data-error'] ? '#e53935' : '#ddd'};
-  font-size: 0.875rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
   outline: none;
   width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   
   &:focus {
-    border-color: ${props => props['data-error'] ? '#e53935' : '#6366f1'};
-    box-shadow: 0 0 0 2px ${props => props['data-error'] ? 'rgba(229, 57, 53, 0.2)' : 'rgba(99, 102, 241, 0.2)'};
+    border-color: ${props => props['data-error'] ? '#e53935' : 'var(--primary)'};
+    box-shadow: 0 0 0 3px ${props => props['data-error'] ? 'rgba(229, 57, 53, 0.2)' : 'rgba(255, 77, 77, 0.2)'};
   }
   
   &::placeholder {
@@ -65,17 +68,18 @@ export const DateTimeInput = styled.input`
 export const Select = styled.select`
   ${inputStyles}
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
+  background-position: right 14px center;
   padding-right: 40px;
+  cursor: pointer;
 `;
 
 export const Textarea = styled.textarea`
   ${inputStyles}
   min-height: 100px;
   resize: vertical;
+  margin-top: 4px;
 `;
 
 export const ErrorMessage = styled.div`
@@ -86,46 +90,39 @@ export const ErrorMessage = styled.div`
 
 export const ButtonGroup = styled.div`
   display: flex;
+  gap: 15px;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
+  margin-top: 20px;
 `;
 
 export const Button = styled.button`
-  padding: 10px 16px;
+  background-color: ${props => props.secondary ? '#f3f4f6' : 'var(--primary)'};
+  color: ${props => props.secondary ? '#333' : 'white'};
+  border: none;
   border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.875rem;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   
-  ${props => props.variant === 'secondary' 
-    ? css`
-        background-color: #f5f5f5;
-        color: #333;
-        border: 1px solid #ddd;
-        
-        &:hover:not(:disabled) {
-          background-color: #e0e0e0;
-        }
-      `
-    : css`
-        background-color: #6366f1;
-        color: white;
-        border: none;
-        
-        &:hover:not(:disabled) {
-          background-color: #4f46e5;
-        }
-      `
+  &:hover {
+    background-color: ${props => props.secondary ? '#e5e7eb' : 'var(--primary-dark)'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
   
   &:disabled {
-    opacity: 0.6;
+    background-color: #d1d5db;
+    color: #9ca3af;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 `;

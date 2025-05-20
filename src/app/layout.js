@@ -1,4 +1,5 @@
 import { Inter, Roboto_Mono } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import StyledComponentsRegistry from './registry'
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
@@ -13,6 +14,13 @@ const robotoMono = Roboto_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+});
+
+const poppins = Poppins({
+  weight: ['400', '500', '600', '700'],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins",
 });
 
 export const metadata = {
@@ -33,7 +41,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className={`${inter.variable} ${robotoMono.variable}`}>
+      <body className={`${inter.variable} ${robotoMono.variable} ${poppins.variable}`}>
         <AccessibilityProvider>
           <StyledComponentsRegistry>
             {children}
